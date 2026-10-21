@@ -1,0 +1,18 @@
+# Who gets asked to review each folder. The last matching line wins.
+# Every owner listed here needs Write access to the repo.
+# TODO: add the Auth and Web teammates' GitHub usernames when they join.
+
+# Default: PM
+*                   @Nickocade14
+
+# Backend · Data
+/server/            @eethie @Nickocade14
+
+# API contract: whole team
+/docs/              @eethie @Nickocade14
+
+# Mobile, deploy, CI and project config: Nicolas
+/mobile/            @Nickocade14
+/.github/           @Nickocade14
+/.claude/           @Nickocade14
+/AGENTS.md          @Nickocade14
