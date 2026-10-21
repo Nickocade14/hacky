@@ -1,0 +1,1878 @@
+openapi: 3.0.3
+info:
+  title: Hacky API
+  version: 0.1.0
+  description: |
+    REST API for Hacky, an AI chat that helps hackathon attendees find teammates and mentors.
+    COP 4331C Large Project (UCF, Fall 2026).
+
+    This file is the API contract. Server, web and mobile follow it. Change it first, in its own PR.
+
+    Conventions
+    - JSON keys are camelCase. Timestamps are ISO 8601 strings. Ids are MongoDB ObjectIds (24 hex chars).
+    - Auth: `Authorization: Bearer <jwt>` from `POST /api/auth/login`. Every route needs it except
+      `/api/health`, `/api/auth/*` and `/api/demo/*`.
+    - Routes under `/api/events/{slug}/...` also require membership (403 otherwise), except `/join`, which creates it.
+    - One team per person per event, including owners. The owner is included in members and counts toward maxSize.
+    - Every error is `{ "error": { "code", "message", "details"? } }`.
+    - Live updates use Socket.IO on the same server (JWT in the handshake `auth.token`), not REST.
+      Events: `message-new`, `request-new`, `request-updated`, `help-new`, `help-claimed`.
+      They only notify; the REST API is the source of truth.
+servers:
+  - url: https://{domain}
+    description: Production
+    variables:
+      domain:
+        default: your-domain.com
+        description: The team's domain (pending)
+  - url: http://localhost:8787
+    description: Local development
+tags:
+  - name: Auth
+    description: Register, email verification, login (JWT), password reset
+  - name: Me
+    description: The signed-in user
+  - name: Events
+    description: Events, memberships, people and teams
+  - name: Search
+    description: Server-side search with partial matching
+  - name: Chat
+    description: Hacky AI chat
+  - name: Requests
+    description: Connection requests and blocks
+  - name: Conversations
+    description: DMs, mentor chats and messages
+  - name: Help
+    description: Mentor help requests
+  - name: Demo
+    description: Only when DEMO_MODE=true. Never enabled in production.
+  - name: Health
+    description: Uptime check
+security:
+  - bearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      operationId: health
+      tags: [Health]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Server is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+
+  # ---------------------------------------------------------------- Auth
+  /api/auth/register:
+    post:
+      operationId: register
+      tags: [Auth]
+      summary: Create an account and send the verification email
+      description: The account can't log in until the email is verified.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "201":
+          description: Account created, verification email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409":
+          description: Email or handle already taken (`code` is `email_taken` or `handle_taken`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /api/auth/verify-email:
+    post:
+      operationId: verifyEmail
+      tags: [Auth]
+      summary: Verify the email with the token from the email link
+      description: The link opens the web page `/verify?token=...`, which calls this route. Tokens work once and expire.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "400":
+          description: Token invalid, used or expired (`code` is `invalid_token`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /api/auth/resend-verification:
+    post:
+      operationId: resendVerification
+      tags: [Auth]
+      summary: Send the verification email again
+      description: Always returns 200, so it doesn't reveal which emails have accounts.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Sent if the account exists and isn't verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/auth/login:
+    post:
+      operationId: login
+      tags: [Auth]
+      summary: Log in and get a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Wrong email or password (`code` is `invalid_credentials`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Email not verified yet (`code` is `email_not_verified`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [Auth]
+      summary: Send a password reset email
+      description: Always returns 200, so it doesn't reveal which emails have accounts. The link opens `/reset?token=...` on the web.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Sent if the account exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [Auth]
+      summary: Set a new password with the token from the email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "400":
+          description: Invalid input, or token invalid, used or expired (`code` is `invalid_token`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  # ---------------------------------------------------------------- Me
+  /api/me:
+    get:
+      operationId: getMe
+      tags: [Me]
+      summary: The signed-in user's profile and events
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/me/profile:
+    patch:
+      operationId: updateProfile
+      tags: [Me]
+      summary: Update my public profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfile"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # ---------------------------------------------------------------- Events
+  /api/events:
+    get:
+      operationId: listEvents
+      tags: [Events]
+      summary: Events a user can join
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events]
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EventInfo"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/events/{slug}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getEvent
+      tags: [Events]
+      summary: Event info and theme
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventInfo"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/events/{slug}/join:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    post:
+      operationId: joinEvent
+      tags: [Events]
+      summary: Join an event
+      description: Joining again returns the same membership. Mentors start with `verified = false` until an organizer verifies them.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinEventBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: My membership in the event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMe"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/events/{slug}/me:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getEventMe
+      tags: [Events]
+      summary: My membership and intake in this event
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMe"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      operationId: updateEventMe
+      tags: [Events]
+      summary: Update my intake, availability or looking flag
+      description: Partial update. `role` and `verified` can't be changed here.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventMeBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMe"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/events/{slug}/me/team:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getMyTeam
+      tags: [Events]
+      summary: The team I lead or belong to in this event
+      responses:
+        "200":
+          description: "`team` is null when I'm on no team"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [team]
+                properties:
+                  team:
+                    oneOf:
+                      - $ref: "#/components/schemas/MyTeam"
+                      - $ref: "#/components/schemas/NullValue"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/events/{slug}/people/{handle}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - name: handle
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/Handle"
+    get:
+      operationId: getPerson
+      tags: [Events]
+      summary: A person's full profile in this event
+      description: 404 if they aren't in the event or either person blocked the other.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonDetail"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/events/{slug}/teams:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    post:
+      operationId: createTeam
+      tags: [Events]
+      summary: Create my team in this event
+      description: |
+        The authenticated user becomes owner and the first member. A person may belong to only one
+        team per event. Further members request to join through POST /api/events/{slug}/requests
+        with teamId and toUserId set to the owner; the owner accepts through /api/requests/{id}/accept.
+        The agent may propose a team or draft a request; it does not enroll users without this approval.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamBody"
+      responses:
+        "201":
+          description: Team created with its owner as the first member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamDetail"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+  /api/events/{slug}/teams/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getTeam
+      tags: [Events]
+      summary: Team details with its members
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamDetail"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ---------------------------------------------------------------- Search
+  /api/search:
+    get:
+      operationId: search
+      tags: [Search]
+      summary: Search people in an event (partial match)
+      description: |
+        Case-insensitive partial match on name, handle and skills. Called as the user types.
+        Blocked people and the user themself are left out. Most relevant first: handle or name
+        starting with `q`, then contains `q`, then skill matches.
+      parameters:
+        - name: event
+          in: query
+          required: true
+          description: Event slug
+          schema:
+            $ref: "#/components/schemas/Slug"
+        - name: q
+          in: query
+          required: true
+          description: Search text (partial)
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          example: rea
+        - name: role
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/MemberRole"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        "200":
+          description: Matches (empty array when nothing matches)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  # ---------------------------------------------------------------- Chat
+  /api/events/{slug}/chat:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    post:
+      operationId: chat
+      tags: [Chat]
+      summary: Send a message to Hacky
+      description: |
+        The event comes from the URL. Send only the newest message; the server loads the history itself.
+        Default response is an AI SDK UI message stream (web). With `?format=json` the server waits
+        for the full answer and returns it as JSON (mobile).
+      parameters:
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [stream, json]
+            default: stream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: The assistant's answer
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: AI SDK UI message stream
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    $ref: "#/components/schemas/ChatMessage"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    get:
+      operationId: getChatHistory
+      tags: [Chat]
+      summary: My chat history with Hacky in this event
+      responses:
+        "200":
+          description: Oldest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [messages]
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChatMessage"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  # ---------------------------------------------------------------- Requests
+  /api/events/{slug}/requests:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: listRequests
+      tags: [Requests]
+      summary: My incoming and outgoing requests in this event
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requests]
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ConnectionRequest"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: sendRequest
+      tags: [Requests]
+      summary: Send a connection request
+      description: |
+        One request per direction, event and purpose (personal or a specific team).
+        For personal requests, if the other person already sent me a pending personal request,
+        accept the existing request and open one DM: the response is `accepted` with `conversationId`.
+        With teamId, this is a request to join that team and toUserId must be its owner. It stays
+        pending until the owner accepts; reverse requests never auto-accept team membership.
+        Return 409 if the requester is already on a team in this event.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendRequestBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "201":
+          description: Request sent (or accepted, if it was mutual)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/requests/{id}/accept:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: acceptRequest
+      tags: [Requests]
+      summary: Accept a request (recipient only)
+      description: |
+        Accepting twice returns the same conversation. If team is set, the recipient must still own
+        that team. Atomically add the requester to the team, accept the request and open the DM.
+        Return 409 without accepting if the team is full or the requester already belongs to another
+        team in this event. The caller must belong to the request event.
+      responses:
+        "200":
+          description: Accepted, with the DM's conversationId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestResult"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/requests/{id}/hide:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: hideRequest
+      tags: [Requests]
+      summary: '"Not now": hide an incoming request'
+      description: Only the recipient sees it hidden. The sender keeps seeing it as pending.
+      responses:
+        "200":
+          description: Hidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/blocks:
+    post:
+      operationId: blockUser
+      tags: [Requests]
+      summary: Block a person
+      description: Applies in every event and in both directions. Blocking twice is fine.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  $ref: "#/components/schemas/ObjectId"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # ---------------------------------------------------------------- Conversations
+  /api/events/{slug}/conversations:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: listConversations
+      tags: [Conversations]
+      summary: My conversations in this event, newest activity first
+      description: Sorted by lastMessageAt descending, then id descending. Empty conversations use their creation time until the first message.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [conversations]
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ConversationSummary"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/conversations/{id}/messages:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listMessages
+      tags: [Conversations]
+      summary: A page of messages (oldest first)
+      description: |
+        Messages are ordered by their server-generated ObjectId, ascending in each returned page.
+        Without cursors, return the newest page. `before` loads the preceding page; `after` returns
+        the next page after that id (not the newest page), so reconnects do not skip messages.
+        Cursors are exclusive. Use one, not both.
+      parameters:
+        - name: before
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ObjectId"
+        - name: after
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ObjectId"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 30
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessagePage"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: sendMessage
+      tags: [Conversations]
+      summary: Send a message
+      description: Retrying with the same `clientId` returns the same message. 403 if either person blocked the other.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    $ref: "#/components/schemas/Message"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/conversations/{id}/messages/{messageId}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/ObjectId"
+    delete:
+      operationId: deleteMessage
+      tags: [Conversations]
+      summary: Unsend my message for everyone
+      description: Only the sender, never a system message. 404 means it's already gone.
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/conversations/{id}/read:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: markRead
+      tags: [Conversations]
+      summary: Mark the conversation as read up to now
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [lastReadAt]
+                properties:
+                  lastReadAt:
+                    type: string
+                    format: date-time
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ---------------------------------------------------------------- Help
+  /api/events/{slug}/help-requests:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    post:
+      operationId: createHelpRequest
+      tags: [Help]
+      summary: Ask mentors for help
+      description: A hacker can have at most 3 open requests (409 `too_many_open`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HelpRequestDraft"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelpRequestResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/events/{slug}/help-queue:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getHelpQueue
+      tags: [Help]
+      summary: The open queue (verified mentors) and my own help requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelpQueue"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/help-requests/{id}/claim:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: claimHelpRequest
+      tags: [Help]
+      summary: Claim an open help request (verified mentors)
+      description: Succeeds only while the request is still open. Opens the mentor chat.
+      responses:
+        "200":
+          description: Claimed, with the mentor chat's conversationId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelpRequestResult"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/help-requests/{id}/resolve:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: resolveHelpRequest
+      tags: [Help]
+      summary: Mark a claimed request as resolved (its mentor)
+      description: Posts a system message in the mentor chat and updates its lastMessageAt in the same transaction.
+      responses:
+        "200":
+          description: Resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelpRequestResult"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  # ---------------------------------------------------------------- Demo
+  /api/demo/people:
+    get:
+      operationId: listDemoPeople
+      tags: [Demo]
+      summary: Seeded people you can sign in as
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [people]
+                properties:
+                  people:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PersonSummary"
+        "404":
+          description: DEMO_MODE is off
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /api/demo/sign-in:
+    post:
+      operationId: demoSignIn
+      tags: [Demo]
+      summary: Get a JWT for a seeded person
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  $ref: "#/components/schemas/ObjectId"
+      responses:
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResult"
+        "404":
+          description: DEMO_MODE is off, or not a seeded person
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      description: Event slug
+      schema:
+        $ref: "#/components/schemas/Slug"
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ObjectId"
+
+  responses:
+    BadRequest:
+      description: Invalid input (`invalid_input`, `invalid_id`, `invalid_json`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    Unauthorized:
+      description: Missing, invalid or expired token (`unauthorized`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    Forbidden:
+      description: Not allowed, e.g. not a member of the event (`forbidden`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    NotFound:
+      description: Not found, or hidden by a block (`not_found`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    Conflict:
+      description: Already exists or already changed, e.g. already requested or already claimed (`conflict`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    PayloadTooLarge:
+      description: JSON request body exceeds 100 KB (`payload_too_large`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    RateLimited:
+      description: Too many requests (`rate_limited`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+
+  schemas:
+    # ---------------------------------------------------------- primitives
+    NullValue:
+      type: object
+      nullable: true
+      enum: [null]
+      description: Only null; use with oneOf when a referenced schema is nullable.
+    ObjectId:
+      type: string
+      pattern: "^[a-f0-9]{24}$"
+      example: 6716a3f2c9e77b0012ab34cd
+    Slug:
+      type: string
+      pattern: "^[a-z0-9-]{2,40}$"
+      example: knighthacks-ix
+    Handle:
+      type: string
+      pattern: "^[a-z0-9_]{3,30}$"
+      example: nico_c
+    Tag:
+      type: string
+      minLength: 1
+      maxLength: 40
+      example: react
+    Tags:
+      type: array
+      maxItems: 30
+      items:
+        $ref: "#/components/schemas/Tag"
+    MemberRole:
+      type: string
+      enum: [hacker, mentor, sponsor, organizer]
+    Availability:
+      type: string
+      enum: [available, busy, offline]
+    Experience:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    HackGoal:
+      type: string
+      enum: [win, learn, ship]
+    Motivation:
+      type: string
+      enum: [build, learn, meet, career, compete, fun]
+    ConnectionStatus:
+      type: string
+      enum: [pending, accepted]
+    ConnectionSource:
+      type: string
+      enum: [agent, qr, profile]
+    ConversationKind:
+      type: string
+      enum: [dm, mentor, team]
+    MessageKind:
+      type: string
+      enum: [text, card, system]
+    HelpStatus:
+      type: string
+      enum: [open, claimed, resolved]
+
+    Ok:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          example: true
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: invalid_input
+            message:
+              type: string
+              example: Invalid input
+            details:
+              description: Field-level problems, when the input was invalid
+              type: array
+              items:
+                type: object
+                properties:
+                  path: {}
+                  message:
+                    type: string
+
+    # ---------------------------------------------------------- auth
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 72
+      description: At least 8 Unicode code points and at most 72 UTF-8 bytes. The server checks byte length before bcrypt.
+      x-maxBytes: 72
+      format: password
+    RegisterBody:
+      type: object
+      required: [name, handle, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+          example: Nicolas Cadena
+        handle:
+          $ref: "#/components/schemas/Handle"
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: nico@example.com
+        password:
+          $ref: "#/components/schemas/Password"
+    LoginBody:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: nico@example.com
+        password:
+          type: string
+          format: password
+          example: correct-horse-battery
+    LoginResult:
+      type: object
+      required: [token, expiresAt, me]
+      properties:
+        token:
+          type: string
+          description: JWT. Send it as `Authorization Bearer`.
+        expiresAt:
+          type: string
+          format: date-time
+        me:
+          $ref: "#/components/schemas/Me"
+    TokenBody:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 200
+    EmailBody:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    ResetPasswordBody:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 200
+        password:
+          $ref: "#/components/schemas/Password"
+
+    # ---------------------------------------------------------- people
+    HackyStyle:
+      type: object
+      description: Hacky avatar options. Unknown keys pass through. Max 2000 chars as JSON.
+      additionalProperties: true
+      properties:
+        look:
+          type: string
+          example: knit
+        color:
+          type: string
+          maxLength: 40
+        flair:
+          type: string
+          maxLength: 40
+        move:
+          type: string
+          maxLength: 40
+        avatar:
+          type: string
+          enum: [photo, hacky]
+    ProfileLinks:
+      type: object
+      properties:
+        github:
+          type: string
+          format: uri
+          pattern: "^https://"
+          maxLength: 300
+        linkedin:
+          type: string
+          format: uri
+          pattern: "^https://"
+          maxLength: 300
+        website:
+          type: string
+          format: uri
+          pattern: "^https://"
+          maxLength: 300
+    PublicProfile:
+      type: object
+      description: Never includes email.
+      required: [userId, handle, name, hackyStyle, photoUrl, bio, links, isDemo]
+      properties:
+        userId:
+          $ref: "#/components/schemas/ObjectId"
+        handle:
+          $ref: "#/components/schemas/Handle"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        hackyStyle:
+          $ref: "#/components/schemas/HackyStyle"
+        photoUrl:
+          type: string
+          nullable: true
+          description: An /assets/ path or an https URL
+          pattern: "^(/assets/|https://)"
+        bio:
+          type: string
+          nullable: true
+          maxLength: 500
+        links:
+          $ref: "#/components/schemas/ProfileLinks"
+        isDemo:
+          type: boolean
+    PersonSummary:
+      type: object
+      description: The compact person used in lists, cards, requests and chats.
+      required: [userId, handle, name, hackyStyle, photoUrl, role]
+      properties:
+        userId:
+          $ref: "#/components/schemas/ObjectId"
+        handle:
+          $ref: "#/components/schemas/Handle"
+        name:
+          type: string
+        hackyStyle:
+          $ref: "#/components/schemas/HackyStyle"
+        photoUrl:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/MemberRole"
+    UpdateProfileBody:
+      type: object
+      description: Send only the fields to change.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        bio:
+          type: string
+          nullable: true
+          maxLength: 500
+        hackyStyle:
+          $ref: "#/components/schemas/HackyStyle"
+        links:
+          $ref: "#/components/schemas/ProfileLinks"
+    Membership:
+      type: object
+      required: [role, verified, availability, looking]
+      properties:
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        verified:
+          type: boolean
+        availability:
+          $ref: "#/components/schemas/Availability"
+        looking:
+          type: boolean
+          description: Looking for a team
+    IntakeFields:
+      type: object
+      properties:
+        skills:
+          $ref: "#/components/schemas/Tags"
+        skillsWanted:
+          $ref: "#/components/schemas/Tags"
+        experience:
+          oneOf:
+            - $ref: "#/components/schemas/Experience"
+            - $ref: "#/components/schemas/NullValue"
+        wantsExperienced:
+          type: boolean
+        goal:
+          oneOf:
+            - $ref: "#/components/schemas/HackGoal"
+            - $ref: "#/components/schemas/NullValue"
+        track:
+          type: string
+          nullable: true
+          maxLength: 80
+        interests:
+          $ref: "#/components/schemas/Tags"
+        idea:
+          type: string
+          nullable: true
+          maxLength: 2000
+        motivations:
+          type: array
+          maxItems: 6
+          items:
+            $ref: "#/components/schemas/Motivation"
+    Intake:
+      description: What Hacky knows about me for matching. `summary` and `complete` are set by the server.
+      allOf:
+        - $ref: "#/components/schemas/IntakeFields"
+        - type: object
+          required: [skills, skillsWanted, experience, wantsExperienced, goal, track, interests, idea, motivations, summary, complete]
+          properties:
+            summary:
+              type: string
+              nullable: true
+              maxLength: 1000
+            complete:
+              type: boolean
+    Relation:
+      type: object
+      description: Where the viewer stands with this person.
+      required: [state, requestId, conversationId]
+      properties:
+        state:
+          type: string
+          enum: [none, outgoing, incoming, accepted]
+        requestId:
+          oneOf:
+            - $ref: "#/components/schemas/ObjectId"
+            - $ref: "#/components/schemas/NullValue"
+        conversationId:
+          oneOf:
+            - $ref: "#/components/schemas/ObjectId"
+            - $ref: "#/components/schemas/NullValue"
+    PersonDetail:
+      allOf:
+        - $ref: "#/components/schemas/PublicProfile"
+        - $ref: "#/components/schemas/Membership"
+        - type: object
+          required: [skills, skillsWanted, experience, goal, track, interests, idea, summary, motivations, relation]
+          properties:
+            skills:
+              $ref: "#/components/schemas/Tags"
+            skillsWanted:
+              $ref: "#/components/schemas/Tags"
+            experience:
+              oneOf:
+                - $ref: "#/components/schemas/Experience"
+                - $ref: "#/components/schemas/NullValue"
+            goal:
+              oneOf:
+                - $ref: "#/components/schemas/HackGoal"
+                - $ref: "#/components/schemas/NullValue"
+            track:
+              type: string
+              nullable: true
+            interests:
+              $ref: "#/components/schemas/Tags"
+            idea:
+              type: string
+              nullable: true
+            summary:
+              type: string
+              nullable: true
+            motivations:
+              type: array
+              items:
+                $ref: "#/components/schemas/Motivation"
+            relation:
+              $ref: "#/components/schemas/Relation"
+
+    # ---------------------------------------------------------- me / events
+    MyEvent:
+      type: object
+      required: [slug, name, role, verified]
+      properties:
+        slug:
+          $ref: "#/components/schemas/Slug"
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        verified:
+          type: boolean
+    Me:
+      type: object
+      required: [profile, events]
+      properties:
+        profile:
+          $ref: "#/components/schemas/PublicProfile"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyEvent"
+    EventTheme:
+      type: object
+      description: Colors and fonts the apps turn into their theme. Unknown keys pass through.
+      additionalProperties: true
+      properties:
+        brand:
+          type: string
+        brandContrast:
+          type: string
+        accent:
+          type: string
+        surface:
+          type: string
+        logoUrl:
+          type: string
+        displayFont:
+          type: string
+    EventInfo:
+      type: object
+      required: [slug, name, theme, tracks, startsAt, endsAt]
+      properties:
+        slug:
+          $ref: "#/components/schemas/Slug"
+        name:
+          type: string
+        theme:
+          $ref: "#/components/schemas/EventTheme"
+        tracks:
+          type: array
+          items:
+            type: string
+        startsAt:
+          type: string
+          format: date-time
+          nullable: true
+        endsAt:
+          type: string
+          format: date-time
+          nullable: true
+    JoinEventBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [hacker, mentor]
+          default: hacker
+    EventMe:
+      allOf:
+        - $ref: "#/components/schemas/Membership"
+        - type: object
+          required: [intake]
+          properties:
+            intake:
+              $ref: "#/components/schemas/Intake"
+    UpdateEventMeBody:
+      description: Partial update. Send only the fields to change.
+      allOf:
+        - $ref: "#/components/schemas/IntakeFields"
+        - type: object
+          properties:
+            availability:
+              $ref: "#/components/schemas/Availability"
+            looking:
+              type: boolean
+    CreateTeamBody:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        idea:
+          type: string
+          maxLength: 1000
+        track:
+          type: string
+        wantedSkills:
+          $ref: "#/components/schemas/Tags"
+        maxSize:
+          type: integer
+          minimum: 1
+          maximum: 8
+          default: 4
+          description: Includes the owner.
+    MyTeam:
+      type: object
+      required: [id, name, isOwner, size, maxSize]
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        name:
+          type: string
+        isOwner:
+          type: boolean
+        size:
+          type: integer
+          minimum: 1
+        maxSize:
+          type: integer
+          minimum: 1
+    TeamRef:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        name:
+          type: string
+    TeamSummary:
+      type: object
+      required: [id, name, idea, track, wantedSkills, size, maxSize, owner]
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        name:
+          type: string
+        idea:
+          type: string
+          nullable: true
+        track:
+          type: string
+          nullable: true
+        wantedSkills:
+          $ref: "#/components/schemas/Tags"
+        size:
+          type: integer
+          minimum: 1
+        maxSize:
+          type: integer
+          minimum: 1
+        owner:
+          $ref: "#/components/schemas/PersonSummary"
+    TeamDetail:
+      allOf:
+        - $ref: "#/components/schemas/TeamSummary"
+        - type: object
+          required: [members]
+          properties:
+            members:
+              description: Lead first. Blocked people are left out.
+              type: array
+              items:
+                $ref: "#/components/schemas/PersonSummary"
+
+    # ---------------------------------------------------------- search
+    SearchHit:
+      allOf:
+        - $ref: "#/components/schemas/PersonSummary"
+        - type: object
+          required: [skills, matchedSkills]
+          properties:
+            skills:
+              $ref: "#/components/schemas/Tags"
+            matchedSkills:
+              description: Skills that matched `q` (empty when the match was on name or handle)
+              allOf:
+                - $ref: "#/components/schemas/Tags"
+    SearchResults:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchHit"
+
+    # ---------------------------------------------------------- chat
+    ChatMessage:
+      type: object
+      description: An AI SDK UIMessage. `parts` holds text and tool results (cards).
+      required: [id, role, parts]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system]
+        parts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    ChatBody:
+      type: object
+      required: [message]
+      properties:
+        message:
+          $ref: "#/components/schemas/ChatMessage"
+
+    # ---------------------------------------------------------- requests
+    ConnectionRequest:
+      type: object
+      description: "`direction` and `person` are relative to the viewer. `hiddenAt` only appears on incoming requests."
+      required: [id, direction, status, intro, source, person, team, conversationId, createdAt, respondedAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        direction:
+          type: string
+          enum: [incoming, outgoing]
+        status:
+          $ref: "#/components/schemas/ConnectionStatus"
+        intro:
+          type: string
+        source:
+          $ref: "#/components/schemas/ConnectionSource"
+        person:
+          $ref: "#/components/schemas/PersonSummary"
+        team:
+          oneOf:
+            - $ref: "#/components/schemas/TeamRef"
+            - $ref: "#/components/schemas/NullValue"
+        conversationId:
+          oneOf:
+            - $ref: "#/components/schemas/ObjectId"
+            - $ref: "#/components/schemas/NullValue"
+        createdAt:
+          type: string
+          format: date-time
+        respondedAt:
+          type: string
+          format: date-time
+          nullable: true
+        hiddenAt:
+          type: string
+          format: date-time
+          nullable: true
+    SendRequestBody:
+      type: object
+      required: [toUserId, intro]
+      properties:
+        toUserId:
+          $ref: "#/components/schemas/ObjectId"
+        intro:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: No links allowed.
+        source:
+          allOf:
+            - $ref: "#/components/schemas/ConnectionSource"
+          default: agent
+        teamId:
+          description: Request to join this team; toUserId must be its owner. Membership requires owner acceptance.
+          allOf:
+            - $ref: "#/components/schemas/ObjectId"
+    RequestResult:
+      type: object
+      required: [request]
+      properties:
+        request:
+          $ref: "#/components/schemas/ConnectionRequest"
+
+    # ---------------------------------------------------------- conversations
+    Message:
+      type: object
+      required: [id, conversationId, senderId, clientId, body, kind, createdAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        conversationId:
+          $ref: "#/components/schemas/ObjectId"
+        senderId:
+          description: null for system messages
+          oneOf:
+            - $ref: "#/components/schemas/ObjectId"
+            - $ref: "#/components/schemas/NullValue"
+        clientId:
+          type: string
+          format: uuid
+          nullable: true
+        body:
+          type: string
+        kind:
+          $ref: "#/components/schemas/MessageKind"
+        createdAt:
+          type: string
+          format: date-time
+    SendMessageBody:
+      type: object
+      required: [clientId, body]
+      properties:
+        clientId:
+          type: string
+          format: uuid
+          description: Made by the client. Lets it swap its instant copy for the real message.
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+    MessagePage:
+      type: object
+      required: [messages, hasMore]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        hasMore:
+          type: boolean
+    ConversationSummary:
+      type: object
+      required: [id, kind, peer, team, helpRequest, lastMessage, lastMessageAt, unreadCount, peerLastReadAt, createdAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        kind:
+          $ref: "#/components/schemas/ConversationKind"
+        peer:
+          description: The other person (DM partner, or the mentor/hacker in a mentor chat). null in team chats.
+          oneOf:
+            - $ref: "#/components/schemas/PersonSummary"
+            - $ref: "#/components/schemas/NullValue"
+        team:
+          oneOf:
+            - $ref: "#/components/schemas/TeamRef"
+            - $ref: "#/components/schemas/NullValue"
+        helpRequest:
+          type: object
+          nullable: true
+          required: [id, title, status]
+          properties:
+            id:
+              $ref: "#/components/schemas/ObjectId"
+            title:
+              type: string
+            status:
+              $ref: "#/components/schemas/HelpStatus"
+        lastMessage:
+          oneOf:
+            - $ref: "#/components/schemas/Message"
+            - $ref: "#/components/schemas/NullValue"
+        lastMessageAt:
+          type: string
+          format: date-time
+          description: Last message activity; creation time while the conversation is empty.
+        unreadCount:
+          type: integer
+          minimum: 0
+        peerLastReadAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # ---------------------------------------------------------- help
+    HelpRequestDraft:
+      type: object
+      required: [title, details, skillsNeeded]
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+        details:
+          type: string
+          nullable: true
+          maxLength: 2000
+        skillsNeeded:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/Tag"
+    HelpRequest:
+      allOf:
+        - $ref: "#/components/schemas/HelpRequestDraft"
+        - type: object
+          required: [id, status, hacker, mentor, conversationId, createdAt, claimedAt, resolvedAt]
+          properties:
+            id:
+              $ref: "#/components/schemas/ObjectId"
+            status:
+              $ref: "#/components/schemas/HelpStatus"
+            hacker:
+              $ref: "#/components/schemas/PersonSummary"
+            mentor:
+              oneOf:
+                - $ref: "#/components/schemas/PersonSummary"
+                - $ref: "#/components/schemas/NullValue"
+            conversationId:
+              oneOf:
+                - $ref: "#/components/schemas/ObjectId"
+                - $ref: "#/components/schemas/NullValue"
+            createdAt:
+              type: string
+              format: date-time
+            claimedAt:
+              type: string
+              format: date-time
+              nullable: true
+            resolvedAt:
+              type: string
+              format: date-time
+              nullable: true
+    HelpFit:
+      type: object
+      description: How well the request fits the viewing mentor. `highlighted` = this mentor is in the top 3.
+      required: [score, matchedSkills, highlighted]
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        matchedSkills:
+          $ref: "#/components/schemas/Tags"
+        highlighted:
+          type: boolean
+    HelpQueue:
+      type: object
+      required: [open, mine]
+      properties:
+        open:
+          description: The shared queue sorted by fit (verified mentors only; empty for everyone else)
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/HelpRequest"
+              - type: object
+                required: [fit]
+                properties:
+                  fit:
+                    $ref: "#/components/schemas/HelpFit"
+        mine:
+          description: Requests I created, or claimed as a mentor
+          type: array
+          items:
+            $ref: "#/components/schemas/HelpRequest"
+    HelpRequestResult:
+      type: object
+      required: [helpRequest]
+      properties:
+        helpRequest:
+          $ref: "#/components/schemas/HelpRequest"
