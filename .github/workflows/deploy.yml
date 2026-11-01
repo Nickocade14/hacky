@@ -14,7 +14,8 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -25,7 +26,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # The droplet always checks out origin/main. If main moved on since this CI run,
+      # that newer commit isn't tested yet, so skip: its own CI run will deploy it.
+      - name: Check main is the tested commit
+        id: check
+        if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+          if [ "$main_sha" != "$TESTED_SHA" ]; then
+            echo "CI passed for $TESTED_SHA but main is now $main_sha. Skipping; the newer commit deploys after its CI."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy over SSH
+        if: steps.check.outputs.skip != 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}

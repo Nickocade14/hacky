@@ -3,7 +3,7 @@
 Every push to `main` that passes CI is deployed to the droplet by `.github/workflows/deploy.yml`.
 
 ```
-push to main → CI passes → Deploy workflow → SSH to droplet
+push to main → CI passes → Deploy workflow (skips if main already moved past that commit) → SSH to droplet
   → deploy/ssh-deploy.sh   (git fetch + reset to origin/main)
   → deploy/deploy.sh       (npm ci, build, pm2 reload, health check)
 ```
