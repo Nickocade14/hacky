@@ -417,7 +417,11 @@ class SubmitButton extends StatelessWidget {
                 ),
                 Text('Please wait…'),
               ]
-            : [Text(label), const Icon(Icons.arrow_forward, size: 17)],
+            : [
+                // Flexible so long labels wrap instead of overflowing.
+                Flexible(child: Text(label, textAlign: TextAlign.center)),
+                const Icon(Icons.arrow_forward, size: 17),
+              ],
       ),
     );
   }
