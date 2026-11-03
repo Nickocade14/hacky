@@ -497,8 +497,10 @@ class FormSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 18),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      // Wraps onto two lines on narrow screens or large text sizes.
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(
             prompt,
