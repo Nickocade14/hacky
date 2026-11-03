@@ -18,11 +18,11 @@ class RegisterBody {
   final String password;
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'handle': handle,
-        'email': email,
-        'password': password,
-      };
+    'name': name,
+    'handle': handle,
+    'email': email,
+    'password': password,
+  };
 }
 
 /// `LoginBody`: `POST /api/auth/login`.
@@ -77,10 +77,10 @@ class LoginResult {
   final Me me;
 
   factory LoginResult.fromJson(Map<String, dynamic> json) => LoginResult(
-        token: readString(json, 'token'),
-        expiresAt: readDateTime(json, 'expiresAt'),
-        me: Me.fromJson(readObject(json, 'me')),
-      );
+    token: readString(json, 'token'),
+    expiresAt: readDateTime(json, 'expiresAt'),
+    me: Me.fromJson(readObject(json, 'me')),
+  );
 }
 
 /// `Me`: the signed-in user, returned in `LoginResult` and by `GET /api/me`.
@@ -91,9 +91,9 @@ class Me {
   final List<MyEvent> events;
 
   factory Me.fromJson(Map<String, dynamic> json) => Me(
-        profile: PublicProfile.fromJson(readObject(json, 'profile')),
-        events: readList(json, 'events', MyEvent.fromJson),
-      );
+    profile: PublicProfile.fromJson(readObject(json, 'profile')),
+    events: readList(json, 'events', MyEvent.fromJson),
+  );
 }
 
 /// `PublicProfile`. Never includes email.
@@ -123,15 +123,15 @@ class PublicProfile {
   final bool isDemo;
 
   factory PublicProfile.fromJson(Map<String, dynamic> json) => PublicProfile(
-        userId: readString(json, 'userId'),
-        handle: readString(json, 'handle'),
-        name: readString(json, 'name'),
-        hackyStyle: readObject(json, 'hackyStyle'),
-        photoUrl: readNullableString(json, 'photoUrl'),
-        bio: readNullableString(json, 'bio'),
-        links: ProfileLinks.fromJson(readObject(json, 'links')),
-        isDemo: readBool(json, 'isDemo'),
-      );
+    userId: readString(json, 'userId'),
+    handle: readString(json, 'handle'),
+    name: readString(json, 'name'),
+    hackyStyle: readObject(json, 'hackyStyle'),
+    photoUrl: readNullableString(json, 'photoUrl'),
+    bio: readNullableString(json, 'bio'),
+    links: ProfileLinks.fromJson(readObject(json, 'links')),
+    isDemo: readBool(json, 'isDemo'),
+  );
 }
 
 /// `ProfileLinks`. Every link is optional.
@@ -143,10 +143,10 @@ class ProfileLinks {
   final String? website;
 
   factory ProfileLinks.fromJson(Map<String, dynamic> json) => ProfileLinks(
-        github: readNullableString(json, 'github'),
-        linkedin: readNullableString(json, 'linkedin'),
-        website: readNullableString(json, 'website'),
-      );
+    github: readNullableString(json, 'github'),
+    linkedin: readNullableString(json, 'linkedin'),
+    website: readNullableString(json, 'website'),
+  );
 }
 
 /// `MemberRole`.
@@ -167,9 +167,9 @@ class MyEvent {
   final bool verified;
 
   factory MyEvent.fromJson(Map<String, dynamic> json) => MyEvent(
-        slug: readString(json, 'slug'),
-        name: readString(json, 'name'),
-        role: readEnum(json, 'role', MemberRole.values),
-        verified: readBool(json, 'verified'),
-      );
+    slug: readString(json, 'slug'),
+    name: readString(json, 'name'),
+    role: readEnum(json, 'role', MemberRole.values),
+    verified: readBool(json, 'verified'),
+  );
 }

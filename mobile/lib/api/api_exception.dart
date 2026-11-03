@@ -61,7 +61,7 @@ class ApiErrorDetail {
   final String? message;
 
   factory ApiErrorDetail.fromJson(Map<String, dynamic> json) => ApiErrorDetail(
-        path: json['path'],
-        message: json['message'] is String ? json['message'] as String : null,
-      );
+    path: json['path'],
+    message: json['message'] is String ? json['message'] as String : null,
+  );
 }

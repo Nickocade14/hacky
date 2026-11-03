@@ -11,7 +11,7 @@ abstract interface class TokenStore {
 /// Never put the token in SharedPreferences: it's plain text on disk.
 class SecureTokenStore implements TokenStore {
   SecureTokenStore([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   static const _key = 'hacky_jwt';
 
