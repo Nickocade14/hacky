@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug builds call the dev server over plain http at 10.0.2.2:8787
+         (see lib/api/api_config.dart). Release builds keep Android's default,
+         which blocks cleartext traffic. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>
