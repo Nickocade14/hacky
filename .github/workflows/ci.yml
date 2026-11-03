@@ -52,5 +52,22 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
-  # Add jobs here when the folders exist:
-  #   web:    cd web && npm ci && npm run build
+  web:
+    name: Web (build, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      # build also runs api:types (from docs/openapi.yaml) and typecheck.
+      - run: npm run build
+      - run: npm test
