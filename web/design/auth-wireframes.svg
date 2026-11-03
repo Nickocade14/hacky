@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2320" height="1920" viewBox="0 0 2320 1920" role="img" aria-labelledby="title description">
+  <title id="title">Hacky authentication wireframes</title>
+  <desc id="description">Five editable desktop content wireframes: login, register, verify email, forgot password, and reset password. Blue annotations describe navigation and states. This is a design source for Figma import, not a published prototype.</desc>
+  <defs>
+    <style>
+      text{font-family:Lato,Arial,sans-serif;fill:#243247} .page-title{font-size:36px;font-weight:700} .intro{font-size:18px;fill:#606975} .frame-title{font-size:22px;font-weight:700} .route{font-size:15px;fill:#606975} .brand{font-size:25px;font-weight:700} .tag{font-size:12px;font-weight:700;letter-spacing:1.5px;fill:#606975} .hero{font-size:30px;font-weight:700} .body{font-size:15px;fill:#606975} .heading{font-size:29px;font-weight:700} .label{font-size:14px;font-weight:700} .placeholder{font-size:14px;fill:#606975} .button-text{font-size:15px;font-weight:700;fill:#fff} .link{font-size:14px;font-weight:700;fill:#0866d9} .small{font-size:12px;fill:#606975} .annotation{font-size:14px;fill:#0866d9} .step{font-size:13px;font-weight:700;fill:#0866d9} .field{fill:#fff;stroke:#d8dde5;stroke-width:1.5} .line{stroke:#d8dde5;stroke-width:1.5} .action{fill:#0866d9} .success{fill:#243247;font-size:18px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="2320" height="1920" fill="#eef1f5"/>
+  <text x="40" y="56" class="page-title">Hacky / auth wireframes</text>
+  <text x="40" y="90" class="intro">Week 1 catch-up · Editable design source · Lato + the original Hacky palette</text>
+  <text x="40" y="120" class="intro">Import into Figma, create frames, then connect the blue actions in Prototype mode.</text>
+  <text x="2280" y="55" text-anchor="end" class="tag">DESKTOP CONTENT LAYOUTS</text>
+
+  <g id="login" transform="translate(40 165)">
+    <text y="0" class="frame-title">01 / Login</text><text x="720" y="0" text-anchor="end" class="route">/login · first screen</text>
+    <rect y="22" width="720" height="740" rx="16" fill="#fff" stroke="#d8dde5"/>
+    <path d="M16 22H704Q720 22 720 38V66H0V38Q0 22 16 22Z" fill="#f5f6f8"/>
+    <circle cx="20" cy="44" r="4" fill="#d8dde5"/><circle cx="34" cy="44" r="4" fill="#d8dde5"/><circle cx="48" cy="44" r="4" fill="#d8dde5"/>
+    <text x="360" y="49" text-anchor="middle" class="small">Hacky · Find your people</text>
+    <rect y="66" width="245" height="696" fill="#f5f6f8"/>
+    <text x="28" y="119" class="brand">hacky.</text><text x="28" y="211" class="tag">KNIGHT HACKS IX</text>
+    <text x="28" y="260" class="hero">Good ideas.</text><text x="28" y="298" class="hero">Great people.</text>
+    <text x="28" y="338" class="body">Find your next teammate,</text><text x="28" y="361" class="body">mentor, or connection.</text>
+    <circle cx="122" cy="486" r="71" fill="#e9edf3" stroke="#d8dde5" stroke-dasharray="5 5"/>
+    <text x="122" y="481" text-anchor="middle" class="small">Globe</text><text x="122" y="501" text-anchor="middle" class="small">illustration</text>
+    <text x="28" y="716" class="small">One event. Your people.</text>
+    <text x="285" y="159" class="heading">Welcome back.</text><text x="285" y="187" class="body">Your people are waiting.</text>
+    <text x="285" y="239" class="label">Email</text><rect x="285" y="251" width="395" height="49" rx="10" class="field"/><text x="300" y="282" class="placeholder">you@example.com</text>
+    <text x="285" y="337" class="label">Password</text><rect x="285" y="349" width="395" height="49" rx="10" class="field"/><text x="300" y="380" class="placeholder">••••••••••••</text><text x="630" y="380" class="link">Show</text>
+    <text x="680" y="426" text-anchor="end" class="link">Forgot password? → 04</text>
+    <rect x="285" y="459" width="395" height="50" rx="10" class="action"/><text x="482" y="490" text-anchor="middle" class="button-text">Log in</text>
+    <text x="285" y="552" class="body">New here?</text><text x="359" y="552" class="link">Create an account → 02</text>
+    <line x1="285" y1="595" x2="680" y2="595" class="line"/>
+    <text x="285" y="624" class="annotation">Success → signed-in app</text><text x="285" y="649" class="annotation">Unverified → verification instructions</text>
+    <text x="285" y="688" class="small">State variants: submitting, API error, unverified.</text><text x="285" y="709" class="small">Show the server's error message near the form.</text>
+  </g>
+
+  <g id="register" transform="translate(800 165)">
+    <text y="0" class="frame-title">02 / Register</text><text x="720" y="0" text-anchor="end" class="route">/register</text>
+    <rect y="22" width="720" height="740" rx="16" fill="#fff" stroke="#d8dde5"/>
+    <path d="M16 22H704Q720 22 720 38V66H0V38Q0 22 16 22Z" fill="#f5f6f8"/>
+    <circle cx="20" cy="44" r="4" fill="#d8dde5"/><circle cx="34" cy="44" r="4" fill="#d8dde5"/><circle cx="48" cy="44" r="4" fill="#d8dde5"/>
+    <text x="360" y="49" text-anchor="middle" class="small">Hacky · Create your account</text>
+    <rect y="66" width="245" height="696" fill="#f5f6f8"/>
+    <text x="28" y="119" class="brand">hacky.</text><text x="28" y="211" class="tag">START WITH HELLO</text>
+    <text x="28" y="260" class="hero">Your next</text><text x="28" y="298" class="hero">team starts here.</text>
+    <text x="28" y="338" class="body">Tell us who you are.</text><text x="28" y="361" class="body">We'll help you find your fit.</text>
+    <text x="28" y="446" class="step">1  Create your account</text><text x="28" y="483" class="body">2  Verify your email</text><text x="28" y="520" class="body">3  Log in and get started</text>
+    <text x="28" y="716" class="small">One event. Your people.</text>
+    <text x="285" y="130" class="heading">Meet your people.</text><text x="285" y="158" class="body">Create your Hacky account.</text>
+    <text x="285" y="199" class="label">Name</text><rect x="285" y="211" width="395" height="44" rx="10" class="field"/><text x="300" y="239" class="placeholder">Your name</text>
+    <text x="285" y="286" class="label">Handle</text><rect x="285" y="298" width="395" height="44" rx="10" class="field"/><text x="300" y="326" class="placeholder">your_handle</text>
+    <text x="285" y="363" class="small">Lowercase letters, numbers, and underscores.</text>
+    <text x="285" y="399" class="label">Email</text><rect x="285" y="411" width="395" height="44" rx="10" class="field"/><text x="300" y="439" class="placeholder">you@example.com</text>
+    <text x="285" y="486" class="label">Password</text><rect x="285" y="498" width="395" height="44" rx="10" class="field"/><text x="300" y="526" class="placeholder">Create a password</text><text x="630" y="526" class="link">Show</text>
+    <text x="285" y="564" class="small">At least 8 characters. Maximum 72 UTF-8 bytes.</text>
+    <rect x="285" y="589" width="395" height="50" rx="10" class="action"/><text x="482" y="620" text-anchor="middle" class="button-text">Create account</text>
+    <text x="285" y="676" class="body">Already here?</text><text x="379" y="676" class="link">Log in → 01</text>
+    <text x="285" y="720" class="annotation">Success → check your inbox / 03</text>
+  </g>
+
+  <g id="verify-email" transform="translate(1560 165)">
+    <text y="0" class="frame-title">03 / Verify email</text><text x="720" y="0" text-anchor="end" class="route">/verify?token=…</text>
+    <rect y="22" width="720" height="740" rx="16" fill="#fff" stroke="#d8dde5"/>
+    <path d="M16 22H704Q720 22 720 38V66H0V38Q0 22 16 22Z" fill="#f5f6f8"/>
+    <circle cx="20" cy="44" r="4" fill="#d8dde5"/><circle cx="34" cy="44" r="4" fill="#d8dde5"/><circle cx="48" cy="44" r="4" fill="#d8dde5"/>
+    <text x="360" y="49" text-anchor="middle" class="small">Hacky · Verify your email</text>
+    <text x="40" y="119" class="brand">hacky.</text>
+    <rect x="155" y="165" width="410" height="505" rx="16" fill="#f5f6f8" stroke="#d8dde5"/>
+    <circle cx="360" cy="230" r="28" fill="#e9edf3"/><path d="M344 220h32v22h-32zm0 0 16 12 16-12" fill="none" stroke="#0866d9" stroke-width="2"/>
+    <text x="360" y="299" text-anchor="middle" class="heading">One more step.</text>
+    <text x="360" y="334" text-anchor="middle" class="body">Confirm your email to finish setting up.</text>
+    <rect x="190" y="365" width="340" height="49" rx="10" class="action"/><text x="360" y="396" text-anchor="middle" class="button-text">Verify email</text>
+    <line x1="190" y1="445" x2="530" y2="445" class="line"/>
+    <text x="190" y="477" class="label">Need a new verification link?</text><text x="190" y="508" class="label">Email</text>
+    <rect x="190" y="520" width="340" height="44" rx="10" class="field"/><text x="205" y="548" class="placeholder">you@example.com</text>
+    <rect x="190" y="580" width="340" height="44" rx="10" fill="#fff" stroke="#d8dde5"/><text x="360" y="608" text-anchor="middle" class="link">Resend verification email</text>
+    <text x="360" y="706" text-anchor="middle" class="link">Back to log in → 01</text>
+    <text x="40" y="800" class="annotation">Variants: inbox instructions · link ready · verifying · verified · invalid link</text>
+    <text x="40" y="824" class="small">Verified → Log in. No token → resend form. Invalid token → request a new link.</text>
+  </g>
+
+  <g id="forgot-password" transform="translate(40 1060)">
+    <text y="0" class="frame-title">04 / Forgot password</text><text x="720" y="0" text-anchor="end" class="route">/forgot-password</text>
+    <rect y="22" width="720" height="740" rx="16" fill="#fff" stroke="#d8dde5"/>
+    <path d="M16 22H704Q720 22 720 38V66H0V38Q0 22 16 22Z" fill="#f5f6f8"/>
+    <circle cx="20" cy="44" r="4" fill="#d8dde5"/><circle cx="34" cy="44" r="4" fill="#d8dde5"/><circle cx="48" cy="44" r="4" fill="#d8dde5"/>
+    <text x="360" y="49" text-anchor="middle" class="small">Hacky · Password recovery</text>
+    <rect y="66" width="245" height="696" fill="#f5f6f8"/>
+    <text x="28" y="119" class="brand">hacky.</text><text x="28" y="211" class="tag">BACK IN NO TIME</text>
+    <text x="28" y="260" class="hero">Fresh start.</text><text x="28" y="298" class="hero">Same people.</text>
+    <text x="28" y="338" class="body">We'll send you a link</text><text x="28" y="361" class="body">to choose a new password.</text>
+    <text x="28" y="716" class="small">One event. Your people.</text>
+    <text x="285" y="190" class="heading">Forgot your password?</text><text x="285" y="226" class="body">It happens. Enter your account email.</text>
+    <text x="285" y="282" class="label">Email</text><rect x="285" y="294" width="395" height="49" rx="10" class="field"/><text x="300" y="325" class="placeholder">you@example.com</text>
+    <rect x="285" y="374" width="395" height="50" rx="10" class="action"/><text x="482" y="405" text-anchor="middle" class="button-text">Send reset link</text>
+    <text x="285" y="466" class="link">← Back to log in / 01</text>
+    <rect x="285" y="520" width="395" height="118" rx="12" fill="#f5f6f8" stroke="#d8dde5"/>
+    <text x="305" y="550" class="success">Check your inbox</text><text x="305" y="580" class="body">If an account exists for that email,</text><text x="305" y="603" class="body">you'll receive a password reset link.</text>
+    <text x="285" y="684" class="annotation">Email link → reset password / 05</text><text x="285" y="709" class="small">Same confirmation for known and unknown emails.</text>
+  </g>
+
+  <g id="reset-password" transform="translate(800 1060)">
+    <text y="0" class="frame-title">05 / Reset password</text><text x="720" y="0" text-anchor="end" class="route">/reset?token=…</text>
+    <rect y="22" width="720" height="740" rx="16" fill="#fff" stroke="#d8dde5"/>
+    <path d="M16 22H704Q720 22 720 38V66H0V38Q0 22 16 22Z" fill="#f5f6f8"/>
+    <circle cx="20" cy="44" r="4" fill="#d8dde5"/><circle cx="34" cy="44" r="4" fill="#d8dde5"/><circle cx="48" cy="44" r="4" fill="#d8dde5"/>
+    <text x="360" y="49" text-anchor="middle" class="small">Hacky · Choose a new password</text>
+    <rect y="66" width="245" height="696" fill="#f5f6f8"/>
+    <text x="28" y="119" class="brand">hacky.</text><text x="28" y="211" class="tag">LET'S GET YOU BACK</text>
+    <text x="28" y="260" class="hero">A new password.</text><text x="28" y="298" class="hero">A new start.</text>
+    <text x="28" y="338" class="body">Your teammates and</text><text x="28" y="361" class="body">mentors are still here.</text>
+    <text x="28" y="716" class="small">One event. Your people.</text>
+    <text x="285" y="190" class="heading">Choose a new password.</text><text x="285" y="226" class="body">Make it something only you know.</text>
+    <text x="285" y="282" class="label">New password</text><rect x="285" y="294" width="395" height="49" rx="10" class="field"/><text x="300" y="325" class="placeholder">Your new password</text><text x="630" y="325" class="link">Show</text>
+    <text x="285" y="368" class="small">At least 8 characters. Maximum 72 UTF-8 bytes.</text>
+    <text x="285" y="410" class="label">Confirm password</text><rect x="285" y="422" width="395" height="49" rx="10" class="field"/><text x="300" y="453" class="placeholder">Repeat your new password</text>
+    <rect x="285" y="502" width="395" height="50" rx="10" class="action"/><text x="482" y="533" text-anchor="middle" class="button-text">Reset password</text>
+    <text x="285" y="598" class="annotation">Success → password changed → Log in / 01</text><text x="285" y="628" class="annotation">Missing or invalid link → request a new link / 04</text>
+    <text x="285" y="684" class="small">Confirm password is a client-only check.</text><text x="285" y="709" class="small">The token comes from the email link, never manual entry.</text>
+  </g>
+
+  <g id="prototype-notes" transform="translate(1560 1060)">
+    <text y="0" class="frame-title">Prototype connections</text>
+    <rect y="22" width="720" height="740" rx="16" fill="#f5f6f8" stroke="#d8dde5" stroke-dasharray="8 6"/>
+    <text x="36" y="78" class="tag">SIGN-UP FLOW</text>
+    <text x="36" y="116" class="heading">01 Login → 02 Register</text>
+    <text x="36" y="150" class="body">Create account → 03 Check inbox</text>
+    <text x="36" y="181" class="body">Open email link → 03 Verify email → 01 Login</text>
+    <line x1="36" y1="217" x2="684" y2="217" class="line"/>
+    <text x="36" y="256" class="tag">RECOVERY FLOW</text>
+    <text x="36" y="294" class="heading">01 Login → 04 Forgot password</text>
+    <text x="36" y="328" class="body">Send reset link → Check inbox confirmation</text>
+    <text x="36" y="359" class="body">Open email link → 05 Reset password → 01 Login</text>
+    <line x1="36" y1="395" x2="684" y2="395" class="line"/>
+    <text x="36" y="434" class="tag">BEFORE CALLING THE FIGMA TASK COMPLETE</text>
+    <text x="36" y="472" class="body">1. Import the SVG into your team's Figma file.</text>
+    <text x="36" y="507" class="body">2. Place each screen group in its own frame.</text>
+    <text x="36" y="542" class="body">3. Add inbox, success, error, and loading variants.</text>
+    <text x="36" y="577" class="body">4. Connect buttons and links in Prototype mode.</text>
+    <text x="36" y="612" class="body">5. Share the prototype with the team for review.</text>
+    <text x="36" y="679" class="annotation">This SVG is the editable source, not a live Figma project.</text>
+    <text x="36" y="710" class="small">API details live in docs/openapi.yaml. Do not use these annotations as a contract.</text>
+  </g>
+</svg>
