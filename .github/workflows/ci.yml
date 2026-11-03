@@ -32,6 +32,25 @@ jobs:
       - run: npm run build
       - run: npm test
 
+  mobile:
+    name: Mobile (analyze, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      # Flutter 3.47.7 ships Dart 3.13.5, which mobile/pubspec.yaml requires (^3.13.5).
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
   # Add jobs here when the folders exist:
   #   web:    cd web && npm ci && npm run build
-  #   mobile: subosito/flutter-action, then flutter analyze && flutter test
