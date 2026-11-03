@@ -1,0 +1,26 @@
+# Who gets asked to review each folder. The last matching line wins.
+# Every owner listed here needs Write access to the repo.
+
+# Default: Nicolas (PM)
+*                       @Nickocade14
+
+# Backend · Auth (Express app, JWT, email): Ethan
+/server/                @eethie
+
+# Backend · Data (models, seed): Mohammed
+/server/src/models/     @mohacker545
+/server/src/**/seed*    @mohacker545
+
+# Web: Ethan
+/web/                   @eethie
+
+# API contract and docs: whole team
+/docs/                  @Nickocade14 @eethie @mohacker545
+
+# Mobile, deploy, CI and project config: Nicolas
+/mobile/                @Nickocade14
+/deploy/                @Nickocade14
+/.github/               @Nickocade14
+/.claude/               @Nickocade14
+/AGENTS.md              @Nickocade14
+/CLAUDE.md              @Nickocade14
