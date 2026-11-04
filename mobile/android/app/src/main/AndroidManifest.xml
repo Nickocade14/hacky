@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release builds need this to call the API; debug builds get it from src/debug. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Hacky"
         android:name="${applicationName}"
