@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'api_exception.dart';
 import 'models/auth.dart';
+import 'models/chat.dart';
 import 'models/conversations.dart';
 import 'models/events.dart';
 import 'models/json_read.dart';
@@ -297,6 +298,27 @@ class ApiClient {
   Future<DateTime> markRead(String conversationId) async => _parse(
     await _send('POST', '/api/conversations/${_seg(conversationId)}/read'),
     (json) => readDateTime(json, 'lastReadAt'),
+  );
+
+  // ---------------------------------------------------------------- chat
+
+  /// Sends my newest message to Hacky and waits for the whole answer
+  /// (`?format=json`; the streaming format is for the web).
+  Future<ChatMessage> sendChat(String slug, ChatBody body) async => _parse(
+    await _send(
+      'POST',
+      '/api/events/${_seg(slug)}/chat',
+      body: body.toJson(),
+      query: const {'format': 'json'},
+    ),
+    (json) => ChatMessage.fromJson(readObject(json, 'message')),
+  );
+
+  /// My chat history with Hacky in this event, oldest first.
+  Future<List<ChatMessage>> getChatHistory(String slug) async => _parseList(
+    await _send('GET', '/api/events/${_seg(slug)}/chat'),
+    'messages',
+    ChatMessage.fromJson,
   );
 
   void close() => _http.close();
