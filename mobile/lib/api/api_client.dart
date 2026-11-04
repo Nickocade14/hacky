@@ -8,6 +8,7 @@ import 'api_exception.dart';
 import 'models/auth.dart';
 import 'models/events.dart';
 import 'models/json_read.dart';
+import 'models/me.dart';
 import 'token_store.dart';
 
 /// The one place the app talks to the Hacky API (docs/openapi.yaml).
@@ -82,6 +83,18 @@ class ApiClient {
   /// The signed-in user's profile and events.
   Future<Me> getMe() async =>
       _parse(await _send('GET', '/api/me'), Me.fromJson);
+
+  /// Updates my public profile and returns it. [body] must set at least one
+  /// field (the contract's `minProperties: 1`).
+  Future<PublicProfile> updateProfile(UpdateProfileBody body) async {
+    if (body.isEmpty) {
+      throw ArgumentError.value(body, 'body', 'Set at least one field');
+    }
+    return _parse(
+      await _send('PATCH', '/api/me/profile', body: body.toJson()),
+      PublicProfile.fromJson,
+    );
+  }
 
   // ---------------------------------------------------------------- events
 

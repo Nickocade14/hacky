@@ -1,5 +1,28 @@
 // Response bodies shaped like docs/openapi.yaml, for the client tests.
 
+const publicProfileJson = {
+  'userId': '6716a3f2c9e77b0012ab34cd',
+  'handle': 'nico_c',
+  'name': 'Nicolas Cadena',
+  'hackyStyle': {'look': 'knit', 'avatar': 'hacky'},
+  'photoUrl': null,
+  'bio': 'Flutter and coffee.',
+  'links': {'github': 'https://github.com/Nickocade14'},
+  'isDemo': false,
+};
+
+const meJson = {
+  'profile': publicProfileJson,
+  'events': [
+    {
+      'slug': 'knighthacks-ix',
+      'name': 'Knight Hacks IX',
+      'role': 'hacker',
+      'verified': true,
+    },
+  ],
+};
+
 const eventInfoJson = {
   'slug': 'knighthacks-ix',
   'name': 'Knight Hacks IX',
