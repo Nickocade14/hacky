@@ -3,6 +3,7 @@ import '../models/auth.dart';
 import '../models/events.dart';
 import '../models/me.dart';
 import '../models/people.dart';
+import '../models/search.dart';
 import '../models/teams.dart';
 import 'fake_world.dart';
 
@@ -194,6 +195,54 @@ mixin FakeEndpoints {
     final team = world.teams[teamId];
     if (team == null) throw fakeError(404, 'not_found', 'No such team.');
     return world.teamDetail(team);
+  }
+
+  // ---------------------------------------------------------------- search
+
+  Future<SearchResults> search({
+    required String event,
+    required String q,
+    MemberRole? role,
+    int? limit,
+  }) async {
+    if (q.isEmpty || q.length > 100) {
+      throw ArgumentError.value(q, 'q', 'Must be 1 to 100 characters');
+    }
+    if (limit != null && (limit < 1 || limit > 50)) {
+      throw RangeError.range(limit, 1, 50, 'limit');
+    }
+    final world = await fakeWorld();
+    fakeMembership(world, event);
+    final needle = q.toLowerCase();
+
+    // Same order as the contract: handle or name starting with q, then
+    // containing q, then skill matches. Ties keep the seed order.
+    final ranked = <(int, SearchHit)>[];
+    for (final person in world.people.values) {
+      final m = person.membership;
+      if (m == null || (role != null && m.role != role)) continue;
+      final handle = person.handle.toLowerCase();
+      final name = person.name.toLowerCase();
+      final matched = [
+        for (final skill in m.intake.skills)
+          if (skill.toLowerCase().contains(needle)) skill,
+      ];
+      final int rank;
+      if (handle.startsWith(needle) || name.startsWith(needle)) {
+        rank = 0;
+      } else if (handle.contains(needle) || name.contains(needle)) {
+        rank = 1;
+      } else if (matched.isNotEmpty) {
+        rank = 2;
+      } else {
+        continue;
+      }
+      ranked.add((rank, person.searchHit(rank == 2 ? matched : const [])));
+    }
+    final sorted = [...ranked]..sort((a, b) => a.$1.compareTo(b.$1));
+    return SearchResults(
+      results: [for (final (_, hit) in sorted.take(limit ?? 20)) hit],
+    );
   }
 
   /// My membership in [slug]; 403 when I'm not a member, like the server.
