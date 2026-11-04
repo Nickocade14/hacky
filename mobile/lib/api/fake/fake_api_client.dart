@@ -1,7 +1,7 @@
-import '../api/api_client.dart';
-import '../api/api_exception.dart';
-import '../api/models/auth.dart';
-import '../api/token_store.dart';
+import '../api_client.dart';
+import '../api_exception.dart';
+import '../models/auth.dart';
+import '../token_store.dart';
 
 /// An in-memory stand-in for [ApiClient] while the server's auth routes don't
 /// exist. Turn it on with `--dart-define=FAKE_API=true`.

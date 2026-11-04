@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/auth/error_text.dart';
-import 'package:mobile/dev/fake_api_client.dart';
+import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/routes.dart';
 import 'package:mobile/screens/forgot_password_screen.dart';
 import 'package:mobile/widgets/auth_widgets.dart';

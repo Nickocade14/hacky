@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/app.dart';
-import 'package:mobile/dev/fake_api_client.dart';
+import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/theme.dart';
 
 import 'support/screen_harness.dart';

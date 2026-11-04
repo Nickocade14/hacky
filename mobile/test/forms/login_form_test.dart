@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/api/models/auth.dart';
 import 'package:mobile/auth/error_text.dart';
-import 'package:mobile/dev/fake_api_client.dart';
+import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/forms/login_form.dart';
 import 'package:mobile/routes.dart';
 
