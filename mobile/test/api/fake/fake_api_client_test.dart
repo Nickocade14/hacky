@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/api/api_exception.dart';
 import 'package:mobile/api/models/auth.dart';
+import 'package:mobile/api/models/me.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
 
 import '../../support/screen_harness.dart';
@@ -9,6 +10,30 @@ Matcher apiError(String code) =>
     isA<ApiException>().having((e) => e.code, 'code', code);
 
 void main() {
+  test('serves the other endpoints and shows profile edits in me', () async {
+    final (:api, store: _) = fakeApi();
+    await api.login(
+      const LoginBody(
+        email: FakeApiClient.demoEmail,
+        password: FakeApiClient.testPassword,
+      ),
+    );
+
+    final event = await api.getEvent('knighthacks-ix');
+    expect(event.slug, 'knighthacks-ix');
+
+    await api.updateProfile(const UpdateProfileBody(name: 'Renamed Hacker'));
+    expect((await api.getMe()).profile.name, 'Renamed Hacker');
+  });
+
+  test('the other endpoints need a login', () async {
+    final (:api, store: _) = fakeApi();
+    await expectLater(
+      api.getEvent('knighthacks-ix'),
+      throwsA(apiError('unauthorized')),
+    );
+  });
+
   test('register, verify by resending, log in, load me, log out', () async {
     final (:api, :store) = fakeApi();
     const email = 'ethan@example.com';

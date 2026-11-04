@@ -2,9 +2,12 @@ import '../api_client.dart';
 import '../api_exception.dart';
 import '../models/auth.dart';
 import '../token_store.dart';
+import 'fake_endpoints.dart';
 
-/// An in-memory stand-in for [ApiClient] while the server's auth routes don't
+/// An in-memory stand-in for [ApiClient] while the server's routes don't
 /// exist. Turn it on with `--dart-define=FAKE_API=true`.
+///
+/// Auth lives here; every other endpoint comes from [FakeEndpoints].
 ///
 /// Test accounts (password for all: `password123`):
 /// - `demo@hacky.dev`: verified, logs in.
@@ -15,7 +18,7 @@ import '../token_store.dart';
 ///
 /// Accounts you register live until the app restarts. They start unverified;
 /// resend the verification email to verify them.
-class FakeApiClient implements ApiClient {
+class FakeApiClient with FakeEndpoints implements ApiClient {
   FakeApiClient({
     required this._tokenStore,
     this.delay = const Duration(milliseconds: 700),
@@ -116,7 +119,7 @@ class FakeApiClient implements ApiClient {
       await _tokenStore.clear();
       throw _error(401, 'unauthorized', 'Your session expired. Log in again.');
     }
-    return account.me;
+    return fakeApplyChanges(account.me);
   }
 
   @override
