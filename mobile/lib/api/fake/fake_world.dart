@@ -9,6 +9,7 @@ import '../models/events.dart';
 import '../models/people.dart';
 import '../models/requests.dart';
 import '../models/search.dart';
+import '../models/teams.dart';
 
 /// The one fake event. Same slug and name as the auth fake's `MyEvent`.
 const fakeEventSlug = 'knighthacks-ix';
@@ -305,6 +306,18 @@ class FakeWorld {
       conversationId: null,
     );
   }
+
+  TeamDetail teamDetail(FakeTeam team) => TeamDetail(
+    id: team.id,
+    name: team.name,
+    idea: team.idea,
+    track: team.track,
+    wantedSkills: team.wantedSkills,
+    size: team.memberIds.length,
+    maxSize: team.maxSize,
+    owner: byId(team.ownerId)!.summary,
+    members: [for (final id in team.memberIds) byId(id)!.summary],
+  );
 
   FakeTeam? teamOf(String userId) =>
       teams.values.where((t) => t.memberIds.contains(userId)).firstOrNull;

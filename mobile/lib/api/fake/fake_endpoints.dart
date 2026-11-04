@@ -3,6 +3,7 @@ import '../models/auth.dart';
 import '../models/events.dart';
 import '../models/me.dart';
 import '../models/people.dart';
+import '../models/teams.dart';
 import 'fake_world.dart';
 
 /// In-memory versions of the non-auth [ApiClient] endpoints, with realistic
@@ -142,6 +143,57 @@ mixin FakeEndpoints {
       throw fakeError(404, 'not_found', 'No one called @$handle here.');
     }
     return person.detail(world.relationTo(person.userId));
+  }
+
+  // ---------------------------------------------------------------- teams
+
+  Future<MyTeam?> getMyTeam(String slug) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    final team = world.teamOf(world.me.userId);
+    if (team == null) return null;
+    return MyTeam(
+      id: team.id,
+      name: team.name,
+      isOwner: team.ownerId == world.me.userId,
+      size: team.memberIds.length,
+      maxSize: team.maxSize,
+    );
+  }
+
+  Future<TeamDetail> createTeam(String slug, CreateTeamBody body) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    if (body.name.trim().isEmpty || body.name.length > 80) {
+      throw fakeInvalid('name', 'Must be 1 to 80 characters');
+    }
+    final maxSize = body.maxSize ?? 4;
+    if (maxSize < 1 || maxSize > 8) {
+      throw fakeInvalid('maxSize', 'Must be 1 to 8');
+    }
+    if (world.teamOf(world.me.userId) != null) {
+      throw fakeError(409, 'conflict', 'You are already on a team.');
+    }
+    final team = FakeTeam(
+      id: world.newId(),
+      name: body.name,
+      idea: body.idea,
+      track: body.track,
+      wantedSkills: body.wantedSkills ?? const [],
+      maxSize: maxSize,
+      ownerId: world.me.userId,
+      memberIds: [world.me.userId],
+    );
+    world.teams[team.id] = team;
+    return world.teamDetail(team);
+  }
+
+  Future<TeamDetail> getTeam(String slug, String teamId) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    final team = world.teams[teamId];
+    if (team == null) throw fakeError(404, 'not_found', 'No such team.');
+    return world.teamDetail(team);
   }
 
   /// My membership in [slug]; 403 when I'm not a member, like the server.
