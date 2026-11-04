@@ -56,6 +56,28 @@ const personDetailJson = {
   },
 };
 
+const teamDetailJson = {
+  'id': '6716a3f2c9e77b0012ab0201',
+  'name': 'Rash Decisions',
+  'idea': 'Skin rash triage from a photo',
+  'track': null,
+  'wantedSkills': ['flutter'],
+  'size': 2,
+  'maxSize': 4,
+  'owner': personSummaryJson,
+  'members': [
+    personSummaryJson,
+    {
+      'userId': '6716a3f2c9e77b0012ab0002',
+      'handle': 'leo_builds',
+      'name': 'Leo Nguyen',
+      'hackyStyle': <String, dynamic>{},
+      'photoUrl': null,
+      'role': 'hacker',
+    },
+  ],
+};
+
 const eventInfoJson = {
   'slug': 'knighthacks-ix',
   'name': 'Knight Hacks IX',

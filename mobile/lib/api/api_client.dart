@@ -10,6 +10,7 @@ import 'models/events.dart';
 import 'models/json_read.dart';
 import 'models/me.dart';
 import 'models/people.dart';
+import 'models/teams.dart';
 import 'token_store.dart';
 
 /// The one place the app talks to the Hacky API (docs/openapi.yaml).
@@ -146,6 +147,36 @@ class ApiClient {
   Future<PersonDetail> getPerson(String slug, String handle) async => _parse(
     await _send('GET', '/api/events/${_seg(slug)}/people/${_seg(handle)}'),
     PersonDetail.fromJson,
+  );
+
+  // ---------------------------------------------------------------- teams
+
+  /// The team I lead or belong to in this event, or null when I'm on none.
+  Future<MyTeam?> getMyTeam(String slug) async =>
+      _parse(await _send('GET', '/api/events/${_seg(slug)}/me/team'), (json) {
+        if (!json.containsKey('team')) {
+          throw const FormatException('"team" is missing');
+        }
+        final team = readNullableObject(json, 'team');
+        return team == null ? null : MyTeam.fromJson(team);
+      });
+
+  /// Creates my team; I become its owner and first member. 409 if I'm
+  /// already on a team in this event.
+  Future<TeamDetail> createTeam(String slug, CreateTeamBody body) async =>
+      _parse(
+        await _send(
+          'POST',
+          '/api/events/${_seg(slug)}/teams',
+          body: body.toJson(),
+        ),
+        TeamDetail.fromJson,
+      );
+
+  /// Team details with its members.
+  Future<TeamDetail> getTeam(String slug, String teamId) async => _parse(
+    await _send('GET', '/api/events/${_seg(slug)}/teams/${_seg(teamId)}'),
+    TeamDetail.fromJson,
   );
 
   void close() => _http.close();
