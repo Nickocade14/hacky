@@ -147,6 +147,13 @@ class ProfileLinks {
     linkedin: readNullableString(json, 'linkedin'),
     website: readNullableString(json, 'website'),
   );
+
+  /// Only the links that are set. The contract has no null for a link.
+  Map<String, dynamic> toJson() => {
+    'github': ?github,
+    'linkedin': ?linkedin,
+    'website': ?website,
+  };
 }
 
 /// `MemberRole`.
