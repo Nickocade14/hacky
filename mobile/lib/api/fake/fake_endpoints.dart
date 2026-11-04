@@ -1,5 +1,6 @@
 import '../api_exception.dart';
 import '../models/auth.dart';
+import '../models/conversations.dart';
 import '../models/events.dart';
 import '../models/me.dart';
 import '../models/people.dart';
@@ -359,6 +360,132 @@ mixin FakeEndpoints {
       ..status = ConnectionStatus.accepted
       ..respondedAt = world.now()
       ..conversationId = world.openDm(other).id;
+  }
+
+  // ---------------------------------------------------------------- conversations
+
+  Future<List<ConversationSummary>> listConversations(String slug) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    final me = world.me.userId;
+    final summaries = [
+      for (final c in world.conversations.values)
+        if (c.memberIds.contains(me)) _summary(world, c),
+    ];
+    // Newest activity first, then id descending.
+    return summaries..sort((a, b) {
+      final byTime = b.lastMessageAt.compareTo(a.lastMessageAt);
+      return byTime != 0 ? byTime : b.id.compareTo(a.id);
+    });
+  }
+
+  Future<MessagePage> listMessages(
+    String conversationId, {
+    String? before,
+    String? after,
+    int? limit,
+  }) async {
+    if (before != null && after != null) {
+      throw ArgumentError('Use before or after, not both');
+    }
+    if (limit != null && (limit < 1 || limit > 100)) {
+      throw RangeError.range(limit, 1, 100, 'limit');
+    }
+    final world = await fakeWorld();
+    final all = _conversation(world, conversationId).messages;
+    final size = limit ?? 30;
+    // Ids grow with time, so comparing them orders messages. Cursors are
+    // exclusive.
+    if (after != null) {
+      final newer = [
+        for (final m in all)
+          if (m.id.compareTo(after) > 0) m,
+      ];
+      return MessagePage(
+        messages: newer.take(size).toList(),
+        hasMore: newer.length > size,
+      );
+    }
+    final older = [
+      for (final m in all)
+        if (before == null || m.id.compareTo(before) < 0) m,
+    ];
+    final start = older.length > size ? older.length - size : 0;
+    return MessagePage(messages: older.sublist(start), hasMore: start > 0);
+  }
+
+  Future<Message> sendMessage(
+    String conversationId,
+    SendMessageBody body,
+  ) async {
+    final world = await fakeWorld();
+    final conversation = _conversation(world, conversationId);
+    final me = world.me.userId;
+    if (body.body.trim().isEmpty || body.body.length > 4000) {
+      throw fakeInvalid('body', 'Must be 1 to 4000 characters');
+    }
+    // A retry with the same clientId returns the same message.
+    final retry = conversation.messages
+        .where((m) => m.senderId == me && m.clientId == body.clientId)
+        .firstOrNull;
+    if (retry != null) return retry;
+    final message = Message(
+      id: world.newId(),
+      conversationId: conversation.id,
+      senderId: me,
+      clientId: body.clientId,
+      body: body.body,
+      kind: MessageKind.text,
+      createdAt: world.now(),
+    );
+    conversation.messages.add(message);
+    conversation.lastReadAt[me] = message.createdAt;
+    return message;
+  }
+
+  Future<DateTime> markRead(String conversationId) async {
+    final world = await fakeWorld();
+    final conversation = _conversation(world, conversationId);
+    return conversation.lastReadAt[world.me.userId] = world.now();
+  }
+
+  FakeConversation _conversation(FakeWorld world, String id) {
+    final conversation = world.conversations[id];
+    if (conversation == null) {
+      throw fakeError(404, 'not_found', 'No such conversation.');
+    }
+    if (!conversation.memberIds.contains(world.me.userId)) {
+      throw fakeError(403, 'forbidden', 'Not your conversation.');
+    }
+    return conversation;
+  }
+
+  ConversationSummary _summary(FakeWorld world, FakeConversation c) {
+    final me = world.me.userId;
+    final peerId = c.kind == ConversationKind.team
+        ? null
+        : c.memberIds.firstWhere((id) => id != me);
+    final team = c.teamId == null ? null : world.teams[c.teamId];
+    final last = c.messages.lastOrNull;
+    final readAt = c.lastReadAt[me];
+    return ConversationSummary(
+      id: c.id,
+      kind: c.kind,
+      peer: peerId == null ? null : world.byId(peerId)!.summary,
+      team: team == null ? null : TeamRef(id: team.id, name: team.name),
+      helpRequest: null,
+      lastMessage: last,
+      lastMessageAt: last?.createdAt ?? c.createdAt,
+      unreadCount: c.messages
+          .where(
+            (m) =>
+                m.senderId != me &&
+                (readAt == null || m.createdAt.isAfter(readAt)),
+          )
+          .length,
+      peerLastReadAt: peerId == null ? null : c.lastReadAt[peerId],
+      createdAt: c.createdAt,
+    );
   }
 
   /// My membership in [slug]; 403 when I'm not a member, like the server.
