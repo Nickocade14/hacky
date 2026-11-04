@@ -9,6 +9,7 @@ import 'models/auth.dart';
 import 'models/events.dart';
 import 'models/json_read.dart';
 import 'models/me.dart';
+import 'models/people.dart';
 import 'token_store.dart';
 
 /// The one place the app talks to the Hacky API (docs/openapi.yaml).
@@ -137,6 +138,15 @@ class ApiClient {
         ),
         EventMe.fromJson,
       );
+
+  // ---------------------------------------------------------------- people
+
+  /// A person's full profile in this event. 404 if they aren't in the event
+  /// or either person blocked the other.
+  Future<PersonDetail> getPerson(String slug, String handle) async => _parse(
+    await _send('GET', '/api/events/${_seg(slug)}/people/${_seg(handle)}'),
+    PersonDetail.fromJson,
+  );
 
   void close() => _http.close();
 

@@ -23,6 +23,39 @@ const meJson = {
   ],
 };
 
+const personSummaryJson = {
+  'userId': '6716a3f2c9e77b0012ab0001',
+  'handle': 'maya_ml',
+  'name': 'Maya Patel',
+  'hackyStyle': {'look': 'knit', 'color': 'teal'},
+  'photoUrl': '/assets/people/maya.png',
+  'role': 'hacker',
+};
+
+const personDetailJson = {
+  ...personSummaryJson,
+  'bio': 'ML student, loves health tech.',
+  'links': {'linkedin': 'https://linkedin.com/in/maya'},
+  'isDemo': true,
+  'verified': true,
+  'availability': 'busy',
+  'looking': true,
+  'skills': ['python', 'pytorch'],
+  'skillsWanted': ['flutter'],
+  'experience': 'advanced',
+  'goal': 'win',
+  'track': 'Health',
+  'interests': ['health'],
+  'idea': 'Skin rash triage from a photo',
+  'summary': null,
+  'motivations': ['compete'],
+  'relation': {
+    'state': 'incoming',
+    'requestId': '6716a3f2c9e77b0012ab0101',
+    'conversationId': null,
+  },
+};
+
 const eventInfoJson = {
   'slug': 'knighthacks-ix',
   'name': 'Knight Hacks IX',
