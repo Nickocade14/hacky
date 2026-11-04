@@ -78,6 +78,19 @@ const teamDetailJson = {
   ],
 };
 
+const connectionRequestJson = {
+  'id': '6716a3f2c9e77b0012ab0101',
+  'direction': 'outgoing',
+  'status': 'pending',
+  'intro': 'Want to build the rash triage app together?',
+  'source': 'profile',
+  'person': personSummaryJson,
+  'team': {'id': '6716a3f2c9e77b0012ab0201', 'name': 'Rash Decisions'},
+  'conversationId': null,
+  'createdAt': '2026-11-14T15:30:00.000Z',
+  'respondedAt': null,
+};
+
 const eventInfoJson = {
   'slug': 'knighthacks-ix',
   'name': 'Knight Hacks IX',

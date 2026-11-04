@@ -10,6 +10,7 @@ import 'models/events.dart';
 import 'models/json_read.dart';
 import 'models/me.dart';
 import 'models/people.dart';
+import 'models/requests.dart';
 import 'models/search.dart';
 import 'models/teams.dart';
 import 'token_store.dart';
@@ -211,6 +212,32 @@ class ApiClient {
       SearchResults.fromJson,
     );
   }
+
+  // ---------------------------------------------------------------- requests
+
+  /// Sends a connection request (or a request to join a team, with
+  /// `teamId`). If it was mutual, the result is already `accepted` with a
+  /// `conversationId`.
+  Future<RequestResult> sendRequest(String slug, SendRequestBody body) async =>
+      _parse(
+        await _send(
+          'POST',
+          '/api/events/${_seg(slug)}/requests',
+          body: body.toJson(),
+        ),
+        RequestResult.fromJson,
+      );
+
+  /// Accepts a request I received; the result carries the DM's
+  /// `conversationId`. Accepting twice returns the same conversation.
+  Future<RequestResult> acceptRequest(String requestId) async => _parse(
+    await _send('POST', '/api/requests/${_seg(requestId)}/accept'),
+    RequestResult.fromJson,
+  );
+
+  /// "Not now": hides a request I received. The sender still sees it pending.
+  Future<void> hideRequest(String requestId) =>
+      _send('POST', '/api/requests/${_seg(requestId)}/hide');
 
   void close() => _http.close();
 
