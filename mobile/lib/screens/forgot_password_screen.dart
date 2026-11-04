@@ -43,7 +43,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     return AuthLayout(
       children: [
         const BackToLogin(),
-        const StatusIcon('↺'),
         PageHeading(
           eyebrow: 'IT HAPPENS TO THE BEST OF US',
           title: _sent ? 'Check your inbox.' : 'Forgot your password?',

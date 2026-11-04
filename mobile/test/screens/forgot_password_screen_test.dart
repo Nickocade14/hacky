@@ -4,6 +4,7 @@ import 'package:mobile/auth/error_text.dart';
 import 'package:mobile/dev/fake_api_client.dart';
 import 'package:mobile/routes.dart';
 import 'package:mobile/screens/forgot_password_screen.dart';
+import 'package:mobile/widgets/auth_widgets.dart';
 
 import '../support/screen_harness.dart';
 
@@ -19,6 +20,8 @@ void main() {
 
     expect(find.text('IT HAPPENS TO THE BEST OF US'), findsOneWidget);
     expect(find.text('Forgot your password?'), findsOneWidget);
+    // No "↺" icon: it looked like a reload button that did nothing.
+    expect(find.byType(StatusIcon), findsNothing);
     expect(
       find.text(
         'No worries. We’ll send you a link to get back to your people.',
