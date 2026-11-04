@@ -92,7 +92,7 @@ class Wordmark extends StatelessWidget {
 class MascotHeader extends StatelessWidget {
   const MascotHeader({super.key});
 
-  static const image = 'assets/images/hacky-knit.png';
+  static const image = 'assets/mascots/hacky-knit.png';
 
   @override
   Widget build(BuildContext context) {

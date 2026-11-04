@@ -101,4 +101,4 @@ flutter:
   # Knit Hacky mascot from the original app (seeko-codes/Hacky,
   # react/public/assets/mascots/png/hacky-knit.png), resized to 600px tall.
   assets:
-    - assets/images/hacky-knit.png
+    - assets/mascots/hacky-knit.png
