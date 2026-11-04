@@ -3,10 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/api/models/auth.dart';
 import 'package:mobile/auth/field_rules.dart';
 import 'package:mobile/dev/fake_api_client.dart';
+import 'package:mobile/forms/register_form.dart';
 import 'package:mobile/routes.dart';
-import 'package:mobile/screens/register_screen.dart';
 
 import '../support/screen_harness.dart';
+
+/// Taps on "Log in" under the form are counted here.
+int logInTaps = 0;
+
+Widget registerPage(FakeApiClient api) =>
+    inPage(RegisterForm(api: api, onLogIn: () => logInTaps++));
 
 Future<void> fillRegister(
   WidgetTester tester, {
@@ -26,7 +32,7 @@ final createButton = find.widgetWithText(FilledButton, 'Create account');
 void main() {
   testWidgets('shows the web texts and hints', (tester) async {
     final (:api, store: _) = fakeApi();
-    await pumpScreen(tester, RegisterScreen(api: api));
+    await pumpScreen(tester, registerPage(api));
 
     expect(find.text('YOUR PEOPLE ARE HERE'), findsOneWidget);
     expect(find.text('Let’s make it happen.'), findsOneWidget);
@@ -44,7 +50,7 @@ void main() {
     tester,
   ) async {
     final (:api, store: _) = fakeApi();
-    final visits = await pumpScreen(tester, RegisterScreen(api: api));
+    final visits = await pumpScreen(tester, registerPage(api));
 
     await fillRegister(tester);
     await tapOn(tester, createButton);
@@ -69,7 +75,7 @@ void main() {
     tester,
   ) async {
     final (:api, store: _) = fakeApi();
-    final visits = await pumpScreen(tester, RegisterScreen(api: api));
+    final visits = await pumpScreen(tester, registerPage(api));
 
     await fillRegister(tester, password: '🦄' * 7);
     await tapOn(tester, createButton);
@@ -86,7 +92,7 @@ void main() {
 
   testWidgets('checks the name and handle', (tester) async {
     final (:api, store: _) = fakeApi();
-    final visits = await pumpScreen(tester, RegisterScreen(api: api));
+    final visits = await pumpScreen(tester, registerPage(api));
 
     await fillRegister(tester, name: '   ', handle: 'No Spaces');
     await tapOn(tester, createButton);
@@ -104,7 +110,7 @@ void main() {
     tester,
   ) async {
     final (:api, store: _) = fakeApi();
-    await pumpScreen(tester, RegisterScreen(api: api));
+    await pumpScreen(tester, registerPage(api));
 
     await fillRegister(tester, email: FakeApiClient.demoEmail);
     await tapOn(tester, createButton);
@@ -112,11 +118,13 @@ void main() {
     expect(find.text('That email already has an account.'), findsOneWidget);
   });
 
-  testWidgets('switches to log in', (tester) async {
+  testWidgets('asks to switch to the log in tab', (tester) async {
     final (:api, store: _) = fakeApi();
-    final visits = await pumpScreen(tester, RegisterScreen(api: api));
+    final visits = await pumpScreen(tester, registerPage(api));
 
+    logInTaps = 0;
     await tapOn(tester, find.widgetWithText(TextButton, 'Log in'));
-    expect(visits.single.route, Routes.login);
+    expect(logInTaps, 1);
+    expect(visits, isEmpty, reason: 'switching tabs is not a new page');
   });
 }

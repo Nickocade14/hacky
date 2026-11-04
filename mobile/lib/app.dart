@@ -4,12 +4,12 @@ import 'api/api_client.dart';
 import 'api/models/auth.dart';
 import 'routes.dart';
 import 'screens/account_screen.dart';
+import 'screens/auth_screen.dart';
 import 'screens/check_email_screen.dart';
 import 'screens/forgot_password_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
 import 'screens/start_screen.dart';
 import 'theme.dart';
+import 'widgets/auth_widgets.dart';
 
 class HackyApp extends StatelessWidget {
   const HackyApp({super.key, required this.api});
@@ -36,14 +36,14 @@ class AppRouter {
 
   Route<void> route(RouteSettings settings) {
     final Widget screen = switch (settings.name) {
-      Routes.register => RegisterScreen(api: api),
+      Routes.register => AuthScreen(api: api, initialTab: AuthTab.register),
       Routes.checkEmail => CheckEmailScreen(
         api: api,
         email: settings.arguments as String?,
       ),
       Routes.forgotPassword => ForgotPasswordScreen(api: api),
       Routes.account => AccountScreen(api: api, me: settings.arguments as Me?),
-      _ => LoginScreen(api: api),
+      _ => AuthScreen(api: api),
     };
     return MaterialPageRoute<void>(settings: settings, builder: (_) => screen);
   }

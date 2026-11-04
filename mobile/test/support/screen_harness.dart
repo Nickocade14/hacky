@@ -59,6 +59,11 @@ Future<List<Visit>> pumpScreen(WidgetTester tester, Widget screen) async {
   return visits;
 }
 
+/// A scrollable page around a form that has no page of its own.
+Widget inPage(Widget form) => Scaffold(
+  body: SingleChildScrollView(padding: const EdgeInsets.all(24), child: form),
+);
+
 /// Taps the widget found by [finder] after scrolling it into view.
 Future<void> tapOn(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);

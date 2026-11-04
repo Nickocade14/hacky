@@ -113,11 +113,15 @@ class MascotHeader extends StatelessWidget {
 
 enum AuthTab { login, register }
 
-/// The "Log in" / "Create account" switch on top of both forms.
+/// The "Log in" / "Create account" switch. The white indicator slides to the
+/// selected option; the screen swaps the form below.
 class AuthTabs extends StatelessWidget {
-  const AuthTabs({super.key, required this.current});
+  const AuthTabs({super.key, required this.current, required this.onChanged});
 
   final AuthTab current;
+  final ValueChanged<AuthTab> onChanged;
+
+  static const duration = Duration(milliseconds: 200);
 
   @override
   Widget build(BuildContext context) {
@@ -128,16 +132,46 @@ class AuthTabs extends StatelessWidget {
         color: AppColors.paper,
         borderRadius: AppTheme.borderRadius,
       ),
-      child: Row(
+      child: Stack(
         children: [
-          _tab(context, 'Log in', AuthTab.login, Routes.login),
-          _tab(context, 'Create account', AuthTab.register, Routes.register),
+          Positioned.fill(
+            child: AnimatedAlign(
+              alignment: current == AuthTab.login
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              duration: duration,
+              curve: Curves.easeOutCubic,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: AppTheme.borderRadius,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: AppColors.shadow,
+                        blurRadius: 5,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              _tab('Log in', AuthTab.login),
+              _tab('Create account', AuthTab.register),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _tab(BuildContext context, String label, AuthTab tab, String route) {
+  Widget _tab(String label, AuthTab tab) {
     final active = tab == current;
     return Expanded(
       child: Semantics(
@@ -145,32 +179,18 @@ class AuthTabs extends StatelessWidget {
         button: true,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: active
-              ? null
-              : () => Navigator.of(context).pushReplacementNamed(route),
-          child: Container(
+          onTap: active ? null : () => onChanged(tab),
+          child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-            decoration: BoxDecoration(
-              color: active ? AppColors.white : null,
-              borderRadius: AppTheme.borderRadius,
-              boxShadow: active
-                  ? const [
-                      BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: 5,
-                        offset: Offset(0, 1),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
+            child: AnimatedDefaultTextStyle(
+              duration: duration,
               style: TextStyle(
+                fontFamily: AppTheme.fontFamily,
                 fontSize: 13,
                 fontWeight: _bold,
                 color: active ? AppColors.ink : AppColors.muted,
               ),
+              child: Text(label, textAlign: TextAlign.center),
             ),
           ),
         ),

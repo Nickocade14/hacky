@@ -7,19 +7,25 @@ import '../auth/submit_action.dart';
 import '../routes.dart';
 import '../widgets/auth_widgets.dart';
 
-/// The first screen without a session. Same texts as `LoginPage` in
+/// The "Log in" tab of [AuthScreen]. Same texts as `LoginPage` in
 /// web/src/AuthPages.tsx.
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, required this.api});
+class LoginForm extends StatefulWidget {
+  const LoginForm({
+    super.key,
+    required this.api,
+    required this.onCreateAccount,
+  });
 
   final ApiClient api;
 
+  /// Switches to the "Create account" tab.
+  final VoidCallback onCreateAccount;
+
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginForm> createState() => _LoginFormState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SubmitAction<LoginScreen> {
+class _LoginFormState extends State<LoginForm> with SubmitAction<LoginForm> {
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -40,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen>
     await runAction(() async {
       final result = await widget.api.login(body);
       if (!mounted) return;
-      await Navigator.of(context).pushNamedAndRemoveUntil(
+      Navigator.of(context).pushNamedAndRemoveUntil(
         Routes.account,
         (_) => false,
         arguments: result.me,
@@ -51,9 +57,9 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
-    return AuthLayout(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const AuthTabs(current: AuthTab.login),
         const PageHeading(eyebrow: 'GOOD TO SEE YOU', title: 'Welcome back.'),
         Form(
           key: _form,
@@ -110,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen>
         FormSwitch(
           prompt: 'New around here? ',
           action: 'Create an account',
-          onPressed: () => navigator.pushReplacementNamed(Routes.register),
+          onPressed: widget.onCreateAccount,
         ),
       ],
     );

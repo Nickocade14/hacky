@@ -7,19 +7,22 @@ import '../auth/submit_action.dart';
 import '../routes.dart';
 import '../widgets/auth_widgets.dart';
 
-/// Create an account. Same texts and limits as `RegisterPage` in
-/// web/src/AuthPages.tsx. On success, opens "Check your inbox".
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key, required this.api});
+/// The "Create account" tab of [AuthScreen]. Same texts and limits as
+/// `RegisterPage` in web/src/AuthPages.tsx. On success, opens "Check your inbox".
+class RegisterForm extends StatefulWidget {
+  const RegisterForm({super.key, required this.api, required this.onLogIn});
 
   final ApiClient api;
 
+  /// Switches to the "Log in" tab.
+  final VoidCallback onLogIn;
+
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<RegisterForm> createState() => _RegisterFormState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen>
-    with SubmitAction<RegisterScreen> {
+class _RegisterFormState extends State<RegisterForm>
+    with SubmitAction<RegisterForm> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _handle = TextEditingController();
@@ -54,9 +57,9 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   @override
   Widget build(BuildContext context) {
-    return AuthLayout(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const AuthTabs(current: AuthTab.register),
         const PageHeading(
           eyebrow: 'YOUR PEOPLE ARE HERE',
           title: 'Let’s make it happen.',
@@ -128,8 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen>
         FormSwitch(
           prompt: 'Already part of the crew? ',
           action: 'Log in',
-          onPressed: () =>
-              Navigator.of(context).pushReplacementNamed(Routes.login),
+          onPressed: widget.onLogIn,
         ),
       ],
     );
