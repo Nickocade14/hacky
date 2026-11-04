@@ -1,5 +1,6 @@
 import '../api_exception.dart';
 import '../models/auth.dart';
+import '../models/events.dart';
 import '../models/me.dart';
 import 'fake_world.dart';
 
@@ -71,6 +72,78 @@ mixin FakeEndpoints {
     if (body.hackyStyle != null) me.hackyStyle = body.hackyStyle!;
     if (body.links != null) me.links = body.links!;
     return me.profile;
+  }
+
+  // ---------------------------------------------------------------- events
+
+  Future<List<EventInfo>> listEvents() async => [(await fakeWorld()).event];
+
+  Future<EventInfo> getEvent(String slug) async {
+    final world = await fakeWorld();
+    _eventOr404(slug);
+    return world.event;
+  }
+
+  Future<EventMe> joinEvent(
+    String slug, [
+    JoinEventBody body = const JoinEventBody(),
+  ]) async {
+    final world = await fakeWorld();
+    _eventOr404(slug);
+    final role = body.role ?? JoinRole.hacker;
+    // Joining again returns the same membership. Mentors wait for an
+    // organizer to verify them.
+    final membership = world.me.membership ??= FakeMembership(
+      role: role == JoinRole.mentor ? MemberRole.mentor : MemberRole.hacker,
+      verified: role != JoinRole.mentor,
+    );
+    return membership.eventMe;
+  }
+
+  Future<EventMe> getEventMe(String slug) async =>
+      fakeMembership(await fakeWorld(), slug).eventMe;
+
+  Future<EventMe> updateEventMe(String slug, UpdateEventMeBody body) async {
+    final m = fakeMembership(await fakeWorld(), slug);
+    final old = m.intake;
+    final experience = body.experience == null
+        ? old.experience
+        : body.experience!.value;
+    final goal = body.goal == null ? old.goal : body.goal!.value;
+    final skills = body.skills ?? old.skills;
+    m.intake = Intake(
+      skills: skills,
+      skillsWanted: body.skillsWanted ?? old.skillsWanted,
+      experience: experience,
+      wantsExperienced: body.wantsExperienced ?? old.wantsExperienced,
+      goal: goal,
+      track: body.track == null ? old.track : body.track!.value,
+      interests: body.interests ?? old.interests,
+      idea: body.idea == null ? old.idea : body.idea!.value,
+      motivations: body.motivations ?? old.motivations,
+      summary: old.summary,
+      // The server decides this; the fake calls it complete once the
+      // matching basics are there.
+      complete: skills.isNotEmpty && experience != null && goal != null,
+    );
+    if (body.availability != null) m.availability = body.availability!;
+    if (body.looking != null) m.looking = body.looking!;
+    return m.eventMe;
+  }
+
+  /// My membership in [slug]; 403 when I'm not a member, like the server.
+  FakeMembership fakeMembership(FakeWorld world, String slug) {
+    final membership = slug == fakeEventSlug ? world.me.membership : null;
+    if (membership == null) {
+      throw fakeError(403, 'forbidden', 'Join the event first.');
+    }
+    return membership;
+  }
+
+  void _eventOr404(String slug) {
+    if (slug != fakeEventSlug) {
+      throw fakeError(404, 'not_found', 'No event "$slug".');
+    }
   }
 }
 
