@@ -542,6 +542,18 @@ class FakeWorld {
     );
     requests[request.id] = request;
 
+    // Leo asked earlier and I said "Not now".
+    final hidden = FakeRequest(
+      id: newId(),
+      fromId: leo.userId,
+      toId: me.userId,
+      intro: 'Need another JavaScript person? I\'m quick with React.',
+      source: ConnectionSource.qr,
+      teamId: null,
+      createdAt: started.add(const Duration(minutes: 10)),
+    )..hiddenAt = started.add(const Duration(minutes: 40));
+    requests[hidden.id] = hidden;
+
     // Priya and I are already connected and chatting.
     final accepted = FakeRequest(
       id: newId(),

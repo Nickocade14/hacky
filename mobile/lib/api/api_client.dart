@@ -217,6 +217,14 @@ class ApiClient {
 
   // ---------------------------------------------------------------- requests
 
+  /// My incoming and outgoing requests in this event. Incoming ones I hid
+  /// are still listed, with `hiddenAt` set.
+  Future<List<ConnectionRequest>> listRequests(String slug) async => _parseList(
+    await _send('GET', '/api/events/${_seg(slug)}/requests'),
+    'requests',
+    ConnectionRequest.fromJson,
+  );
+
   /// Sends a connection request (or a request to join a team, with
   /// `teamId`). If it was mutual, the result is already `accepted` with a
   /// `conversationId`.

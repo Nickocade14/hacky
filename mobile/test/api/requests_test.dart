@@ -10,6 +10,66 @@ void main() {
 
   setUp(() => api = ApiHarness());
 
+  group('listRequests', () {
+    test('GETs my requests in the event and unwraps them', () async {
+      api.respond({
+        'requests': [
+          connectionRequestJson,
+          {
+            ...connectionRequestJson,
+            'id': '6716a3f2c9e77b0012ab0102',
+            'direction': 'incoming',
+            'team': null,
+            'hiddenAt': '2026-11-14T17:00:00.000Z',
+          },
+        ],
+      });
+
+      final requests = await api.client.listRequests('knighthacks-ix');
+
+      expect(api.lastCall, 'GET /api/events/knighthacks-ix/requests');
+      expect(api.lastAuth, 'Bearer $testToken');
+      expect(requests.map((r) => r.direction), [
+        RequestDirection.outgoing,
+        RequestDirection.incoming,
+      ]);
+      expect(requests.first.team!.name, 'Rash Decisions');
+      expect(requests.first.hiddenAt, isNull);
+      expect(requests.last.team, isNull);
+      expect(requests.last.hiddenAt, DateTime.utc(2026, 11, 14, 17));
+    });
+
+    test('returns an empty list when there are none', () async {
+      api.respond({'requests': <Object>[]});
+
+      expect(await api.client.listRequests('knighthacks-ix'), isEmpty);
+    });
+
+    test('throws forbidden when I am not in the event', () async {
+      api.fail(403, 'forbidden');
+
+      await expectLater(
+        api.client.listRequests('knighthacks-ix'),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'forbidden')),
+      );
+    });
+
+    test('a request with an unknown status is an invalid_response', () async {
+      api.respond({
+        'requests': [
+          {...connectionRequestJson, 'status': 'declined'},
+        ],
+      });
+
+      await expectLater(
+        api.client.listRequests('knighthacks-ix'),
+        throwsA(
+          isA<ApiException>().having((e) => e.code, 'code', 'invalid_response'),
+        ),
+      );
+    });
+  });
+
   group('sendRequest', () {
     test('POSTs toUserId and intro, plus source and teamId when set', () async {
       api.respond({'request': connectionRequestJson}, 201);

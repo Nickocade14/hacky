@@ -23,6 +23,57 @@ void main() {
     world = await fake.fakeWorld();
   });
 
+  group('listRequests', () {
+    test('lists the seeded requests newest first', () async {
+      final requests = await fake.listRequests(slug);
+
+      expect(requests.map((r) => r.person.handle), [
+        'jordan_ux',
+        'leo_builds',
+        'priya_codes',
+      ]);
+      final jordan = requests[0];
+      expect(jordan.direction, RequestDirection.incoming);
+      expect(jordan.status, ConnectionStatus.pending);
+      expect(jordan.hiddenAt, isNull);
+      final leo = requests[1];
+      expect(leo.status, ConnectionStatus.pending);
+      expect(leo.hiddenAt, isNotNull);
+      expect(leo.source, ConnectionSource.qr);
+      final priya = requests[2];
+      expect(priya.status, ConnectionStatus.accepted);
+      expect(priya.conversationId, isNotNull);
+    });
+
+    test('includes what I send and hide', () async {
+      final sent = await fake.sendRequest(
+        slug,
+        SendRequestBody(toUserId: idOf('sam_mentor'), intro: 'Hi Sam'),
+      );
+      final jordanId = (await fake.listRequests(slug))
+          .firstWhere((r) => r.person.handle == 'jordan_ux')
+          .id;
+      await fake.hideRequest(jordanId);
+
+      final requests = await fake.listRequests(slug);
+
+      expect(requests.first.id, sent.request.id);
+      expect(requests.first.direction, RequestDirection.outgoing);
+      expect(requests.first.hiddenAt, isNull);
+      expect(requests.firstWhere((r) => r.id == jordanId).hiddenAt, isNotNull);
+    });
+
+    test('Leo\'s hidden request makes him an incoming relation', () async {
+      final leo = await fake.getPerson(slug, 'leo_builds');
+
+      expect(leo.relation.state, RelationState.incoming);
+    });
+
+    test('403s outside my events', () async {
+      await expectLater(fake.listRequests('other'), apiError(403));
+    });
+  });
+
   group('sendRequest', () {
     test('creates a pending outgoing request', () async {
       final result = await fake.sendRequest(

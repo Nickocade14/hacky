@@ -250,6 +250,18 @@ mixin FakeEndpoints {
 
   // ---------------------------------------------------------------- requests
 
+  /// The contract doesn't give an order; the fake lists newest first.
+  Future<List<ConnectionRequest>> listRequests(String slug) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    final me = world.me.userId;
+    final mine = [
+      for (final r in world.requests.values)
+        if (r.fromId == me || r.toId == me) r,
+    ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return [for (final r in mine) world.connectionRequest(r)];
+  }
+
   Future<RequestResult> sendRequest(String slug, SendRequestBody body) async {
     final world = await fakeWorld();
     fakeMembership(world, slug);
