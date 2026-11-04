@@ -271,6 +271,41 @@ class FakeWorld {
 
   FakePerson? byId(String id) => id == me.userId ? me : people[id];
 
+  /// Where I stand with [userId], from our personal (non-team) requests.
+  Relation relationTo(String userId) {
+    final between = requests.values.where(
+      (r) =>
+          r.teamId == null &&
+          ((r.fromId == me.userId && r.toId == userId) ||
+              (r.fromId == userId && r.toId == me.userId)),
+    );
+    final accepted = between
+        .where((r) => r.status == ConnectionStatus.accepted)
+        .firstOrNull;
+    if (accepted != null) {
+      return Relation(
+        state: RelationState.accepted,
+        requestId: accepted.id,
+        conversationId: accepted.conversationId,
+      );
+    }
+    final pending = between.firstOrNull;
+    if (pending == null) {
+      return const Relation(
+        state: RelationState.none,
+        requestId: null,
+        conversationId: null,
+      );
+    }
+    return Relation(
+      state: pending.fromId == me.userId
+          ? RelationState.outgoing
+          : RelationState.incoming,
+      requestId: pending.id,
+      conversationId: null,
+    );
+  }
+
   FakeTeam? teamOf(String userId) =>
       teams.values.where((t) => t.memberIds.contains(userId)).firstOrNull;
 

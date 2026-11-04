@@ -2,6 +2,7 @@ import '../api_exception.dart';
 import '../models/auth.dart';
 import '../models/events.dart';
 import '../models/me.dart';
+import '../models/people.dart';
 import 'fake_world.dart';
 
 /// In-memory versions of the non-auth [ApiClient] endpoints, with realistic
@@ -129,6 +130,18 @@ mixin FakeEndpoints {
     if (body.availability != null) m.availability = body.availability!;
     if (body.looking != null) m.looking = body.looking!;
     return m.eventMe;
+  }
+
+  // ---------------------------------------------------------------- people
+
+  Future<PersonDetail> getPerson(String slug, String handle) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    final person = world.byHandle(handle);
+    if (person == null || person.membership == null) {
+      throw fakeError(404, 'not_found', 'No one called @$handle here.');
+    }
+    return person.detail(world.relationTo(person.userId));
   }
 
   /// My membership in [slug]; 403 when I'm not a member, like the server.
