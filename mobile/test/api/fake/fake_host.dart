@@ -37,7 +37,38 @@ class FakeHost with FakeEndpoints implements ApiClient {
     return me;
   }
 
-  // Endpoints not faked yet.
+  // The auth routes are the host's job (FakeApiClient on the app side). This
+  // class has no noSuchMethod, so it only compiles while FakeEndpoints covers
+  // every other ApiClient method.
+
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Duration get timeout => Duration.zero;
+
+  @override
+  Future<void> register(RegisterBody body) => throw UnimplementedError();
+
+  @override
+  Future<void> verifyEmail(TokenBody body) => throw UnimplementedError();
+
+  @override
+  Future<void> resendVerification(EmailBody body) => throw UnimplementedError();
+
+  @override
+  Future<LoginResult> login(LoginBody body) => throw UnimplementedError();
+
+  @override
+  Future<void> forgotPassword(EmailBody body) => throw UnimplementedError();
+
+  @override
+  Future<void> resetPassword(ResetPasswordBody body) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> logout() async => loggedIn = false;
+
+  @override
+  Future<bool> get isLoggedIn async => loggedIn;
+
+  @override
+  void close() {}
 }

@@ -1,5 +1,6 @@
 import '../api_exception.dart';
 import '../models/auth.dart';
+import '../models/chat.dart';
 import '../models/conversations.dart';
 import '../models/events.dart';
 import '../models/me.dart';
@@ -486,6 +487,57 @@ mixin FakeEndpoints {
       peerLastReadAt: peerId == null ? null : c.lastReadAt[peerId],
       createdAt: c.createdAt,
     );
+  }
+
+  // ---------------------------------------------------------------- chat
+
+  /// Answers with the people whose skills match words in the message. The
+  /// contract doesn't define part shapes; the fake reads and writes AI SDK
+  /// text parts (`{type: text, text}`) and never sends cards.
+  Future<ChatMessage> sendChat(String slug, ChatBody body) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    final message = body.message;
+    if (message.role != ChatRole.user) {
+      throw fakeInvalid('message.role', 'Must be user');
+    }
+    world.chat.add(message);
+
+    final text = [
+      for (final part in message.parts)
+        if (part['type'] == 'text' && part['text'] is String) part['text'],
+    ].join(' ').toLowerCase();
+    final words = text
+        .split(RegExp(r'[^a-z0-9+#]+'))
+        .where((w) => w.length > 1);
+    final matches = [
+      for (final p in world.people.values)
+        if (p.membership!.intake.skills.any(
+          (s) => words.any((w) => s.toLowerCase().contains(w)),
+        ))
+          p,
+    ];
+    final reply = matches.isEmpty
+        ? 'I didn\'t find anyone for that yet. Try a skill, like "flutter" or '
+              '"python".'
+        : 'Here\'s who could help: '
+              '${matches.map((p) => '${p.name} (@${p.handle})').join(', ')}.';
+
+    final answer = ChatMessage(
+      id: 'fake-assistant-${world.newId()}',
+      role: ChatRole.assistant,
+      parts: [
+        {'type': 'text', 'text': reply},
+      ],
+    );
+    world.chat.add(answer);
+    return answer;
+  }
+
+  Future<List<ChatMessage>> getChatHistory(String slug) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    return List.unmodifiable(world.chat);
   }
 
   /// My membership in [slug]; 403 when I'm not a member, like the server.
