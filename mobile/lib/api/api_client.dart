@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'api_exception.dart';
 import 'models/auth.dart';
+import 'models/events.dart';
+import 'models/json_read.dart';
 import 'token_store.dart';
 
 /// The one place the app talks to the Hacky API (docs/openapi.yaml).
@@ -81,6 +83,48 @@ class ApiClient {
   Future<Me> getMe() async =>
       _parse(await _send('GET', '/api/me'), Me.fromJson);
 
+  // ---------------------------------------------------------------- events
+
+  /// Events a user can join.
+  Future<List<EventInfo>> listEvents() async => _parseList(
+    await _send('GET', '/api/events'),
+    'events',
+    EventInfo.fromJson,
+  );
+
+  /// Event info and theme.
+  Future<EventInfo> getEvent(String slug) async => _parse(
+    await _send('GET', '/api/events/${_seg(slug)}'),
+    EventInfo.fromJson,
+  );
+
+  /// Joins the event. Joining again returns the same membership. Mentors
+  /// start unverified until an organizer verifies them.
+  Future<EventMe> joinEvent(
+    String slug, [
+    JoinEventBody body = const JoinEventBody(),
+  ]) async => _parse(
+    await _send('POST', '/api/events/${_seg(slug)}/join', body: body.toJson()),
+    EventMe.fromJson,
+  );
+
+  /// My membership and intake in this event.
+  Future<EventMe> getEventMe(String slug) async => _parse(
+    await _send('GET', '/api/events/${_seg(slug)}/me'),
+    EventMe.fromJson,
+  );
+
+  /// Updates my intake, availability or looking flag (partial update).
+  Future<EventMe> updateEventMe(String slug, UpdateEventMeBody body) async =>
+      _parse(
+        await _send(
+          'PATCH',
+          '/api/events/${_seg(slug)}/me',
+          body: body.toJson(),
+        ),
+        EventMe.fromJson,
+      );
+
   void close() => _http.close();
 
   // ---------------------------------------------------------------- internals
@@ -92,9 +136,14 @@ class ApiClient {
     String method,
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String>? query,
     bool auth = true,
   }) async {
-    final request = http.Request(method, Uri.parse('$_baseUrl$path'))
+    var url = Uri.parse('$_baseUrl$path');
+    if (query != null && query.isNotEmpty) {
+      url = url.replace(queryParameters: query);
+    }
+    final request = http.Request(method, url)
       ..headers['Accept'] = 'application/json';
     if (auth) {
       final token = await _tokenStore.read();
@@ -138,6 +187,16 @@ class ApiClient {
     if (auth && status == 401) await _tokenStore.clear();
     throw ApiException.fromResponse(status, json);
   }
+
+  /// Encodes a path parameter (slug, handle, id) so it can't change the path.
+  static String _seg(String value) => Uri.encodeComponent(value);
+
+  /// Parses a `{ "<key>": [ ... ] }` wrapper into its list.
+  List<T> _parseList<T>(
+    Object? json,
+    String key,
+    T Function(Map<String, dynamic>) fromJson,
+  ) => _parse(json, (map) => readList(map, key, fromJson));
 
   T _parse<T>(Object? json, T Function(Map<String, dynamic>) fromJson) {
     if (json is! Map<String, dynamic>) throw _invalidResponse(200);

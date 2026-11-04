@@ -42,8 +42,57 @@ T readEnum<T extends Enum>(
   Map<String, dynamic> json,
   String key,
   List<T> values,
+) => _enumByName(key, readString(json, key), values);
+
+int readInt(Map<String, dynamic> json, String key) =>
+    _read<int>(json, key, 'an integer');
+
+Map<String, dynamic>? readNullableObject(
+  Map<String, dynamic> json,
+  String key,
 ) {
-  final name = readString(json, key);
+  final value = json[key];
+  if (value == null || value is Map<String, dynamic>) {
+    return value as Map<String, dynamic>?;
+  }
+  throw FormatException('"$key" must be an object or null');
+}
+
+DateTime? readNullableDateTime(Map<String, dynamic> json, String key) =>
+    json[key] == null ? null : readDateTime(json, key);
+
+T? readNullableEnum<T extends Enum>(
+  Map<String, dynamic> json,
+  String key,
+  List<T> values,
+) => json[key] == null ? null : readEnum(json, key, values);
+
+List<String> readStringList(Map<String, dynamic> json, String key) {
+  final list = _read<List<dynamic>>(json, key, 'an array');
+  return [
+    for (final item in list)
+      if (item is String)
+        item
+      else
+        throw FormatException('"$key" must only contain strings'),
+  ];
+}
+
+List<T> readEnumList<T extends Enum>(
+  Map<String, dynamic> json,
+  String key,
+  List<T> values,
+) => [
+  for (final name in readStringList(json, key)) _enumByName(key, name, values),
+];
+
+/// A list of free-form objects, kept as maps.
+List<Map<String, dynamic>> readObjectList(
+  Map<String, dynamic> json,
+  String key,
+) => readList(json, key, (item) => item);
+
+T _enumByName<T extends Enum>(String key, String name, List<T> values) {
   for (final value in values) {
     if (value.name == name) return value;
   }
