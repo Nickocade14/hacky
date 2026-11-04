@@ -9,11 +9,17 @@ import '../theme.dart';
 
 const _bold = FontWeight.w700;
 
-/// The white page with the Hacky brand on top, like the web's phone layout.
+/// The white page with a header on top, like the web's phone layout.
+/// The default header is the "hacky." wordmark on the left.
 class AuthLayout extends StatelessWidget {
-  const AuthLayout({super.key, required this.children});
+  const AuthLayout({
+    super.key,
+    required this.children,
+    this.header = const _WordmarkHeader(),
+  });
 
   final List<Widget> children;
+  final Widget header;
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +33,7 @@ class AuthLayout extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const BrandHeader(),
-                  const SizedBox(height: 44),
-                  ...children,
-                ],
+                children: [header, ...children],
               ),
             ),
           ),
@@ -41,54 +43,68 @@ class AuthLayout extends StatelessWidget {
   }
 }
 
-/// The "h." mark followed by "hacky." in the brand colors.
-class BrandHeader extends StatelessWidget {
-  const BrandHeader({super.key});
+class _WordmarkHeader extends StatelessWidget {
+  const _WordmarkHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(bottom: 44),
+      child: Align(alignment: Alignment.centerLeft, child: Wordmark()),
+    );
+  }
+}
+
+/// "hacky." in ink with a blue dot.
+class Wordmark extends StatelessWidget {
+  const Wordmark({super.key, this.size = 27});
+
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Hacky',
       excludeSemantics: true,
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.action,
-              borderRadius: AppTheme.borderRadius,
-            ),
-            child: const Text(
-              'h.',
-              style: TextStyle(
-                color: AppColors.onAction,
-                fontSize: 23,
-                fontWeight: _bold,
-                letterSpacing: -2,
-                height: 1,
-              ),
-            ),
-          ),
-          const SizedBox(width: 11),
-          const Text.rich(
+      child: Text.rich(
+        const TextSpan(
+          text: 'hacky',
+          children: [
             TextSpan(
-              text: 'hacky',
-              children: [
-                TextSpan(
-                  text: '.',
-                  style: TextStyle(color: AppColors.action),
-                ),
-              ],
+              text: '.',
+              style: TextStyle(color: AppColors.action),
             ),
-            style: TextStyle(
-              color: AppColors.ink,
-              fontSize: 27,
-              fontWeight: _bold,
-              letterSpacing: -1.6,
-            ),
+          ],
+        ),
+        style: TextStyle(
+          color: AppColors.ink,
+          fontSize: size,
+          fontWeight: _bold,
+          letterSpacing: -1.6,
+        ),
+      ),
+    );
+  }
+}
+
+/// The big knit Hacky mascot with the wordmark under it, centered.
+/// Header of the log in / create account screen.
+class MascotHeader extends StatelessWidget {
+  const MascotHeader({super.key});
+
+  static const image = 'assets/images/hacky-knit.png';
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        children: [
+          ExcludeSemantics(
+            child: Image.asset(image, height: 190, fit: BoxFit.contain),
           ),
+          const SizedBox(height: 6),
+          const Wordmark(size: 34),
         ],
       ),
     );
