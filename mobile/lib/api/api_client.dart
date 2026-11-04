@@ -10,6 +10,7 @@ import 'models/events.dart';
 import 'models/json_read.dart';
 import 'models/me.dart';
 import 'models/people.dart';
+import 'models/search.dart';
 import 'models/teams.dart';
 import 'token_store.dart';
 
@@ -178,6 +179,38 @@ class ApiClient {
     await _send('GET', '/api/events/${_seg(slug)}/teams/${_seg(teamId)}'),
     TeamDetail.fromJson,
   );
+
+  // ---------------------------------------------------------------- search
+
+  /// People in [event] whose name, handle or skills partly match [q]
+  /// (case-insensitive), most relevant first. [q] must be 1 to 100
+  /// characters and [limit] 1 to 50 (server default 20).
+  Future<SearchResults> search({
+    required String event,
+    required String q,
+    MemberRole? role,
+    int? limit,
+  }) async {
+    if (q.isEmpty || q.length > 100) {
+      throw ArgumentError.value(q, 'q', 'Must be 1 to 100 characters');
+    }
+    if (limit != null && (limit < 1 || limit > 50)) {
+      throw RangeError.range(limit, 1, 50, 'limit');
+    }
+    return _parse(
+      await _send(
+        'GET',
+        '/api/search',
+        query: {
+          'event': event,
+          'q': q,
+          if (role != null) 'role': role.name,
+          if (limit != null) 'limit': '$limit',
+        },
+      ),
+      SearchResults.fromJson,
+    );
+  }
 
   void close() => _http.close();
 
