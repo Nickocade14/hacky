@@ -3,6 +3,7 @@ import '../models/auth.dart';
 import '../models/events.dart';
 import '../models/me.dart';
 import '../models/people.dart';
+import '../models/requests.dart';
 import '../models/search.dart';
 import '../models/teams.dart';
 import 'fake_world.dart';
@@ -243,6 +244,121 @@ mixin FakeEndpoints {
     return SearchResults(
       results: [for (final (_, hit) in sorted.take(limit ?? 20)) hit],
     );
+  }
+
+  // ---------------------------------------------------------------- requests
+
+  Future<RequestResult> sendRequest(String slug, SendRequestBody body) async {
+    final world = await fakeWorld();
+    fakeMembership(world, slug);
+    final me = world.me.userId;
+    final intro = body.intro;
+    if (intro.trim().isEmpty || intro.length > 500) {
+      throw fakeInvalid('intro', 'Must be 1 to 500 characters');
+    }
+    if (RegExp(r'https?://|www\.', caseSensitive: false).hasMatch(intro)) {
+      throw fakeInvalid('intro', 'No links allowed');
+    }
+    final to = world.byId(body.toUserId);
+    if (to == null || to.membership == null) {
+      throw fakeError(404, 'not_found', 'That person isn\'t here.');
+    }
+    if (to.userId == me) {
+      throw fakeInvalid('toUserId', 'You can\'t send a request to yourself');
+    }
+    final teamId = body.teamId;
+    if (teamId != null) {
+      final team = world.teams[teamId];
+      if (team == null) throw fakeError(404, 'not_found', 'No such team.');
+      if (team.ownerId != to.userId) {
+        throw fakeInvalid('toUserId', 'Must be the team owner');
+      }
+      if (world.teamOf(me) != null) {
+        throw fakeError(409, 'conflict', 'You are already on a team.');
+      }
+    }
+    // One request per direction and purpose.
+    final duplicate = world.requests.values.any(
+      (r) => r.fromId == me && r.toId == to.userId && r.teamId == teamId,
+    );
+    if (duplicate) {
+      throw fakeError(409, 'conflict', 'You already sent this request.');
+    }
+    // A personal request back to someone who asked me first is accepted
+    // right away, with one DM.
+    if (teamId == null) {
+      final mutual = world.requests.values
+          .where(
+            (r) =>
+                r.fromId == to.userId &&
+                r.toId == me &&
+                r.teamId == null &&
+                r.status == ConnectionStatus.pending,
+          )
+          .firstOrNull;
+      if (mutual != null) {
+        _accept(world, mutual);
+        return RequestResult(request: world.connectionRequest(mutual));
+      }
+    }
+    final request = FakeRequest(
+      id: world.newId(),
+      fromId: me,
+      toId: to.userId,
+      intro: intro,
+      source: body.source ?? ConnectionSource.agent,
+      teamId: teamId,
+      createdAt: world.now(),
+    );
+    world.requests[request.id] = request;
+    return RequestResult(request: world.connectionRequest(request));
+  }
+
+  Future<RequestResult> acceptRequest(String requestId) async {
+    final world = await fakeWorld();
+    final request = _incomingRequest(world, requestId);
+    if (request.status != ConnectionStatus.accepted) {
+      final teamId = request.teamId;
+      if (teamId != null) {
+        final team = world.teams[teamId];
+        if (team == null || team.ownerId != world.me.userId) {
+          throw fakeError(409, 'conflict', 'You no longer own that team.');
+        }
+        if (team.memberIds.length >= team.maxSize) {
+          throw fakeError(409, 'conflict', 'The team is full.');
+        }
+        if (world.teamOf(request.fromId) != null) {
+          throw fakeError(409, 'conflict', 'They are already on a team.');
+        }
+        team.memberIds.add(request.fromId);
+      }
+      _accept(world, request);
+    }
+    return RequestResult(request: world.connectionRequest(request));
+  }
+
+  Future<void> hideRequest(String requestId) async {
+    final world = await fakeWorld();
+    _incomingRequest(world, requestId).hiddenAt ??= world.now();
+  }
+
+  FakeRequest _incomingRequest(FakeWorld world, String requestId) {
+    final request = world.requests[requestId];
+    if (request == null) throw fakeError(404, 'not_found', 'No such request.');
+    if (request.toId != world.me.userId) {
+      throw fakeError(403, 'forbidden', 'Only the recipient can do that.');
+    }
+    return request;
+  }
+
+  void _accept(FakeWorld world, FakeRequest request) {
+    final other = request.fromId == world.me.userId
+        ? request.toId
+        : request.fromId;
+    request
+      ..status = ConnectionStatus.accepted
+      ..respondedAt = world.now()
+      ..conversationId = world.openDm(other).id;
   }
 
   /// My membership in [slug]; 403 when I'm not a member, like the server.

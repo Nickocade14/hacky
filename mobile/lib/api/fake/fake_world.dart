@@ -307,6 +307,57 @@ class FakeWorld {
     );
   }
 
+  /// [request] as I see it: direction and person are relative to me.
+  ConnectionRequest connectionRequest(FakeRequest request) {
+    final incoming = request.toId == me.userId;
+    final team = request.teamId == null ? null : teams[request.teamId];
+    return ConnectionRequest(
+      id: request.id,
+      direction: incoming
+          ? RequestDirection.incoming
+          : RequestDirection.outgoing,
+      status: request.status,
+      intro: request.intro,
+      source: request.source,
+      person: byId(incoming ? request.fromId : request.toId)!.summary,
+      team: team == null ? null : TeamRef(id: team.id, name: team.name),
+      conversationId: request.conversationId,
+      createdAt: request.createdAt,
+      respondedAt: request.respondedAt,
+      hiddenAt: incoming ? request.hiddenAt : null,
+    );
+  }
+
+  /// The DM between me and [userId], opened with a system message when new.
+  FakeConversation openDm(String userId) {
+    final existing = conversations.values.where(
+      (c) =>
+          c.kind == ConversationKind.dm &&
+          c.memberIds.contains(me.userId) &&
+          c.memberIds.contains(userId),
+    );
+    if (existing.isNotEmpty) return existing.first;
+    final dm = FakeConversation(
+      id: newId(),
+      kind: ConversationKind.dm,
+      memberIds: [me.userId, userId],
+      createdAt: now(),
+    );
+    dm.messages.add(
+      Message(
+        id: newId(),
+        conversationId: dm.id,
+        senderId: null,
+        clientId: null,
+        body: 'You and ${byId(userId)!.name} are connected. Say hi!',
+        kind: MessageKind.system,
+        createdAt: dm.createdAt,
+      ),
+    );
+    conversations[dm.id] = dm;
+    return dm;
+  }
+
   TeamDetail teamDetail(FakeTeam team) => TeamDetail(
     id: team.id,
     name: team.name,
