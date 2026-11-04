@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'api_exception.dart';
 import 'models/auth.dart';
+import 'models/conversations.dart';
 import 'models/events.dart';
 import 'models/json_read.dart';
 import 'models/me.dart';
@@ -238,6 +239,65 @@ class ApiClient {
   /// "Not now": hides a request I received. The sender still sees it pending.
   Future<void> hideRequest(String requestId) =>
       _send('POST', '/api/requests/${_seg(requestId)}/hide');
+
+  // ---------------------------------------------------------------- conversations
+
+  /// My conversations in this event, newest activity first.
+  Future<List<ConversationSummary>> listConversations(String slug) async =>
+      _parseList(
+        await _send('GET', '/api/events/${_seg(slug)}/conversations'),
+        'conversations',
+        ConversationSummary.fromJson,
+      );
+
+  /// A page of messages, oldest first. Without cursors, the newest page.
+  /// [before] loads the page before that message id, [after] the page after
+  /// it (use one, not both). [limit] is 1 to 100 (server default 30).
+  Future<MessagePage> listMessages(
+    String conversationId, {
+    String? before,
+    String? after,
+    int? limit,
+  }) async {
+    if (before != null && after != null) {
+      throw ArgumentError('Use before or after, not both');
+    }
+    if (limit != null && (limit < 1 || limit > 100)) {
+      throw RangeError.range(limit, 1, 100, 'limit');
+    }
+    return _parse(
+      await _send(
+        'GET',
+        '/api/conversations/${_seg(conversationId)}/messages',
+        query: {
+          'before': ?before,
+          'after': ?after,
+          if (limit != null) 'limit': '$limit',
+        },
+      ),
+      MessagePage.fromJson,
+    );
+  }
+
+  /// Sends a message. Retrying with the same `clientId` returns the same
+  /// message. 403 if either person blocked the other.
+  Future<Message> sendMessage(
+    String conversationId,
+    SendMessageBody body,
+  ) async => _parse(
+    await _send(
+      'POST',
+      '/api/conversations/${_seg(conversationId)}/messages',
+      body: body.toJson(),
+    ),
+    (json) => Message.fromJson(readObject(json, 'message')),
+  );
+
+  /// Marks the conversation read up to now and returns the new `lastReadAt`.
+  Future<DateTime> markRead(String conversationId) async => _parse(
+    await _send('POST', '/api/conversations/${_seg(conversationId)}/read'),
+    (json) => readDateTime(json, 'lastReadAt'),
+  );
 
   void close() => _http.close();
 

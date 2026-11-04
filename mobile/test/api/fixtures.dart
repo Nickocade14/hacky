@@ -91,6 +91,39 @@ const connectionRequestJson = {
   'respondedAt': null,
 };
 
+const messageJson = {
+  'id': '6716a3f2c9e77b0012ab0401',
+  'conversationId': '6716a3f2c9e77b0012ab0301',
+  'senderId': '6716a3f2c9e77b0012ab0001',
+  'clientId': '3f1c2a5e-8b7d-4e6f-9a01-23456789abcd',
+  'body': 'Hey! Saw you do Flutter. Want to team up?',
+  'kind': 'text',
+  'createdAt': '2026-11-14T16:05:00.000Z',
+};
+
+const systemMessageJson = {
+  'id': '6716a3f2c9e77b0012ab0400',
+  'conversationId': '6716a3f2c9e77b0012ab0301',
+  'senderId': null,
+  'clientId': null,
+  'body': 'You are connected.',
+  'kind': 'system',
+  'createdAt': '2026-11-14T16:00:00.000Z',
+};
+
+const conversationSummaryJson = {
+  'id': '6716a3f2c9e77b0012ab0301',
+  'kind': 'dm',
+  'peer': personSummaryJson,
+  'team': null,
+  'helpRequest': null,
+  'lastMessage': messageJson,
+  'lastMessageAt': '2026-11-14T16:05:00.000Z',
+  'unreadCount': 1,
+  'peerLastReadAt': null,
+  'createdAt': '2026-11-14T16:00:00.000Z',
+};
+
 const eventInfoJson = {
   'slug': 'knighthacks-ix',
   'name': 'Knight Hacks IX',
