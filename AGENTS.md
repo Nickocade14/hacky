@@ -1,6 +1,6 @@
 # Hacky
 
-An AI chat that helps hackathon attendees find teammates and mentors. COP 4331C Large Project (UCF, Fall 2026). Team of 4 + PM. Graded on a 100-point rubric; the rules below come from the assignment, so breaking one costs points.
+An AI chat that helps hackathon attendees find teammates and mentors. COP 4331C Large Project (UCF, Fall 2026). Team of 3. Graded on a 100-point rubric; the rules below come from the assignment, so breaking one costs points.
 
 ## Assignment rules (never break these)
 
@@ -18,12 +18,12 @@ An AI chat that helps hackathon attendees find teammates and mentors. COP 4331C 
 
 | Folder | What | Owner |
 |---|---|---|
-| `server/src/models/`, search, matching, seed | MongoDB data layer | Backend · Data |
-| `server/src/` auth, middleware, email, `index.ts` | Express app, JWT, verification/reset | Backend · Auth |
-| `.github/workflows/`, deploy config | DigitalOcean droplet, Nginx, PM2, domain | Deploy |
-| `web/` | React + TypeScript (Vite) | Web |
-| `mobile/` | Flutter app | Mobile |
-| `docs/` | API contract, diagrams, Gantt | Whole team |
+| `server/src/models/`, search, matching, seed | MongoDB data layer | Mohammed (Backend · Data) |
+| `server/src/` auth, middleware, email, `index.ts` | Express app, JWT, verification/reset | Ethan (Backend · Auth) |
+| `.github/workflows/`, deploy config | DigitalOcean droplet, Nginx, PM2, domain | Nicolas (Deploy) |
+| `web/` | React + TypeScript (Vite) | Ethan (Web) |
+| `mobile/` | Flutter app | Nicolas (Mobile) |
+| `docs/` | API contract, diagrams, Gantt | Whole team (Nicolas is PM) |
 
 GitHub activity is graded per person (20 points). Only edit folders your person owns. If something in another folder needs to change, say what and who owns it instead of editing it.
 
@@ -45,3 +45,9 @@ GitHub activity is graded per person (20 points). Only edit folders your person 
 - Code depends on contracts (OpenAPI, models), not on another module's internals.
 - Each fact lives in one place (this file, the models, or the contract). Link instead of copying.
 - Secrets only in `.env` (local) or the droplet's environment.
+
+## Working rules for agents
+
+- Parallel agents each work in their own git worktree, never in a shared checkout.
+- One commit per logical step. Never squash.
+- Visual changes are run and shown to the owner before pushing.
