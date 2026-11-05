@@ -540,9 +540,12 @@ mixin FakeEndpoints {
 
   // ---------------------------------------------------------------- chat
 
-  /// Answers with the people whose skills match words in the message. The
-  /// contract doesn't define part shapes; the fake reads and writes AI SDK
-  /// text parts (`{type: text, text}`) and never sends cards.
+  /// Answers with the people whose skills match words in the message (only
+  /// mentors when it asks for a mentor), skipping people I blocked. The
+  /// contract doesn't define part shapes, so the fake uses the original
+  /// Hacky's (shared/contract.ts), which 12 Hacky chat reads: a text part
+  /// `{type: text, text}`, then a `search_people` tool part whose output has
+  /// one card per person. With no match it answers in text only.
   Future<ChatMessage> sendChat(String slug, ChatBody body) async {
     final world = await fakeWorld();
     fakeMembership(world, slug);
@@ -558,29 +561,95 @@ mixin FakeEndpoints {
     ].join(' ').toLowerCase();
     final words = text
         .split(RegExp(r'[^a-z0-9+#]+'))
-        .where((w) => w.length > 1);
+        .where((w) => w.length > 1)
+        .toList();
+    final mentorsOnly = words.any((w) => w.startsWith('mentor'));
     final matches = [
       for (final p in world.people.values)
-        if (p.membership!.intake.skills.any(
-          (s) => words.any((w) => s.toLowerCase().contains(w)),
-        ))
-          p,
-    ];
-    final reply = matches.isEmpty
-        ? 'I didn\'t find anyone for that yet. Try a skill, like "flutter" or '
-              '"python".'
-        : 'Here\'s who could help: '
-              '${matches.map((p) => '${p.name} (@${p.handle})').join(', ')}.';
+        if (!world.isBlocked(p.userId) &&
+            (!mentorsOnly || p.membership!.role == MemberRole.mentor))
+          (person: p, skills: _skillsMatching(p, words)),
+    ].where((m) => m.skills.isNotEmpty).take(10).toList();
 
+    final id = world.newId();
     final answer = ChatMessage(
-      id: 'fake-assistant-${world.newId()}',
+      id: 'fake-assistant-$id',
       role: ChatRole.assistant,
-      parts: [
-        {'type': 'text', 'text': reply},
-      ],
+      parts: matches.isEmpty
+          ? [
+              {
+                'type': 'text',
+                'text':
+                    'I didn\'t find anyone for that yet. Try a skill, like '
+                    '"flutter" or "python".',
+              },
+            ]
+          : [
+              {
+                'type': 'text',
+                'text': matches.length == 1
+                    ? 'Here\'s who could help. Tap the card to see their '
+                          'profile or connect.'
+                    : 'Here\'s who could help. Tap a card to see their '
+                          'profile or connect.',
+              },
+              {
+                'type': 'tool-search_people',
+                'toolCallId': 'fake-call-$id',
+                'state': 'output-available',
+                'input': {'query': text.trim()},
+                'output': {
+                  'status': 'matches',
+                  'kind': mentorsOnly ? 'mentor' : 'hacker',
+                  'cards': [
+                    for (final m in matches) _personCard(m.person, m.skills),
+                  ],
+                },
+              },
+            ],
     );
     world.chat.add(answer);
     return answer;
+  }
+
+  /// [person]'s skills that one of [words] names: a whole word of the skill
+  /// ("go", "ux"), or part of it for words of 3+ letters ("torch"), so
+  /// short words like "on" don't match "python".
+  static List<String> _skillsMatching(FakePerson person, List<String> words) {
+    bool names(String skill, String word) =>
+        skill.split(' ').contains(word) ||
+        (word.length >= 3 && skill.contains(word));
+    return [
+      for (final skill in person.membership!.intake.skills)
+        if (words.any((w) => names(skill.toLowerCase(), w))) skill,
+    ];
+  }
+
+  /// A `search_people` card: `person` for hackers, `mentor` for mentors.
+  static Map<String, dynamic> _personCard(
+    FakePerson person,
+    List<String> matched,
+  ) {
+    final m = person.membership!;
+    final mentor = m.role == MemberRole.mentor;
+    return {
+      'card': mentor ? 'mentor' : 'person',
+      'person': {
+        'userId': person.userId,
+        'handle': person.handle,
+        'name': person.name,
+        'hackyStyle': person.hackyStyle,
+        'photoUrl': person.photoUrl,
+        'role': m.role.name,
+      },
+      if (mentor) 'verified': m.verified,
+      'skills': m.intake.skills,
+      'evidence': {
+        'matchedSkills': matched,
+        if (mentor) 'availability': m.availability.name,
+      },
+      'reason': m.intake.summary ?? 'Knows ${matched.join(', ')}.',
+    };
   }
 
   Future<List<ChatMessage>> getChatHistory(String slug) async {
