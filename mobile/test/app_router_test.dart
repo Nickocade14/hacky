@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/app.dart';
 import 'package:mobile/routes.dart';
+import 'package:mobile/screens/chat_thread_screen.dart';
 import 'package:mobile/theme.dart';
 
 import 'support/screen_harness.dart';
@@ -86,7 +87,11 @@ void main() {
     await pumpLauncher(tester, api);
 
     await tapOn(tester, find.text('open chat'));
-    expect(find.text('Chat'), findsOneWidget);
-    expect(find.text('Screen 11 is on its way'), findsOneWidget);
+    final screen = tester.widget<ChatThreadScreen>(
+      find.byType(ChatThreadScreen),
+    );
+    expect(screen.eventSlug, 'knighthacks-ix');
+    expect(screen.conversationId, '6716a3f2c9e700000000010a');
+    expect(find.byType(BackButton), findsOneWidget);
   });
 }

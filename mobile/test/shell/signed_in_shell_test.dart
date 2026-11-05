@@ -5,6 +5,7 @@ import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/api/models/auth.dart';
 import 'package:mobile/auth/error_text.dart';
 import 'package:mobile/routes.dart';
+import 'package:mobile/screens/conversations_screen.dart';
 import 'package:mobile/shell/app_tab.dart';
 import 'package:mobile/shell/app_tab_bar.dart';
 import 'package:mobile/shell/signed_in_shell.dart';
@@ -69,7 +70,7 @@ void main() {
     expect(find.text('Screen 12 is on its way'), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.chats));
-    expect(find.text('Screen 10 is on its way'), findsOneWidget);
+    expect(find.byType(ConversationsScreen), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.me));
     expect(find.text('Screen 08 is on its way'), findsOneWidget);
@@ -88,7 +89,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Screen 10 is on its way'), findsOneWidget);
+    expect(find.byType(ConversationsScreen), findsOneWidget);
     expect(find.text('YOUR EVENT'), findsNothing);
   });
 
