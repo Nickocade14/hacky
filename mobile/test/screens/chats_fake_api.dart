@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:mobile/api/api_exception.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/api/fake/fake_world.dart';
@@ -37,7 +39,11 @@ class ChatsFakeApi extends FakeApiClient {
   /// Thrown by `sendMessage` while set.
   ApiException? sendError;
 
+  /// `sendMessage` waits for it while set, so the busy state can be seen.
+  Completer<void>? sendGate;
+
   final sent = <SendMessageBody>[];
+  int pageLoads = 0;
   final olderCursors = <String>[];
   int markReads = 0;
 
@@ -55,6 +61,7 @@ class ChatsFakeApi extends FakeApiClient {
     String? after,
     int? limit,
   }) async {
+    pageLoads++;
     if (before == null && after == null && openError != null) {
       throw openError!;
     }
@@ -77,6 +84,7 @@ class ChatsFakeApi extends FakeApiClient {
     SendMessageBody body,
   ) async {
     sent.add(body);
+    await sendGate?.future;
     final error = sendError;
     if (error != null) throw error;
     return super.sendMessage(conversationId, body);
