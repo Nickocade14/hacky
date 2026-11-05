@@ -143,7 +143,9 @@ mixin FakeEndpoints {
     final world = await fakeWorld();
     fakeMembership(world, slug);
     final person = world.byHandle(handle);
-    if (person == null || person.membership == null) {
+    if (person == null ||
+        person.membership == null ||
+        world.isBlocked(person.userId)) {
       throw fakeError(404, 'not_found', 'No one called @$handle here.');
     }
     return person.detail(world.relationTo(person.userId));
@@ -224,6 +226,7 @@ mixin FakeEndpoints {
     for (final person in world.people.values) {
       final m = person.membership;
       if (m == null || (role != null && m.role != role)) continue;
+      if (world.isBlocked(person.userId)) continue;
       final handle = person.handle.toLowerCase();
       final name = person.name.toLowerCase();
       final matched = [
@@ -274,7 +277,7 @@ mixin FakeEndpoints {
       throw fakeInvalid('intro', 'No links allowed');
     }
     final to = world.byId(body.toUserId);
-    if (to == null || to.membership == null) {
+    if (to == null || to.membership == null || world.isBlocked(to.userId)) {
       throw fakeError(404, 'not_found', 'That person isn\'t here.');
     }
     if (to.userId == me) {
@@ -354,6 +357,20 @@ mixin FakeEndpoints {
   Future<void> hideRequest(String requestId) async {
     final world = await fakeWorld();
     _incomingRequest(world, requestId).hiddenAt ??= world.now();
+  }
+
+  /// Blocking twice is fine. After it, they're left out of search and
+  /// Hacky's suggestions, their profile 404s and our chat 403s on send. The
+  /// conversation stays in the list, as the contract doesn't hide it.
+  Future<void> blockUser(BlockBody body) async {
+    final world = await fakeWorld();
+    if (body.userId.isEmpty) {
+      throw fakeInvalid('userId', 'Required');
+    }
+    if (body.userId == world.me.userId) {
+      throw fakeInvalid('userId', 'You can\'t block yourself');
+    }
+    world.blockedIds.add(body.userId);
   }
 
   FakeRequest _incomingRequest(FakeWorld world, String requestId) {
@@ -437,6 +454,10 @@ mixin FakeEndpoints {
     if (body.body.trim().isEmpty || body.body.length > 4000) {
       throw fakeInvalid('body', 'Must be 1 to 4000 characters');
     }
+    final peer = world.peerIn(conversation);
+    if (peer != null && world.isBlocked(peer)) {
+      throw fakeError(403, 'forbidden', 'You can\'t message this person.');
+    }
     // A retry with the same clientId returns the same message.
     final retry = conversation.messages
         .where((m) => m.senderId == me && m.clientId == body.clientId)
@@ -454,6 +475,24 @@ mixin FakeEndpoints {
     conversation.messages.add(message);
     conversation.lastReadAt[me] = message.createdAt;
     return message;
+  }
+
+  /// Unsends my message for everyone: it's removed, so it leaves the pages
+  /// and the conversation's last message. 404 when it's already gone.
+  Future<void> deleteMessage(String conversationId, String messageId) async {
+    final world = await fakeWorld();
+    final conversation = _conversation(world, conversationId);
+    final message = conversation.messages
+        .where((m) => m.id == messageId)
+        .firstOrNull;
+    if (message == null) {
+      throw fakeError(404, 'not_found', 'That message is already gone.');
+    }
+    if (message.kind == MessageKind.system ||
+        message.senderId != world.me.userId) {
+      throw fakeError(403, 'forbidden', 'You can only unsend your messages.');
+    }
+    conversation.messages.remove(message);
   }
 
   Future<DateTime> markRead(String conversationId) async {
@@ -475,9 +514,7 @@ mixin FakeEndpoints {
 
   ConversationSummary _summary(FakeWorld world, FakeConversation c) {
     final me = world.me.userId;
-    final peerId = c.kind == ConversationKind.team
-        ? null
-        : c.memberIds.firstWhere((id) => id != me);
+    final peerId = world.peerIn(c);
     final team = c.teamId == null ? null : world.teams[c.teamId];
     final last = c.messages.lastOrNull;
     final readAt = c.lastReadAt[me];
