@@ -288,8 +288,10 @@ class CardActionsRow extends StatelessWidget {
       children: [
         if (sent != null)
           RequestStatusLine(result: sent, to: to, actions: actions),
-        Row(
+        // Wraps on narrow phones instead of overflowing.
+        Wrap(
           spacing: 10,
+          runSpacing: 8,
           children: [
             OutlinedButton(onPressed: onView, child: Text(viewLabel)),
             if (sent == null && canConnect)
