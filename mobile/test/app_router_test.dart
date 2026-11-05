@@ -64,7 +64,7 @@ void main() {
 
     await tapOn(tester, find.text('open person'));
     expect(find.text('Profile'), findsOneWidget);
-    expect(find.text('Screen 07 is on its way'), findsOneWidget);
+    expect(find.text('Maya Patel'), findsOneWidget);
     expect(find.textContaining('@maya_ml'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
 
