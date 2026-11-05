@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/api/api_exception.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
@@ -121,10 +122,25 @@ void main() {
   });
 
   testWidgets('a link tap copies it', (tester) async {
+    Object? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') copied = call.arguments;
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
     await openProfile(tester, ScriptedProfileApi(), 'maya_ml');
 
     await tapOn(tester, find.byKey(const Key('person-link-github')));
 
+    expect(copied, {'text': 'https://github.com/maya-ml'});
     expect(
       find.text('GitHub link copied: https://github.com/maya-ml'),
       findsOneWidget,

@@ -2,6 +2,8 @@
 // to bottom: who they are with the action button, then About, Skills,
 // Wants to learn, Track · Idea and Links.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -146,9 +148,9 @@ class ProfileLinksRow extends StatelessWidget {
 
   static bool hasAny(ProfileLinks links) => entries(links).isNotEmpty;
 
-  Future<void> _copy(BuildContext context, String label, String url) async {
-    await Clipboard.setData(ClipboardData(text: url));
-    if (!context.mounted) return;
+  /// Says it's copied right away; the clipboard write needs no answer.
+  void _copy(BuildContext context, String label, String url) {
+    unawaited(Clipboard.setData(ClipboardData(text: url)));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$label link copied: $url')),
     );
