@@ -120,6 +120,7 @@ class MessageBubble extends StatelessWidget {
     required this.mine,
     this.faded = false,
     this.below,
+    this.onLongPress,
   });
 
   final String text;
@@ -130,6 +131,9 @@ class MessageBubble extends StatelessWidget {
   /// Not saved yet (sending or failed).
   final bool faded;
   final Widget? below;
+
+  /// Long-press on my saved message: Unsend.
+  final VoidCallback? onLongPress;
 
   static const _radius = Radius.circular(20);
   static const _tail = Radius.circular(6);
@@ -168,9 +172,47 @@ class MessageBubble extends StatelessWidget {
               : CrossAxisAlignment.start,
           spacing: 4,
           children: [
-            Opacity(opacity: faded ? 0.65 : 1, child: bubble),
+            GestureDetector(
+              onLongPress: onLongPress,
+              child: Opacity(opacity: faded ? 0.65 : 1, child: bubble),
+            ),
             ?below,
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// What a long-press on my message offers: "Unsend for everyone". Closes
+/// with true when it was picked.
+class UnsendSheet extends StatelessWidget {
+  const UnsendSheet({super.key});
+
+  static const label = 'Unsend for everyone';
+
+  static Future<bool> show(BuildContext context) async {
+    final picked = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => const UnsendSheet(),
+    );
+    return picked ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: ListTile(
+          leading: const Icon(Icons.undo, color: AppColors.danger),
+          title: const Text(
+            label,
+            style: TextStyle(color: AppColors.danger, fontWeight: _bold),
+          ),
+          subtitle: const Text('It’s removed for everyone in this chat.'),
+          onTap: () => Navigator.of(context).pop(true),
         ),
       ),
     );
