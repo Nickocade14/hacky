@@ -177,6 +177,41 @@ void main() {
     });
   });
 
+  group('deleteMessage', () {
+    const messageId = '6716a3f2c9e77b0012ab0401';
+
+    test('DELETEs the message', () async {
+      api.respond({'ok': true});
+
+      await api.client.deleteMessage(conversationId, messageId);
+
+      expect(
+        api.lastCall,
+        'DELETE /api/conversations/$conversationId/messages/$messageId',
+      );
+      expect(api.lastAuth, 'Bearer $testToken');
+      expect(api.lastBody, isNull);
+    });
+
+    test('throws forbidden for someone else\'s message', () async {
+      api.fail(403, 'forbidden');
+
+      await expectLater(
+        api.client.deleteMessage(conversationId, messageId),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'forbidden')),
+      );
+    });
+
+    test('throws not_found when it is already gone', () async {
+      api.fail(404, 'not_found');
+
+      await expectLater(
+        api.client.deleteMessage(conversationId, messageId),
+        throwsA(isA<ApiException>().having((e) => e.statusCode, 'status', 404)),
+      );
+    });
+  });
+
   group('markRead', () {
     test('POSTs to the read route and returns lastReadAt', () async {
       api.respond({'lastReadAt': '2026-11-14T16:20:00.000Z'});
