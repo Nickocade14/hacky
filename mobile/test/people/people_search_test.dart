@@ -128,6 +128,7 @@ void main() {
     search.setText('rea');
     final loading = search.state as SearchLoading;
     expect(loading.previous.single.handle, 'leo_builds');
+    await tester.pump(_wait);
   });
 
   testWidgets('the role filter asks right away with the same text', (
