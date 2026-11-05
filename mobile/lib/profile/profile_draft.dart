@@ -63,14 +63,11 @@ class ProfileDraft {
   final Map<String, dynamic> hackyStyle;
 
   Map<ProfileField, String> validate() => {
-    if (ProfileRules.name(name) case final problem?) ProfileField.name: problem,
-    if (ProfileRules.bio(bio) case final problem?) ProfileField.bio: problem,
-    if (ProfileRules.link(github) case final problem?)
-      ProfileField.github: problem,
-    if (ProfileRules.link(linkedin) case final problem?)
-      ProfileField.linkedin: problem,
-    if (ProfileRules.link(website) case final problem?)
-      ProfileField.website: problem,
+    ProfileField.name: ?ProfileRules.name(name),
+    ProfileField.bio: ?ProfileRules.bio(bio),
+    ProfileField.github: ?ProfileRules.link(github),
+    ProfileField.linkedin: ?ProfileRules.link(linkedin),
+    ProfileField.website: ?ProfileRules.link(website),
   };
 
   /// The PATCH body for what differs from [saved], or null when nothing does.
@@ -142,15 +139,11 @@ class IntakeDraft {
   final bool looking;
 
   Map<ProfileField, String> validate() => {
-    if (ProfileRules.tags(skills) case final problem?)
-      ProfileField.skills: problem,
-    if (ProfileRules.tags(skillsWanted) case final problem?)
-      ProfileField.skillsWanted: problem,
-    if (ProfileRules.tags(interests) case final problem?)
-      ProfileField.interests: problem,
-    if (ProfileRules.track(track) case final problem?)
-      ProfileField.track: problem,
-    if (ProfileRules.idea(idea) case final problem?) ProfileField.idea: problem,
+    ProfileField.skills: ?ProfileRules.tags(skills),
+    ProfileField.skillsWanted: ?ProfileRules.tags(skillsWanted),
+    ProfileField.interests: ?ProfileRules.tags(interests),
+    ProfileField.track: ?ProfileRules.track(track),
+    ProfileField.idea: ?ProfileRules.idea(idea),
   };
 
   /// The PATCH body for what differs from [saved], or null when nothing does.

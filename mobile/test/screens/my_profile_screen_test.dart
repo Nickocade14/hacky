@@ -21,8 +21,7 @@ const _network = ApiException(
 
 /// A signed-in fake whose calls can be made to fail.
 class FlakyApi extends FakeApiClient {
-  FlakyApi({Duration delay = Duration.zero})
-    : super(tokenStore: _signedIn(), delay: delay);
+  FlakyApi({super.delay = Duration.zero}) : super(tokenStore: _signedIn());
 
   static MemoryTokenStore _signedIn() =>
       MemoryTokenStore()..token = 'fake-jwt:${FakeApiClient.demoEmail}';
