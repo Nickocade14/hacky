@@ -66,7 +66,7 @@ void main() {
     expect(find.text('Find your people'), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.hacky));
-    expect(find.text('Screen 12 is on its way'), findsOneWidget);
+    expect(find.text('Hi Demo!'), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.chats));
     expect(find.text('Screen 10 is on its way'), findsOneWidget);
@@ -98,7 +98,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tapOn(tester, find.text('Ask Hacky'));
-    expect(find.text('Screen 12 is on its way'), findsOneWidget);
+    expect(find.text('Hi Demo!'), findsOneWidget);
   });
 
   testWidgets('Chats opens 09 Requests for the current event', (tester) async {
