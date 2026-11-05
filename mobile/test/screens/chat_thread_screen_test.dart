@@ -49,8 +49,11 @@ Future<({ChatsFakeApi api, String id, List<Visit> visits})> openPriya(
 MessageBubble bubbleOf(WidgetTester tester, String text) =>
     tester.widget<MessageBubble>(find.widgetWithText(MessageBubble, text));
 
-Future<void> write(WidgetTester tester, String text) =>
-    tester.enterText(find.byKey(ChatComposer.fieldKey), text);
+/// Types into the composer and rebuilds, so Send turns on.
+Future<void> write(WidgetTester tester, String text) async {
+  await tester.enterText(find.byKey(ChatComposer.fieldKey), text);
+  await tester.pump();
+}
 
 IconButton sendButton(WidgetTester tester) =>
     tester.widget<IconButton>(find.byKey(ChatComposer.sendKey));
