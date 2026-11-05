@@ -63,7 +63,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tapOn(tester, tabOf(AppTab.people));
-    expect(find.text('Screen 06 is on its way'), findsOneWidget);
+    expect(find.text('Find your people'), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.hacky));
     expect(find.text('Screen 12 is on its way'), findsOneWidget);
@@ -182,6 +182,6 @@ void main() {
 
     await tapOn(tester, tabOf(AppTab.people));
     expect(find.text('Join an event first'), findsNothing);
-    expect(find.text('Screen 06 is on its way'), findsOneWidget);
+    expect(find.text('Find your people'), findsOneWidget);
   });
 }
