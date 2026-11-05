@@ -23,6 +23,8 @@ class HomeHeader extends StatelessWidget {
   final Me me;
   final VoidCallback onOpenMe;
 
+  static const avatarKey = Key('home-avatar');
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -34,6 +36,7 @@ class HomeHeader extends StatelessWidget {
           button: true,
           label: 'My profile',
           child: InkWell(
+            key: avatarKey,
             customBorder: const CircleBorder(),
             onTap: onOpenMe,
             child: PersonAvatar(name: me.profile.name, size: 40),
