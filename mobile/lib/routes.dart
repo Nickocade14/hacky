@@ -10,9 +10,6 @@ abstract final class Routes {
   static const checkEmail = '/check-email';
   static const forgotPassword = '/forgot-password';
 
-  /// Argument: the signed-in user (`Me?`). Loaded from the API when null.
-  static const account = '/account';
-
   /// The signed-in shell with the tab bar (05 Home first).
   /// Argument: the signed-in user (`Me?`). Loaded from the API when null.
   static const home = '/home';
