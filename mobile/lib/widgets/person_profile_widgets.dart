@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../api/models/auth.dart';
+import '../api/models/events.dart';
 import '../api/models/people.dart';
 import '../people/person_labels.dart';
 import '../theme.dart';
