@@ -282,4 +282,39 @@ void main() {
       await expectLater(fake.hideRequest(mine.request.id), apiError(403));
     });
   });
+
+  group('blockUser', () {
+    test('hides them from search, their profile, requests and teams', () async {
+      await fake.blockUser(BlockBody(userId: idOf('leo_builds')));
+
+      final found = await fake.search(event: slug, q: 'react');
+      expect(found.results.map((r) => r.handle), ['jordan_ux']);
+      await expectLater(fake.getPerson(slug, 'leo_builds'), apiError(404));
+      await expectLater(
+        fake.sendRequest(
+          slug,
+          SendRequestBody(toUserId: idOf('leo_builds'), intro: 'Hi'),
+        ),
+        apiError(404),
+      );
+      final team = await fake.getTeam(slug, world.teams.keys.single);
+      expect(team.members.map((m) => m.handle), ['maya_ml']);
+    });
+
+    test('blocking twice is fine', () async {
+      final leo = BlockBody(userId: idOf('leo_builds'));
+
+      await fake.blockUser(leo);
+      await fake.blockUser(leo);
+
+      expect(world.blockedIds, {idOf('leo_builds')});
+    });
+
+    test('can\'t block myself', () async {
+      await expectLater(
+        fake.blockUser(BlockBody(userId: world.me.userId)),
+        apiError(400),
+      );
+    });
+  });
 }

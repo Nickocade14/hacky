@@ -134,6 +134,57 @@ void main() {
     });
   });
 
+  group('deleteMessage', () {
+    Message mine() => world.conversations[dmId]!.messages.firstWhere(
+      (m) => m.senderId == world.me.userId,
+    );
+
+    test('removes my message from the pages and the list', () async {
+      final sent = await fake.sendMessage(
+        dmId,
+        const SendMessageBody(clientId: 'oops', body: 'Wrong chat'),
+      );
+
+      await fake.deleteMessage(dmId, sent.id);
+
+      final page = await fake.listMessages(dmId);
+      expect(page.messages.map((m) => m.id), isNot(contains(sent.id)));
+      expect(page.messages, hasLength(3));
+      final dm = (await fake.listConversations(slug)).single;
+      expect(dm.lastMessage!.body, contains('food tables'));
+    });
+
+    test('404s when it is already gone', () async {
+      final id = mine().id;
+      await fake.deleteMessage(dmId, id);
+
+      await expectLater(fake.deleteMessage(dmId, id), apiError(404));
+    });
+
+    test('403s for their messages and system messages', () async {
+      final messages = world.conversations[dmId]!.messages;
+      final system = messages.firstWhere((m) => m.kind == MessageKind.system);
+      final theirs = messages.firstWhere(
+        (m) => m.senderId != null && m.senderId != world.me.userId,
+      );
+
+      await expectLater(fake.deleteMessage(dmId, system.id), apiError(403));
+      await expectLater(fake.deleteMessage(dmId, theirs.id), apiError(403));
+      expect(messages, hasLength(3));
+    });
+  });
+
+  test('after a block the DM stays listed but sending 403s', () async {
+    final priya = world.byHandle('priya_codes')!.userId;
+    await fake.blockUser(BlockBody(userId: priya));
+
+    expect((await fake.listConversations(slug)).single.id, dmId);
+    await expectLater(
+      fake.sendMessage(dmId, const SendMessageBody(clientId: 'b', body: 'Hi')),
+      apiError(403),
+    );
+  });
+
   group('markRead', () {
     test('clears the unread count', () async {
       final readAt = await fake.markRead(dmId);
