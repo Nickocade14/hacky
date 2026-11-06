@@ -41,7 +41,7 @@ void main() {
     expect(find.text('Enter your password.'), findsOneWidget);
   });
 
-  testWidgets('logs in with a normalized email and opens the account', (
+  testWidgets('logs in with a normalized email and opens Home', (
     tester,
   ) async {
     final (:api, :store) = fakeApi();
@@ -50,7 +50,7 @@ void main() {
     await fillLogin(tester, '  DEMO@hacky.dev ', FakeApiClient.testPassword);
     await tapOn(tester, logInButton);
 
-    expect(visits.single.route, Routes.account);
+    expect(visits.single.route, Routes.home);
     expect((visits.single.arguments as Me).profile.name, 'Demo Hacker');
     expect(store.token, isNotNull);
   });
