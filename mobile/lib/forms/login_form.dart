@@ -47,7 +47,7 @@ class _LoginFormState extends State<LoginForm> with SubmitAction<LoginForm> {
       final result = await widget.api.login(body);
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
-        Routes.account,
+        Routes.home,
         (_) => false,
         arguments: result.me,
       );
