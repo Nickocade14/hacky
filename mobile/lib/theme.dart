@@ -74,6 +74,31 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.white,
+        surfaceTintColor: AppColors.white,
+        indicatorColor: AppColors.hover,
+        elevation: 0,
+        height: 68,
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontFamily: fontFamily,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.action
+                : AppColors.muted,
+          ),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            size: 22,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.action
+                : AppColors.muted,
+          ),
+        ),
+      ),
       cardTheme: CardThemeData(
         color: AppColors.white,
         shadowColor: AppColors.shadow,

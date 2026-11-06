@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/app.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
+import 'package:mobile/shell/app_tab.dart';
+import 'package:mobile/shell/app_tab_bar.dart';
 import 'package:mobile/theme.dart';
 
 import 'support/screen_harness.dart';
@@ -35,7 +37,8 @@ void main() {
     store.token = 'fake-jwt:${FakeApiClient.demoEmail}';
     await pumpApp(tester, api);
 
-    expect(find.text('You’re in, Demo.'), findsOneWidget);
+    expect(find.text('Knight Hacks IX'), findsOneWidget);
+    expect(find.byKey(AppTabBar.keyOf(AppTab.home)), findsOneWidget);
   });
 
   testWidgets('drops a saved token the server rejects', (tester) async {
@@ -47,7 +50,7 @@ void main() {
     expect(store.token, isNull);
   });
 
-  testWidgets('register, resend, log in and sign out end to end', (
+  testWidgets('register, resend, log in, open Me and sign out end to end', (
     tester,
   ) async {
     final (:api, :store) = fakeApi();
@@ -83,9 +86,11 @@ void main() {
     );
     await tapOn(tester, find.widgetWithText(FilledButton, 'Log in'));
 
-    expect(find.text('You’re in, Ethan.'), findsOneWidget);
+    expect(find.text('Knight Hacks IX'), findsOneWidget);
     expect(store.token, isNotNull);
 
+    await tapOn(tester, find.byKey(AppTabBar.keyOf(AppTab.me)));
+    expect(find.text('Ethan Zeng\n@ethan_z'), findsOneWidget);
     await tapOn(tester, find.text('Sign out'));
     expect(find.text('Welcome back.'), findsOneWidget);
     expect(store.token, isNull);
