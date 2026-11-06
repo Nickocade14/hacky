@@ -235,6 +235,10 @@ class FakeWorld {
   final conversations = <String, FakeConversation>{};
   final chat = <ChatMessage>[];
 
+  /// The people I blocked. A block works both ways, but in the fake only I
+  /// block anyone.
+  final blockedIds = <String>{};
+
   int _nextId = 0x100;
 
   /// A fresh 24-hex-character id, like a MongoDB ObjectId. Ids increase, so
@@ -271,6 +275,15 @@ class FakeWorld {
       : people.values.where((p) => p.handle == handle).firstOrNull;
 
   FakePerson? byId(String id) => id == me.userId ? me : people[id];
+
+  /// One of us blocked the other: we're hidden from each other.
+  bool isBlocked(String userId) => blockedIds.contains(userId);
+
+  /// The other person in a DM or mentor chat; null in a team chat.
+  String? peerIn(FakeConversation conversation) =>
+      conversation.kind == ConversationKind.team
+      ? null
+      : conversation.memberIds.where((id) => id != me.userId).firstOrNull;
 
   /// Where I stand with [userId], from our personal (non-team) requests.
   Relation relationTo(String userId) {
@@ -367,7 +380,11 @@ class FakeWorld {
     size: team.memberIds.length,
     maxSize: team.maxSize,
     owner: byId(team.ownerId)!.summary,
-    members: [for (final id in team.memberIds) byId(id)!.summary],
+    // Lead first. Blocked people are left out.
+    members: [
+      for (final id in team.memberIds)
+        if (!isBlocked(id)) byId(id)!.summary,
+    ],
   );
 
   FakeTeam? teamOf(String userId) =>

@@ -208,6 +208,31 @@ void main() {
     });
   });
 
+  group('blockUser', () {
+    test('POSTs the userId to /api/blocks', () async {
+      api.respond({'ok': true});
+
+      await api.client.blockUser(
+        const BlockBody(userId: '6716a3f2c9e77b0012ab0001'),
+      );
+
+      expect(api.lastCall, 'POST /api/blocks');
+      expect(api.lastAuth, 'Bearer $testToken');
+      expect(api.lastBody, {'userId': '6716a3f2c9e77b0012ab0001'});
+    });
+
+    test('throws invalid_input for a bad userId', () async {
+      api.fail(400, 'invalid_input');
+
+      await expectLater(
+        api.client.blockUser(const BlockBody(userId: 'nope')),
+        throwsA(
+          isA<ApiException>().having((e) => e.code, 'code', 'invalid_input'),
+        ),
+      );
+    });
+  });
+
   test('hiddenAt is read when present', () {
     final request = ConnectionRequest.fromJson({
       ...connectionRequestJson,

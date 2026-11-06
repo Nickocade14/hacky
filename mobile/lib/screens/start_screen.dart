@@ -5,8 +5,9 @@ import '../routes.dart';
 import '../theme.dart';
 
 /// Shown for a moment at launch: restores the session from secure storage.
-/// With a saved token it opens the account, which checks the token with
-/// `GET /api/me` and falls back to log in on a 401. Otherwise it opens log in.
+/// With a saved token it opens the signed-in shell, which checks the token
+/// with `GET /api/me` and falls back to log in on a 401. Otherwise it opens
+/// log in.
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key, required this.api});
 
@@ -33,7 +34,7 @@ class _StartScreenState extends State<StartScreen> {
     }
     if (!mounted) return;
     Navigator.of(context)
-        .pushReplacementNamed(loggedIn ? Routes.account : Routes.login);
+        .pushReplacementNamed(loggedIn ? Routes.home : Routes.login);
   }
 
   @override

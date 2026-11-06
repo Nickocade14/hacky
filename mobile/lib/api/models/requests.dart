@@ -102,3 +102,13 @@ class RequestResult {
     request: ConnectionRequest.fromJson(readObject(json, 'request')),
   );
 }
+
+/// The body of `POST /api/blocks`: who to block. The block applies in every
+/// event and in both directions.
+class BlockBody {
+  const BlockBody({required this.userId});
+
+  final String userId;
+
+  Map<String, dynamic> toJson() => {'userId': userId};
+}
