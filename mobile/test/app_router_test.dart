@@ -79,7 +79,7 @@ void main() {
 
     await tapOn(tester, find.text('open requests'));
     expect(find.text('Requests'), findsOneWidget);
-    expect(find.text('Screen 09 is on its way'), findsOneWidget);
+    expect(find.text('Incoming (1)'), findsOneWidget);
   });
 
   testWidgets('opens 11 Chat thread', (tester) async {
