@@ -160,7 +160,7 @@ test("resend-verification and forgot-password always answer 200", async () => {
   }
   assert.equal(outbox.length, 0);
 
-  await call("POST", "/api/auth/register", { name: "Bo", handle: "bo_dev", email: "bo@example.com", password: "password-1" });
+  assert.equal((await call("POST", "/api/auth/register", { name: "Bo", handle: "bo_dev", email: "bo@example.com", password: "password-1" })).status, 201);
   const first = tokenFromMail("/verify");
   assert.equal((await call("POST", "/api/auth/resend-verification", { email: "bo@example.com" })).status, 200);
   const second = tokenFromMail("/verify");
@@ -176,7 +176,8 @@ test("resend-verification and forgot-password always answer 200", async () => {
 });
 
 test("forgot and reset password", async () => {
-  await call("POST", "/api/auth/register", { name: "Cy", handle: "cy", email: "cy@example.com", password: "old-password" });
+  const registered = await call("POST", "/api/auth/register", { name: "Cy", handle: "cy_dev", email: "cy@example.com", password: "old-password" });
+  assert.equal(registered.status, 201);
   outbox.length = 0;
   assert.equal((await call("POST", "/api/auth/forgot-password", { email: "cy@example.com" })).status, 200);
   const token = tokenFromMail("/reset");
