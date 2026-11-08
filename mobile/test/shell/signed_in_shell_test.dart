@@ -72,7 +72,7 @@ void main() {
     expect(find.text('Screen 10 is on its way'), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.me));
-    expect(find.text('Screen 08 is on its way'), findsOneWidget);
+    expect(find.text('Change Hacky style'), findsOneWidget);
     expect(find.text('Demo Hacker\n@demo_hacker'), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.home));
