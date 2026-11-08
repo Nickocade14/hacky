@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { Router } from "express";
 import mongoose, { Types } from "mongoose";
 import { z } from "zod";
@@ -7,10 +8,20 @@ import { HttpError } from "../errors.js";
 import { consumeAuthToken, issueAuthToken } from "../models/AuthToken.js";
 import { ProfileModel } from "../models/Profile.js";
 import { UserModel } from "../models/User.js";
+import { buildMe } from "../me.js";
 import { hashPassword, registerBodySchema } from "../validation/auth.js";
+import { signToken } from "./jwt.js";
 
 const tokenBodySchema = z.object({ token: z.string().min(1).max(200) });
 const emailBodySchema = z.object({ email: z.email().max(254).transform((value) => value.toLowerCase()) });
+
+const loginBodySchema = z.object({
+  email: z.email().max(254).transform((value) => value.toLowerCase()),
+  password: z.string().min(1).max(200),
+});
+
+// bcrypt hash of a random string nobody knows (cost 12, like real hashes).
+const DUMMY_HASH = "$2b$12$gBuKWijY0GDua/9hgQY.LueT42I0MOv4MNHhaO2838pT4ARoWqj/6";
 
 const ok = { ok: true } as const;
 
@@ -64,6 +75,19 @@ export function createAuthRouter({ mailer = createSmtpMailer() }: { mailer?: Mai
       await sendQuietly(mailer, verifyEmailMail(email, await profileName(user._id), token));
     }
     res.json(ok);
+  });
+
+  router.post("/login", async (req, res) => {
+    const { email, password } = loginBodySchema.parse(req.body);
+    const user = await UserModel.findOne({ email }).select("+passwordHash emailVerified").lean();
+    // Compare against a dummy hash when the email is unknown, so both cases take as long.
+    const matches = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+    if (!user || !matches) throw new HttpError(401, "invalid_credentials", "Wrong email or password.");
+    if (!user.emailVerified) {
+      throw new HttpError(403, "email_not_verified", "Verify your email before logging in. Check your inbox for the link.");
+    }
+    const { token, expiresAt } = signToken(user._id);
+    res.json({ token, expiresAt, me: await buildMe(user._id) });
   });
 
   return router;
