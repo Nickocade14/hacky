@@ -3,13 +3,13 @@ import { Router } from "express";
 import mongoose, { Types } from "mongoose";
 import { z } from "zod";
 import { createSmtpMailer, type Mail, type Mailer } from "../email/mailer.js";
-import { VERIFY_TTL_MINUTES, verifyEmailMail } from "../email/templates.js";
+import { RESET_TTL_MINUTES, VERIFY_TTL_MINUTES, resetPasswordMail, verifyEmailMail } from "../email/templates.js";
 import { HttpError } from "../errors.js";
 import { consumeAuthToken, issueAuthToken } from "../models/AuthToken.js";
 import { ProfileModel } from "../models/Profile.js";
 import { UserModel } from "../models/User.js";
 import { buildMe } from "../me.js";
-import { hashPassword, registerBodySchema } from "../validation/auth.js";
+import { hashPassword, registerBodySchema, resetPasswordBodySchema } from "../validation/auth.js";
 import { signToken } from "./jwt.js";
 
 const tokenBodySchema = z.object({ token: z.string().min(1).max(200) });
@@ -88,6 +88,29 @@ export function createAuthRouter({ mailer = createSmtpMailer() }: { mailer?: Mai
     }
     const { token, expiresAt } = signToken(user._id);
     res.json({ token, expiresAt, me: await buildMe(user._id) });
+  });
+
+  // Always 200, so it doesn't reveal which emails have accounts.
+  router.post("/forgot-password", async (req, res) => {
+    const { email } = emailBodySchema.parse(req.body);
+    const user = await UserModel.findOne({ email }).select("_id").lean();
+    if (user) {
+      const token = await issueAuthToken(user._id, "reset-password", RESET_TTL_MINUTES);
+      await sendQuietly(mailer, resetPasswordMail(email, await profileName(user._id), token));
+    }
+    res.json(ok);
+  });
+
+  router.post("/reset-password", async (req, res) => {
+    const { token, password } = resetPasswordBodySchema.parse(req.body);
+    const userId = await consumeAuthToken(token, "reset-password");
+    if (!userId) throw new HttpError(400, "invalid_token", "This link is invalid or has expired. Request a new one.");
+    // Opening the emailed link also proves the user owns the address.
+    await UserModel.updateOne(
+      { _id: userId },
+      { $set: { passwordHash: await hashPassword(password), emailVerified: true } },
+    );
+    res.json(ok);
   });
 
   return router;
