@@ -1,10 +1,17 @@
 import { Router } from "express";
+import { Types } from "mongoose";
 import { z } from "zod";
+import { HttpError } from "../errors.js";
+import { ConnectionRequestModel } from "../models/ConnectionRequest.js";
+import { ConversationModel } from "../models/Conversation.js";
+import { ProfileModel } from "../models/Profile.js";
 import { EventModel } from "../models/Event.js";
 import { MembershipModel } from "../models/Membership.js";
 import { AVAILABILITY, EXPERIENCE, HACK_GOALS, MOTIVATIONS } from "../models/enums.js";
-import { viewerId } from "../me.js";
-import { findEventOr404, requireMembership, toEventInfo, toEventMe } from "./access.js";
+import { toPublicProfile, viewerId } from "../me.js";
+import {
+  blockedWith, findEventOr404, requireMembership, toEventInfo, toEventMe, toIntake, toMembership,
+} from "./access.js";
 
 const tag = z.string().trim().min(1).max(40);
 const tags = z.array(tag).max(30).transform((list) => [...new Set(list)]);
@@ -29,6 +36,28 @@ export const updateEventMeSchema = z.object({
 // Enough for Hacky to match someone: what they know, how much, and why they're here.
 const isComplete = (m: { skills?: string[] | null; experience?: string | null; goal?: string | null }) =>
   (m.skills?.length ?? 0) > 0 && Boolean(m.experience) && Boolean(m.goal);
+
+// Relation in docs/openapi.yaml: where the viewer stands with this person
+// (personal requests only; team requests don't change it).
+export async function relationWith(event: Types.ObjectId, viewer: Types.ObjectId, other: Types.ObjectId) {
+  const [low, high] = viewer.toString() < other.toString() ? [viewer, other] : [other, viewer];
+  const [requests, dm] = await Promise.all([
+    ConnectionRequestModel.find({
+      event,
+      team: null,
+      $or: [{ from: viewer, to: other }, { from: other, to: viewer }],
+    }).select("_id from status").lean(),
+    ConversationModel.findOne({ event, kind: "dm", dmUserLow: low, dmUserHigh: high }).select("_id").lean(),
+  ]);
+  const conversationId = dm?._id.toString() ?? null;
+  const accepted = requests.find((r) => r.status === "accepted");
+  if (accepted) return { state: "accepted", requestId: accepted._id.toString(), conversationId };
+  const outgoing = requests.find((r) => r.status === "pending" && r.from.equals(viewer));
+  if (outgoing) return { state: "outgoing", requestId: outgoing._id.toString(), conversationId };
+  const incoming = requests.find((r) => r.status === "pending" && r.from.equals(other));
+  if (incoming) return { state: "incoming", requestId: incoming._id.toString(), conversationId };
+  return { state: "none", requestId: null, conversationId };
+}
 
 // Mounted at /api/events after requireAuth.
 export function createEventsRouter(): Router {
@@ -86,6 +115,27 @@ export function createEventsRouter(): Router {
       { new: true },
     ).lean();
     res.json(toEventMe(updated!));
+  });
+
+  // PersonDetail. 404 if they aren't in the event or either one blocked the other.
+  router.get("/:slug/people/:handle", async (req, res) => {
+    const viewer = viewerId(res.locals);
+    const handle = z.string().toLowerCase().regex(/^[a-z0-9_]{3,30}$/).parse(req.params.handle);
+    const { event } = await requireMembership(req.params.slug, viewer);
+    const notFound = new HttpError(404, "not_found", "This person isn't at this event.");
+    const profile = await ProfileModel.findOne({ handle }).lean();
+    if (!profile) throw notFound;
+    const blocked = await blockedWith(viewer);
+    if (blocked.some((id) => id.equals(profile._id))) throw notFound;
+    const membership = await MembershipModel.findOne({ event: event._id, user: profile._id }).lean();
+    if (!membership) throw notFound;
+    const { complete: _complete, wantsExperienced: _wants, ...intake } = toIntake(membership);
+    res.json({
+      ...toPublicProfile(profile),
+      ...toMembership(membership),
+      ...intake,
+      relation: await relationWith(event._id, viewer, profile._id),
+    });
   });
 
   return router;
