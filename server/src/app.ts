@@ -4,6 +4,8 @@ import { requireAuth } from "./auth/jwt.js";
 import { createAuthRouter } from "./auth/routes.js";
 import type { Mailer } from "./email/mailer.js";
 import { errorHandler } from "./errors.js";
+import { createEventsRouter } from "./events/routes.js";
+import { createTeamsRouter } from "./events/teams.js";
 import { createMeRouter } from "./me.js";
 import { searchHandler } from "./search.js";
 
@@ -25,6 +27,7 @@ export function createApp({ mailer }: AppOptions = {}) {
   // Everything below needs a JWT (Authorization: Bearer <token>).
   app.use("/api/me", requireAuth, createMeRouter());
   app.get("/api/search", requireAuth, searchHandler);
+  app.use("/api/events", requireAuth, createEventsRouter(), createTeamsRouter());
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: { code: "not_found", message: "Route not found" } });
