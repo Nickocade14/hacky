@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'api/api_client.dart';
 import 'api/models/auth.dart';
 import 'routes.dart';
-import 'screens/account_screen.dart';
 import 'screens/auth_screen.dart';
+import 'screens/chat_thread_screen.dart';
 import 'screens/check_email_screen.dart';
 import 'screens/forgot_password_screen.dart';
+import 'screens/person_profile_screen.dart';
+import 'screens/requests_screen.dart';
 import 'screens/start_screen.dart';
+import 'shell/signed_in_shell.dart';
 import 'theme.dart';
 import 'widgets/auth_widgets.dart';
 
@@ -42,9 +45,27 @@ class AppRouter {
         email: settings.arguments as String?,
       ),
       Routes.forgotPassword => ForgotPasswordScreen(api: api),
-      Routes.account => AccountScreen(api: api, me: settings.arguments as Me?),
+      Routes.home => SignedInShell(api: api, me: settings.arguments as Me?),
+      Routes.person => _person(settings.arguments as PersonArgs),
+      Routes.requests => RequestsScreen(
+        api: api,
+        eventSlug: (settings.arguments as RequestsArgs).eventSlug,
+      ),
+      Routes.chatThread => _chatThread(settings.arguments as ChatThreadArgs),
       _ => AuthScreen(api: api),
     };
     return MaterialPageRoute<void>(settings: settings, builder: (_) => screen);
   }
+
+  Widget _person(PersonArgs args) => PersonProfileScreen(
+    api: api,
+    eventSlug: args.eventSlug,
+    handle: args.handle,
+  );
+
+  Widget _chatThread(ChatThreadArgs args) => ChatThreadScreen(
+    api: api,
+    eventSlug: args.eventSlug,
+    conversationId: args.conversationId,
+  );
 }
