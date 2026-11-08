@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import { requireAuth } from "./auth/jwt.js";
 import { createAuthRouter } from "./auth/routes.js";
+import { createChatRouter } from "./chat/routes.js";
+import type { Ranker } from "./chat/gemini.js";
 import type { Mailer } from "./email/mailer.js";
 import { errorHandler } from "./errors.js";
 import { createEventsRouter } from "./events/routes.js";
@@ -13,9 +15,10 @@ import { createRequestsRouter } from "./social/requests.js";
 
 export interface AppOptions {
   mailer?: Mailer; // tests pass a fake that records mail
+  rank?: Ranker; // tests pass a fake Hacky ranker
 }
 
-export function createApp({ mailer }: AppOptions = {}) {
+export function createApp({ mailer, rank }: AppOptions = {}) {
   const app = express();
   const origins = (process.env.CORS_ORIGIN ?? "http://localhost:5173").split(",").map((origin) => origin.trim());
   app.use(cors({ origin: origins }));
@@ -31,7 +34,7 @@ export function createApp({ mailer }: AppOptions = {}) {
   app.use(["/api/me", "/api/search", "/api/events", "/api/requests", "/api/blocks", "/api/conversations"], requireAuth);
   app.use("/api/me", createMeRouter());
   app.get("/api/search", searchHandler);
-  app.use("/api/events", createEventsRouter(), createTeamsRouter());
+  app.use("/api/events", createEventsRouter(), createTeamsRouter(), createChatRouter({ rank }));
   app.use("/api", createRequestsRouter(), createConversationsRouter());
 
   app.use("/api", (_req, res) => {
