@@ -143,7 +143,9 @@ mixin FakeEndpoints {
     final world = await fakeWorld();
     fakeMembership(world, slug);
     final person = world.byHandle(handle);
-    if (person == null || person.membership == null) {
+    if (person == null ||
+        person.membership == null ||
+        world.isBlocked(person.userId)) {
       throw fakeError(404, 'not_found', 'No one called @$handle here.');
     }
     return person.detail(world.relationTo(person.userId));
@@ -224,6 +226,7 @@ mixin FakeEndpoints {
     for (final person in world.people.values) {
       final m = person.membership;
       if (m == null || (role != null && m.role != role)) continue;
+      if (world.isBlocked(person.userId)) continue;
       final handle = person.handle.toLowerCase();
       final name = person.name.toLowerCase();
       final matched = [
@@ -274,7 +277,7 @@ mixin FakeEndpoints {
       throw fakeInvalid('intro', 'No links allowed');
     }
     final to = world.byId(body.toUserId);
-    if (to == null || to.membership == null) {
+    if (to == null || to.membership == null || world.isBlocked(to.userId)) {
       throw fakeError(404, 'not_found', 'That person isn\'t here.');
     }
     if (to.userId == me) {
@@ -354,6 +357,20 @@ mixin FakeEndpoints {
   Future<void> hideRequest(String requestId) async {
     final world = await fakeWorld();
     _incomingRequest(world, requestId).hiddenAt ??= world.now();
+  }
+
+  /// Blocking twice is fine. After it, they're left out of search and
+  /// Hacky's suggestions, their profile 404s and our chat 403s on send. The
+  /// conversation stays in the list, as the contract doesn't hide it.
+  Future<void> blockUser(BlockBody body) async {
+    final world = await fakeWorld();
+    if (body.userId.isEmpty) {
+      throw fakeInvalid('userId', 'Required');
+    }
+    if (body.userId == world.me.userId) {
+      throw fakeInvalid('userId', 'You can\'t block yourself');
+    }
+    world.blockedIds.add(body.userId);
   }
 
   FakeRequest _incomingRequest(FakeWorld world, String requestId) {
@@ -437,6 +454,10 @@ mixin FakeEndpoints {
     if (body.body.trim().isEmpty || body.body.length > 4000) {
       throw fakeInvalid('body', 'Must be 1 to 4000 characters');
     }
+    final peer = world.peerIn(conversation);
+    if (peer != null && world.isBlocked(peer)) {
+      throw fakeError(403, 'forbidden', 'You can\'t message this person.');
+    }
     // A retry with the same clientId returns the same message.
     final retry = conversation.messages
         .where((m) => m.senderId == me && m.clientId == body.clientId)
@@ -454,6 +475,24 @@ mixin FakeEndpoints {
     conversation.messages.add(message);
     conversation.lastReadAt[me] = message.createdAt;
     return message;
+  }
+
+  /// Unsends my message for everyone: it's removed, so it leaves the pages
+  /// and the conversation's last message. 404 when it's already gone.
+  Future<void> deleteMessage(String conversationId, String messageId) async {
+    final world = await fakeWorld();
+    final conversation = _conversation(world, conversationId);
+    final message = conversation.messages
+        .where((m) => m.id == messageId)
+        .firstOrNull;
+    if (message == null) {
+      throw fakeError(404, 'not_found', 'That message is already gone.');
+    }
+    if (message.kind == MessageKind.system ||
+        message.senderId != world.me.userId) {
+      throw fakeError(403, 'forbidden', 'You can only unsend your messages.');
+    }
+    conversation.messages.remove(message);
   }
 
   Future<DateTime> markRead(String conversationId) async {
@@ -475,9 +514,7 @@ mixin FakeEndpoints {
 
   ConversationSummary _summary(FakeWorld world, FakeConversation c) {
     final me = world.me.userId;
-    final peerId = c.kind == ConversationKind.team
-        ? null
-        : c.memberIds.firstWhere((id) => id != me);
+    final peerId = world.peerIn(c);
     final team = c.teamId == null ? null : world.teams[c.teamId];
     final last = c.messages.lastOrNull;
     final readAt = c.lastReadAt[me];
@@ -503,9 +540,12 @@ mixin FakeEndpoints {
 
   // ---------------------------------------------------------------- chat
 
-  /// Answers with the people whose skills match words in the message. The
-  /// contract doesn't define part shapes; the fake reads and writes AI SDK
-  /// text parts (`{type: text, text}`) and never sends cards.
+  /// Answers with the people whose skills match words in the message (only
+  /// mentors when it asks for a mentor), skipping people I blocked. The
+  /// contract doesn't define part shapes, so the fake uses the original
+  /// Hacky's (shared/contract.ts), which 12 Hacky chat reads: a text part
+  /// `{type: text, text}`, then a `search_people` tool part whose output has
+  /// one card per person. With no match it answers in text only.
   Future<ChatMessage> sendChat(String slug, ChatBody body) async {
     final world = await fakeWorld();
     fakeMembership(world, slug);
@@ -521,29 +561,95 @@ mixin FakeEndpoints {
     ].join(' ').toLowerCase();
     final words = text
         .split(RegExp(r'[^a-z0-9+#]+'))
-        .where((w) => w.length > 1);
+        .where((w) => w.length > 1)
+        .toList();
+    final mentorsOnly = words.any((w) => w.startsWith('mentor'));
     final matches = [
       for (final p in world.people.values)
-        if (p.membership!.intake.skills.any(
-          (s) => words.any((w) => s.toLowerCase().contains(w)),
-        ))
-          p,
-    ];
-    final reply = matches.isEmpty
-        ? 'I didn\'t find anyone for that yet. Try a skill, like "flutter" or '
-              '"python".'
-        : 'Here\'s who could help: '
-              '${matches.map((p) => '${p.name} (@${p.handle})').join(', ')}.';
+        if (!world.isBlocked(p.userId) &&
+            (!mentorsOnly || p.membership!.role == MemberRole.mentor))
+          (person: p, skills: _skillsMatching(p, words)),
+    ].where((m) => m.skills.isNotEmpty).take(10).toList();
 
+    final id = world.newId();
     final answer = ChatMessage(
-      id: 'fake-assistant-${world.newId()}',
+      id: 'fake-assistant-$id',
       role: ChatRole.assistant,
-      parts: [
-        {'type': 'text', 'text': reply},
-      ],
+      parts: matches.isEmpty
+          ? [
+              {
+                'type': 'text',
+                'text':
+                    'I didn\'t find anyone for that yet. Try a skill, like '
+                    '"flutter" or "python".',
+              },
+            ]
+          : [
+              {
+                'type': 'text',
+                'text': matches.length == 1
+                    ? 'Here\'s who could help. Tap the card to see their '
+                          'profile or connect.'
+                    : 'Here\'s who could help. Tap a card to see their '
+                          'profile or connect.',
+              },
+              {
+                'type': 'tool-search_people',
+                'toolCallId': 'fake-call-$id',
+                'state': 'output-available',
+                'input': {'query': text.trim()},
+                'output': {
+                  'status': 'matches',
+                  'kind': mentorsOnly ? 'mentor' : 'hacker',
+                  'cards': [
+                    for (final m in matches) _personCard(m.person, m.skills),
+                  ],
+                },
+              },
+            ],
     );
     world.chat.add(answer);
     return answer;
+  }
+
+  /// [person]'s skills that one of [words] names: a whole word of the skill
+  /// ("go", "ux"), or part of it for words of 3+ letters ("torch"), so
+  /// short words like "on" don't match "python".
+  static List<String> _skillsMatching(FakePerson person, List<String> words) {
+    bool names(String skill, String word) =>
+        skill.split(' ').contains(word) ||
+        (word.length >= 3 && skill.contains(word));
+    return [
+      for (final skill in person.membership!.intake.skills)
+        if (words.any((w) => names(skill.toLowerCase(), w))) skill,
+    ];
+  }
+
+  /// A `search_people` card: `person` for hackers, `mentor` for mentors.
+  static Map<String, dynamic> _personCard(
+    FakePerson person,
+    List<String> matched,
+  ) {
+    final m = person.membership!;
+    final mentor = m.role == MemberRole.mentor;
+    return {
+      'card': mentor ? 'mentor' : 'person',
+      'person': {
+        'userId': person.userId,
+        'handle': person.handle,
+        'name': person.name,
+        'hackyStyle': person.hackyStyle,
+        'photoUrl': person.photoUrl,
+        'role': m.role.name,
+      },
+      if (mentor) 'verified': m.verified,
+      'skills': m.intake.skills,
+      'evidence': {
+        'matchedSkills': matched,
+        if (mentor) 'availability': m.availability.name,
+      },
+      'reason': m.intake.summary ?? 'Knows ${matched.join(', ')}.',
+    };
   }
 
   Future<List<ChatMessage>> getChatHistory(String slug) async {

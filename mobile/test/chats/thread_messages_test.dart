@@ -99,4 +99,18 @@ void main() {
     expect(t.lastSavedFrom(me)!.id, m(2).id);
     expect(t.lastSavedFrom('cccccccccccccccccccccccc'), isNull);
   });
+
+  test('remove takes out an unsent message and keeps the cursors', () {
+    final t = ThreadMessages(
+      MessagePage(messages: [m(1), m(2, sender: me), m(3)], hasMore: true),
+    );
+
+    t.remove(m(2).id);
+
+    expect(bodies(t), ['message 1', 'message 3']);
+    expect(t.lastSavedFrom(me), isNull);
+    expect(t.syncedId, m(3).id);
+    final added = t.addNewer(MessagePage(messages: [m(4)], hasMore: false));
+    expect(added.map((x) => x.id), [m(4).id]);
+  });
 }

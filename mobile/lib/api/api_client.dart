@@ -249,6 +249,11 @@ class ApiClient {
   Future<void> hideRequest(String requestId) =>
       _send('POST', '/api/requests/${_seg(requestId)}/hide');
 
+  /// Blocks a person in every event and in both directions. Blocking twice
+  /// is fine.
+  Future<void> blockUser(BlockBody body) =>
+      _send('POST', '/api/blocks', body: body.toJson());
+
   // ---------------------------------------------------------------- conversations
 
   /// My conversations in this event, newest activity first.
@@ -300,6 +305,13 @@ class ApiClient {
       body: body.toJson(),
     ),
     (json) => Message.fromJson(readObject(json, 'message')),
+  );
+
+  /// Unsends my message for everyone. Only the sender can, and never for a
+  /// system message. 404 means it's already gone.
+  Future<void> deleteMessage(String conversationId, String messageId) => _send(
+    'DELETE',
+    '/api/conversations/${_seg(conversationId)}/messages/${_seg(messageId)}',
   );
 
   /// Marks the conversation read up to now and returns the new `lastReadAt`.

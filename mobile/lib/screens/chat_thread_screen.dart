@@ -5,14 +5,17 @@ import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../api/models/conversations.dart';
+import '../api/models/people.dart';
 import '../auth/error_text.dart';
 import '../chats/chat_data.dart';
 import '../chats/client_id.dart';
 import '../chats/conversation_text.dart';
 import '../chats/thread_messages.dart';
+import '../people/block_person.dart';
 import '../routes.dart';
 import '../shell/screen_load.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/confirm_action_dialog.dart';
 import '../widgets/thread_widgets.dart';
 
 /// 11 Chat thread (pushed from 07, 09 and 10,
@@ -29,6 +32,11 @@ import '../widgets/thread_widgets.dart';
 /// There are no live updates yet (Socket.IO): while the screen is open it
 /// asks for new messages every [pollInterval] (`listMessages` with `after`).
 /// The header and ••• → View profile open 07.
+///
+/// Long-press on my message → Unsend for everyone: a confirm step, then
+/// `deleteMessage`; the message leaves the thread (the contract deletes it,
+/// and a 404 means it's already gone). In a DM, ••• → Block confirms, calls
+/// `blockUser` and goes back with a snackbar ([BlockPerson]).
 class ChatThreadScreen extends StatefulWidget {
   const ChatThreadScreen({
     super.key,
@@ -42,6 +50,9 @@ class ChatThreadScreen extends StatefulWidget {
   final String eventSlug;
   final String conversationId;
   final Duration pollInterval;
+
+  static const menuKey = Key('thread-menu');
+  static const unsentNote = 'Message unsent.';
 
   @override
   State<ChatThreadScreen> createState() => _ChatThreadScreenState();
@@ -221,9 +232,46 @@ class _ChatThreadScreenState extends State<ChatThreadScreen>
     );
   }
 
+  /// Long-press → Unsend for everyone → confirm → `deleteMessage`.
+  Future<void> _unsend(Message message) async {
+    if (!await UnsendSheet.show(context) || !mounted) return;
+    final unsent = await ConfirmActionDialog.show(
+      context,
+      title: 'Unsend this message?',
+      message: 'It’s removed for everyone in this chat. This can’t be undone.',
+      confirmLabel: 'Unsend',
+      busyLabel: 'Unsending…',
+      action: () => _deleteMessage(message.id),
+    );
+    if (!unsent || !mounted) return;
+    setState(() => _thread?.remove(message.id));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text(ChatThreadScreen.unsentNote)),
+      );
+  }
+
+  /// A 404 means it's already gone, which is what I asked for.
+  Future<void> _deleteMessage(String messageId) async {
+    try {
+      await widget.api.deleteMessage(widget.conversationId, messageId);
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) rethrow;
+    }
+  }
+
+  Future<void> _block(PersonSummary peer) => BlockPerson.confirmAndLeave(
+    context,
+    api: widget.api,
+    userId: peer.userId,
+    name: peer.name,
+  );
+
   @override
   Widget build(BuildContext context) {
     final peer = _conversation?.peer;
+    final isDm = _conversation?.kind == ConversationKind.dm;
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -233,15 +281,9 @@ class _ChatThreadScreenState extends State<ChatThreadScreen>
         ),
         actions: [
           if (peer != null)
-            PopupMenuButton<void>(
-              tooltip: 'More',
-              icon: const Icon(Icons.more_horiz),
-              itemBuilder: (_) => [
-                PopupMenuItem<void>(
-                  onTap: _openProfile,
-                  child: const Text('View profile'),
-                ),
-              ],
+            _ThreadMenu(
+              onViewProfile: _openProfile,
+              onBlock: isDm ? () => _block(peer) : null,
             ),
           const SizedBox(width: 4),
         ],
@@ -320,6 +362,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen>
             text: ConversationText.body(m),
             mine: m.senderId == _myUserId,
             below: m.id == seen ? const BubbleNote('Seen') : null,
+            onLongPress: m.senderId == _myUserId ? () => _unsend(m) : null,
           ),
       for (final p in thread.pending)
         PendingBubble(
@@ -340,5 +383,38 @@ class _ChatThreadScreenState extends State<ChatThreadScreen>
     final mine = thread.lastSavedFrom(_myUserId);
     if (mine == null || readAt.isBefore(mine.createdAt)) return null;
     return mine.id;
+  }
+}
+
+/// ••• on 11: View profile, and Block in a DM.
+class _ThreadMenu extends StatelessWidget {
+  const _ThreadMenu({required this.onViewProfile, required this.onBlock});
+
+  final VoidCallback onViewProfile;
+
+  /// Null outside DMs.
+  final VoidCallback? onBlock;
+
+  @override
+  Widget build(BuildContext context) {
+    final onBlock = this.onBlock;
+    return PopupMenuButton<VoidCallback>(
+      key: ChatThreadScreen.menuKey,
+      tooltip: 'More',
+      icon: const Icon(Icons.more_horiz),
+      // Runs after the menu closed, so a pushed page or dialog lands on top.
+      onSelected: (action) => action(),
+      itemBuilder: (_) => [
+        PopupMenuItem<VoidCallback>(
+          value: onViewProfile,
+          child: const Text('View profile'),
+        ),
+        if (onBlock != null)
+          PopupMenuItem<VoidCallback>(
+            value: onBlock,
+            child: const Text(BlockPerson.menuLabel),
+          ),
+      ],
+    );
   }
 }

@@ -91,6 +91,11 @@ class ThreadMessages {
   void discard(String clientId) =>
       _pending.removeWhere((m) => m.clientId == clientId);
 
+  /// Takes out a saved message I unsent. The cursors stay, since ids keep
+  /// growing.
+  void remove(String messageId) =>
+      _saved.removeWhere((m) => m.id == messageId);
+
   /// My newest saved message, for "Seen".
   Message? lastSavedFrom(String userId) {
     for (final m in _saved.reversed) {

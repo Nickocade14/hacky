@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../api/models/people.dart';
+import '../people/block_person.dart';
 import '../routes.dart';
 import '../shell/screen_load.dart';
 import '../widgets/app_widgets.dart';
@@ -17,8 +18,9 @@ import '../widgets/relation_actions.dart';
 /// (intro sheet, then `sendRequest`), Request sent, Accept / Not now, or
 /// Message → 11 (`Navigate.toChatThread`).
 ///
-/// The wireframe's ••• → Block isn't here yet: `ApiClient` has no
-/// `POST /api/blocks` method.
+/// ••• → Block confirms what blocking does, calls `blockUser`
+/// (`POST /api/blocks`), then goes back to the previous screen with a
+/// snackbar ([BlockPerson]).
 class PersonProfileScreen extends StatefulWidget {
   const PersonProfileScreen({
     super.key,
@@ -26,6 +28,8 @@ class PersonProfileScreen extends StatefulWidget {
     required this.eventSlug,
     required this.handle,
   });
+
+  static const menuKey = Key('person-menu');
 
   final ApiClient api;
   final String eventSlug;
@@ -77,12 +81,23 @@ class _PersonProfileScreenState extends State<PersonProfileScreen>
     conversationId: conversationId,
   );
 
+  Future<void> _block(PersonDetail person) => BlockPerson.confirmAndLeave(
+    context,
+    api: widget.api,
+    userId: person.userId,
+    name: person.name,
+  );
+
   @override
   Widget build(BuildContext context) {
     final person = _person;
     final problem = this.problem;
     return SignedInPage(
       title: 'Profile',
+      actions: [
+        if (person != null && !_missing)
+          _ProfileMenu(onBlock: () => _block(person)),
+      ],
       body: switch ((person, problem)) {
         _ when _missing => const PageColumn(
           children: [
@@ -126,6 +141,30 @@ class _PersonProfileScreenState extends State<PersonProfileScreen>
               children: sections,
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// ••• on 07: Block.
+class _ProfileMenu extends StatelessWidget {
+  const _ProfileMenu({required this.onBlock});
+
+  final VoidCallback onBlock;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<VoidCallback>(
+      key: PersonProfileScreen.menuKey,
+      tooltip: 'More',
+      icon: const Icon(Icons.more_horiz),
+      // Runs after the menu closed, so the dialog opens on top of the page.
+      onSelected: (action) => action(),
+      itemBuilder: (_) => [
+        PopupMenuItem<VoidCallback>(
+          value: onBlock,
+          child: const Text(BlockPerson.menuLabel),
+        ),
       ],
     );
   }
