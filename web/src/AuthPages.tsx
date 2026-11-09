@@ -1,32 +1,35 @@
 import { useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./App";
 import { AuthTabs, BackToLogin, Field, Notice, PageHeading, passwordProblem, SubmitButton, useFormAction } from "./components";
 import { api } from "./lib/api";
 
 const value = (data: FormData, key: string) => String(data.get(key) ?? "");
 const emailValue = (data: FormData) => value(data, "email").trim().toLowerCase();
+const isCode = (code: string) => /^[0-9]{6}$/.test(code);
+const codeError = "Enter the 6-digit code from the email.";
+
+function CodeField({ id, code, onChange }: { id: string; code: string; onChange: (code: string) => void }) {
+  return <Field id={id} label="Code" name="code" value={code} onChange={event => onChange(event.target.value)}
+    inputMode="numeric" autoComplete="one-time-code" placeholder="123456" maxLength={6}
+    hint="The code expires in 10 minutes." required />;
+}
 
 export function LoginPage() {
   const auth = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const action = useFormAction();
-  const [email, setEmail] = useState("");
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     void action.run(async signal => { const result = await api.login({ email: emailValue(data), password: value(data, "password") }, signal); auth.signIn(result); navigate("/app", { replace: true }); });
   }
-  const notice = (location.state as { notice?: string } | null)?.notice;
   return <><AuthTabs /><PageHeading eyebrow="GOOD TO SEE YOU" title="Welcome back." />
-    {notice && <Notice>{notice}</Notice>}
     <form onSubmit={submit} aria-label="Log in" aria-busy={action.busy}>
-      <Field id="login-email" label="Email address" name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} />
+      <Field id="login-email" label="Email address" name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} />
       <Field id="login-password" label="Password" name="password" type="password" autoComplete="current-password" placeholder="Your password" required />
       <div className="form-meta"><Link to="/forgot-password">Forgot password?</Link></div>
       {action.error && <Notice error>{action.error}</Notice>}
-      {action.code === "email_not_verified" && <Link className="inline-action" to="/verify" state={{ email }}>Resend your verification email</Link>}
       <SubmitButton busy={action.busy}>Log in</SubmitButton>
     </form>
     <p className="form-switch">New around here? <Link to="/register">Create an account</Link></p>
@@ -49,77 +52,135 @@ export function RegisterPage() {
   return <><AuthTabs /><PageHeading eyebrow="YOUR PEOPLE ARE HERE" title="Let’s make it happen.">Create your account. Find your crew. Build something great.</PageHeading>
     <form onSubmit={submit} aria-label="Create account" aria-busy={action.busy}>
       <Field id="register-name" label="Your name" name="name" autoComplete="name" placeholder="What should we call you?" maxLength={80} required />
-      <Field id="register-handle" label="Handle" name="handle" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="your_handle" pattern="[a-z0-9_]{3,30}" minLength={3} maxLength={30} title="3–30 lowercase letters, numbers, or underscores" hint="3–30 lowercase letters, numbers, or underscores." required />
+      <Field id="register-handle" label="Username" prefix="@" name="handle" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="your_handle" pattern="[a-z0-9_]{3,30}" minLength={3} maxLength={30} title="3–30 lowercase letters, numbers, or underscores" hint="3–30 lowercase letters, numbers, or underscores." required />
       <Field id="register-email" label="Email address" name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={254} required />
       <Field id="register-password" label="Password" name="password" type="password" autoComplete="new-password" placeholder="Make it a good one" minLength={8} maxLength={72} hint="At least 8 characters. Up to 72 UTF-8 bytes." required />
       {action.error && <Notice error>{action.error}</Notice>}
       <SubmitButton busy={action.busy}>Create account</SubmitButton>
     </form>
-    <p className="privacy-note">We’ll send a verification link to your inbox before you log in.</p><p className="form-switch">Already part of the crew? <Link to="/login">Log in</Link></p>
+    <p className="privacy-note">We’ll email you a 6-digit code to finish creating your account.</p><p className="form-switch">Already part of the crew? <Link to="/login">Log in</Link></p>
   </>;
 }
 
-function ResendVerification({ initialEmail = "" }: { initialEmail?: string }) {
-  const action = useFormAction();
-  const [sent, setSent] = useState(false);
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const data = new FormData(event.currentTarget);
-    void action.run(async signal => { await api.resendVerification({ email: emailValue(data) }, signal); setSent(true); });
-  }
-  return <form onSubmit={submit} aria-label="Resend verification email" aria-busy={action.busy}><Field id="resend-email" label="Email address" type="email" name="email" autoComplete="email" defaultValue={initialEmail} placeholder="you@example.com" required maxLength={254} />{sent && <Notice>If this address has an unverified account, a new link is on its way. Check your spam folder too.</Notice>}{action.error && <Notice error>{action.error}</Notice>}<SubmitButton busy={action.busy}>Resend verification link</SubmitButton></form>;
-}
-
 export function VerifyPage() {
-  const [params] = useSearchParams();
-  const token = params.get("token");
   const location = useLocation();
-  const email = (location.state as { email?: string } | null)?.email;
+  const navigate = useNavigate();
+  const auth = useAuth();
   const action = useFormAction();
-  const [verified, setVerified] = useState(false);
-  const [resending, setResending] = useState(!token);
-  const validToken = Boolean(token && token.length <= 200);
+  const pendingEmail = (location.state as { email?: string } | null)?.email;
+  const [code, setCode] = useState("");
+  const [resent, setResent] = useState(false);
+  const startOver = action.code === "email_taken" || action.code === "handle_taken";
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!validToken) return;
-    void action.run(async signal => { await api.verifyEmail({ token: token! }, signal); setVerified(true); window.history.replaceState(window.history.state, "", "/verify"); });
+    const form = event.currentTarget;
+    const email = pendingEmail ?? emailValue(new FormData(form));
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+
+    if (submitter instanceof HTMLButtonElement && submitter.value === "resend") {
+      const emailField = form.elements.namedItem("email");
+      if (emailField instanceof HTMLInputElement && !emailField.reportValidity()) return;
+      void action.run(async signal => {
+        await api.resendVerification({ email }, signal);
+        setCode("");
+        setResent(true);
+      });
+      return;
+    }
+
+    const normalizedCode = code.trim();
+    if (!isCode(normalizedCode)) { action.setError(codeError); return; }
+    void action.run(async signal => {
+      auth.signIn(await api.verifyEmail({ email, code: normalizedCode }, signal));
+      navigate("/app", { replace: true });
+    });
   }
-  return <><BackToLogin /><div className="status-icon" aria-hidden="true">{verified ? "✓" : "↗"}</div><PageHeading eyebrow={verified ? "YOU’RE ALL SET" : "ONE QUICK STEP"} title={verified ? "Email verified." : token ? "Make it official." : "Check your inbox."}>{verified ? "Your email is verified. You’re ready to meet your people." : token ? "Verify your email to finish setting up your Hacky account." : email ? <>We sent a verification link to <strong>{email}</strong>. Open it to finish setting up your account.</> : "Open the verification link in your email, or request a new one below."}</PageHeading>
-    {verified ? <Link className="button primary" to="/login">Continue to log in</Link> : <>
-      {token && <form onSubmit={submit} aria-label="Verify email" aria-busy={action.busy}>{!validToken && <Notice error>This verification link is invalid. Request a new one below.</Notice>}{action.error && <Notice error>{action.error}</Notice>}{validToken && <SubmitButton busy={action.busy}>Verify my email</SubmitButton>}</form>}
-      {resending ? <ResendVerification initialEmail={email} /> : <button className="text-button" type="button" onClick={() => setResending(true)}>Need a new link? Resend email</button>}
-    </>}
+
+  return <>
+    <BackToLogin />
+    <div className="status-icon" aria-hidden="true">↗</div>
+    <PageHeading eyebrow="ONE QUICK STEP" title="Check your inbox.">
+      {pendingEmail
+        ? <>We sent a 6-digit code to <strong>{pendingEmail}</strong>. Enter it to finish creating your account.</>
+        : "Enter your email address and the 6-digit code to finish creating your account."}
+    </PageHeading>
+    <form onSubmit={submit} aria-label="Verify email" aria-busy={action.busy}>
+      {!pendingEmail && <Field id="verify-email" label="Email address" type="email" name="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} />}
+      <CodeField id="verify-code" code={code} onChange={setCode} />
+      {resent && !action.error && <Notice>A new code is on its way. Check your spam folder too.</Notice>}
+      {action.error && <Notice error>{action.error}</Notice>}
+      {startOver && <Link className="inline-action" to="/register">Back to create account</Link>}
+      <SubmitButton busy={action.busy}>Verify and continue</SubmitButton>
+      <div className="code-actions">
+        <button className="text-button" type="submit" value="resend" formNoValidate disabled={action.busy}>Send a new code</button>
+      </div>
+    </form>
     <p className="privacy-note">Can’t find the email? Take a quick look in your spam folder.</p>
   </>;
 }
 
 export function ForgotPasswordPage() {
-  const action = useFormAction();
-  const [sent, setSent] = useState(false);
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const data = new FormData(event.currentTarget);
-    void action.run(async signal => { await api.forgotPassword({ email: emailValue(data) }, signal); setSent(true); });
-  }
-  return <><BackToLogin /><div className="status-icon" aria-hidden="true">↺</div><PageHeading eyebrow="IT HAPPENS TO THE BEST OF US" title={sent ? "Check your inbox." : "Forgot your password?"}>{sent ? "If an account exists for that email, a password reset link is on its way." : "No worries. We’ll send you a link to get back to your people."}</PageHeading>
-    <form onSubmit={submit} aria-label="Request password reset" aria-busy={action.busy}><Field id="forgot-email" label="Email address" type="email" name="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} />{sent && <Notice>Check your email and spam folder. You can request another link below if you need one.</Notice>}{action.error && <Notice error>{action.error}</Notice>}<SubmitButton busy={action.busy}>{sent ? "Send another link" : "Send reset link"}</SubmitButton></form>
-  </>;
-}
-
-export function ResetPasswordPage() {
-  const [params] = useSearchParams();
-  const token = params.get("token");
-  const validToken = Boolean(token && token.length <= 200);
-  const action = useFormAction();
   const navigate = useNavigate();
   const auth = useAuth();
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const data = new FormData(event.currentTarget);
-    const password = value(data, "password");
+  const action = useFormAction();
+  const [email, setEmail] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [resent, setResent] = useState(false);
+
+  function sendCode(address: string, resend = false) {
+    void action.run(async signal => {
+      await api.forgotPassword({ email: address }, signal);
+      setEmail(address);
+      setCode("");
+      setResent(resend);
+    });
+  }
+
+  function reset(event: FormEvent<HTMLFormElement>, address: string) {
+    event.preventDefault();
+    const normalizedCode = code.trim();
+    if (!isCode(normalizedCode)) { action.setError(codeError); return; }
+    const password = value(new FormData(event.currentTarget), "password");
     const problem = passwordProblem(password);
     if (problem) { action.setError(problem); return; }
-    if (password !== value(data, "confirm")) { action.setError("Your passwords don’t match. Please try again."); return; }
-    void action.run(async signal => { await api.resetPassword({ token: token!, password }, signal); auth.signOut(); navigate("/login", { replace: true, state: { notice: "Password updated. Log in with your new password." } }); });
+    void action.run(async signal => {
+      auth.signIn(await api.resetPassword({ email: address, code: normalizedCode, password }, signal));
+      navigate("/app", { replace: true });
+    });
   }
-  return <><BackToLogin /><div className="status-icon" aria-hidden="true">↺</div><PageHeading eyebrow="A FRESH START" title="New password, same you.">Choose a new password and get back to building.</PageHeading>
-    {validToken ? <form onSubmit={submit} aria-label="Reset password" aria-busy={action.busy}><Field id="reset-password" label="New password" type="password" name="password" autoComplete="new-password" minLength={8} maxLength={72} placeholder="Your new password" hint="At least 8 characters. Up to 72 UTF-8 bytes." required /><Field id="reset-confirm" label="Confirm password" type="password" name="confirm" autoComplete="new-password" placeholder="Once more, just to be sure" required />{action.error && <Notice error>{action.error}</Notice>}<SubmitButton busy={action.busy}>Save new password</SubmitButton>{action.code === "invalid_token" && <Link className="inline-action" to="/forgot-password">Request a new reset link</Link>}</form> : <><Notice error>This reset link is missing or invalid. Request a new link to choose a password.</Notice><Link className="button primary" to="/forgot-password">Request a reset link</Link></>}
+
+  function changeEmail() {
+    setEmail(null);
+    setCode("");
+    setResent(false);
+    action.setError(null);
+  }
+
+  return <>
+    <BackToLogin />
+    <div className="status-icon" aria-hidden="true">↺</div>
+    <PageHeading eyebrow="IT HAPPENS TO THE BEST OF US" title={email ? "Check your inbox." : "Forgot your password?"}>
+      {email
+        ? <>If an account exists for <strong>{email}</strong>, a 6-digit code is on its way. Enter it with your new password.</>
+        : "No worries. We’ll email you a code to get back to your people."}
+    </PageHeading>
+    {email ? <form onSubmit={event => reset(event, email)} aria-label="Reset password" aria-busy={action.busy}>
+      <CodeField id="reset-code" code={code} onChange={setCode} />
+      <Field id="reset-password" label="New password" type="password" name="password" autoComplete="new-password"
+        minLength={8} maxLength={72} placeholder="Make it a good one" hint="At least 8 characters. Up to 72 UTF-8 bytes." required />
+      {resent && !action.error && <Notice>If an account exists for this email, a new code is on its way.</Notice>}
+      {action.error && <Notice error>{action.error}</Notice>}
+      <SubmitButton busy={action.busy}>Reset password</SubmitButton>
+      <div className="code-actions">
+        <button className="text-button" type="button" onClick={() => sendCode(email, true)} disabled={action.busy}>Send a new code</button>
+        <button className="text-button" type="button" onClick={changeEmail} disabled={action.busy}>Use a different email</button>
+      </div>
+    </form> : <form onSubmit={event => { event.preventDefault(); sendCode(emailValue(new FormData(event.currentTarget))); }}
+      aria-label="Request password reset" aria-busy={action.busy}>
+      <Field id="forgot-email" label="Email address" type="email" name="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} />
+      {action.error && <Notice error>{action.error}</Notice>}
+      <SubmitButton busy={action.busy}>Send code</SubmitButton>
+    </form>}
   </>;
 }

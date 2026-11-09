@@ -29,11 +29,19 @@ export function PageHeading({ eyebrow, title, children }: { eyebrow: string; tit
   return <header className="page-heading"><span className="eyebrow">{eyebrow}</span><h1 tabIndex={-1}>{title}</h1>{children && <p>{children}</p>}</header>;
 }
 
-type FieldProps = InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string };
-export function Field({ label, hint, id, type = "text", ...props }: FieldProps) {
+type FieldProps = InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; prefix?: string };
+export function Field({ label, hint, prefix, id, type = "text", ...props }: FieldProps) {
   const [visible, setVisible] = useState(false);
   const isPassword = type === "password";
-  return <div className="field"><label htmlFor={id}>{label}</label><div className="input-wrap"><input {...props} id={id} type={isPassword && visible ? "text" : type} aria-describedby={hint ? `${id}-hint` : undefined} />{isPassword && <button className="password-toggle" type="button" onClick={() => setVisible(!visible)} aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`} aria-pressed={visible}>{visible ? "Hide" : "Show"}</button>}</div>{hint && <small id={`${id}-hint`}>{hint}</small>}</div>;
+  return <div className="field">
+    <label htmlFor={id}>{label}</label>
+    <div className="input-wrap">
+      {prefix && <span className="input-prefix" aria-hidden="true">{prefix}</span>}
+      <input {...props} id={id} type={isPassword && visible ? "text" : type} aria-describedby={hint ? `${id}-hint` : undefined} />
+      {isPassword && <button className="password-toggle" type="button" onClick={() => setVisible(!visible)} aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`} aria-pressed={visible}>{visible ? "Hide" : "Show"}</button>}
+    </div>
+    {hint && <small id={`${id}-hint`}>{hint}</small>}
+  </div>;
 }
 
 export function Notice({ children, error = false }: { children: ReactNode; error?: boolean }) {

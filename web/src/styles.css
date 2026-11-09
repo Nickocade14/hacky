@@ -337,6 +337,19 @@ form {
     opacity: .8;
 }
 
+.input-prefix {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.input-prefix + input {
+    padding-left: 34px;
+}
+
 .field input:focus,
 .field select:focus {
     border-color: var(--action);
@@ -533,6 +546,17 @@ form {
     font-size: 12px;
     text-decoration: underline;
     text-underline-offset: 4px;
+}
+
+.code-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+}
+
+.code-actions .text-button {
+    margin: 0;
+    padding: 8px 0;
 }
 
 .form-content form+form {

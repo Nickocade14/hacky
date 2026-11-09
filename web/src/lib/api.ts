@@ -1,4 +1,4 @@
-import type { EmailBody, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetPasswordBody, SearchQuery, SearchResults, TokenBody } from "./contracts";
+import type { EmailBody, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetCodeBody, SearchQuery, SearchResults, VerifyCodeBody } from "./contracts";
 import { readSession } from "./session";
 
 type ErrorKind = "api" | "network" | "server" | "unavailable" | "unauthorized";
@@ -56,11 +56,11 @@ export function createApiClient(options: ClientOptions = {}) {
   }
   return {
     register: (body: RegisterBody, signal?: AbortSignal) => request<Ok>("/auth/register", "POST", body, signal),
-    verifyEmail: (body: TokenBody, signal?: AbortSignal) => request<Ok>("/auth/verify-email", "POST", body, signal),
+    verifyEmail: (body: VerifyCodeBody, signal?: AbortSignal) => request<LoginResult>("/auth/verify-email", "POST", body, signal),
     resendVerification: (body: EmailBody, signal?: AbortSignal) => request<Ok>("/auth/resend-verification", "POST", body, signal),
     login: (body: LoginBody, signal?: AbortSignal) => request<LoginResult>("/auth/login", "POST", body, signal),
     forgotPassword: (body: EmailBody, signal?: AbortSignal) => request<Ok>("/auth/forgot-password", "POST", body, signal),
-    resetPassword: (body: ResetPasswordBody, signal?: AbortSignal) => request<Ok>("/auth/reset-password", "POST", body, signal),
+    resetPassword: (body: ResetCodeBody, signal?: AbortSignal) => request<LoginResult>("/auth/reset-password", "POST", body, signal),
     getMe: (signal?: AbortSignal) => request<Me>("/me", "GET", undefined, signal, true),
     searchPeople(query: SearchQuery, signal?: AbortSignal) {
       const params = new URLSearchParams({ event: query.event, q: query.q });
