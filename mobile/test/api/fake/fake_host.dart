@@ -48,7 +48,8 @@ class FakeHost with FakeEndpoints implements ApiClient {
   Future<void> register(RegisterBody body) => throw UnimplementedError();
 
   @override
-  Future<void> verifyEmail(TokenBody body) => throw UnimplementedError();
+  Future<LoginResult> verifyEmail(VerifyCodeBody body) =>
+      throw UnimplementedError();
 
   @override
   Future<void> resendVerification(EmailBody body) => throw UnimplementedError();
@@ -60,7 +61,7 @@ class FakeHost with FakeEndpoints implements ApiClient {
   Future<void> forgotPassword(EmailBody body) => throw UnimplementedError();
 
   @override
-  Future<void> resetPassword(ResetPasswordBody body) =>
+  Future<LoginResult> resetPassword(ResetCodeBody body) =>
       throw UnimplementedError();
 
   @override

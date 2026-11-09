@@ -34,33 +34,97 @@ void main() {
     );
   });
 
-  test('register, verify by resending, log in, load me, log out', () async {
+  test('register saves nothing until the code, which logs in', () async {
     final (:api, :store) = fakeApi();
     const email = 'ethan@example.com';
-    await api.register(
-      const RegisterBody(
-        name: 'Ethan Zeng',
-        handle: 'ethan_z',
-        email: email,
-        password: 'correct-password',
-      ),
+    const register = RegisterBody(
+      name: 'Ethan Zeng',
+      handle: 'ethan_z',
+      email: email,
+      password: 'correct-password',
     );
+    await api.register(register);
 
+    // No account yet, so login fails and a wrong code is rejected.
     const login = LoginBody(email: email, password: 'correct-password');
     await expectLater(
       api.login(login),
-      throwsA(apiError('email_not_verified')),
+      throwsA(apiError('invalid_credentials')),
+    );
+    await expectLater(
+      api.verifyEmail(const VerifyCodeBody(email: email, code: '000000')),
+      throwsA(apiError('invalid_code')),
     );
 
-    await api.resendVerification(const EmailBody(email: email));
-    final result = await api.login(login);
+    final result = await api.verifyEmail(
+      const VerifyCodeBody(email: email, code: FakeApiClient.testCode),
+    );
     expect(result.me.profile.name, 'Ethan Zeng');
     expect(store.token, result.token);
-    expect(await api.isLoggedIn, isTrue);
     expect((await api.getMe()).profile.handle, 'ethan_z');
+
+    // A code works once.
+    await expectLater(
+      api.verifyEmail(
+        const VerifyCodeBody(email: email, code: FakeApiClient.testCode),
+      ),
+      throwsA(apiError('invalid_code')),
+    );
 
     await api.logout();
     expect(await api.isLoggedIn, isFalse);
+    expect((await api.login(login)).me.profile.handle, 'ethan_z');
+  });
+
+  test('the first sign-up to verify gets the username', () async {
+    final (:api, store: _) = fakeApi();
+    RegisterBody body(String email) => RegisterBody(
+      name: 'Dee',
+      handle: 'dee',
+      email: email,
+      password: 'password123',
+    );
+    await api.register(body('first@example.com'));
+    await api.register(body('second@example.com'));
+
+    await api.verifyEmail(
+      const VerifyCodeBody(
+        email: 'second@example.com',
+        code: FakeApiClient.testCode,
+      ),
+    );
+    await expectLater(
+      api.verifyEmail(
+        const VerifyCodeBody(
+          email: 'first@example.com',
+          code: FakeApiClient.testCode,
+        ),
+      ),
+      throwsA(apiError('handle_taken')),
+    );
+  });
+
+  test('resets the password with the code and logs in', () async {
+    final (:api, :store) = fakeApi();
+    const email = FakeApiClient.demoEmail;
+    const reset = ResetCodeBody(
+      email: email,
+      code: FakeApiClient.testCode,
+      password: 'brand-new-pass',
+    );
+    // No code was asked for yet.
+    await expectLater(api.resetPassword(reset), throwsA(apiError('invalid_code')));
+
+    await api.forgotPassword(const EmailBody(email: email));
+    final result = await api.resetPassword(reset);
+    expect(store.token, result.token);
+    await expectLater(
+      api.login(
+        const LoginBody(email: email, password: FakeApiClient.testPassword),
+      ),
+      throwsA(apiError('invalid_credentials')),
+    );
+    await api.login(const LoginBody(email: email, password: 'brand-new-pass'));
   });
 
   test('rejects a wrong password and taken email or handle', () async {
