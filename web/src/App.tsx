@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthShell, Notice, PageHeading } from "./components";
 import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage, VerifyPage } from "./AuthPages";
+import { SearchPage } from "./SearchPage";
 import { api, ApiClientError } from "./lib/api";
 import { clearSession, readSession, saveSession } from "./lib/session";
 import type { LoginResult, Me } from "./lib/contracts";
@@ -46,13 +47,13 @@ function AuthProvider({ children }: { children: ReactNode }) {
 function RouteFocus() {
   const { pathname } = useLocation();
   useEffect(() => {
-    document.title = `Hacky · ${pathname === "/register" ? "Create account" : pathname === "/verify" ? "Verify email" : pathname === "/forgot-password" ? "Reset password" : pathname === "/reset" ? "Choose a password" : pathname === "/app" ? "Your account" : "Log in"}`;
+    document.title = `Hacky · ${pathname === "/register" ? "Create account" : pathname === "/verify" ? "Verify email" : pathname === "/forgot-password" ? "Reset password" : pathname === "/reset" ? "Choose a password" : pathname === "/app" ? "Your account" : pathname === "/search" ? "Find people" : "Log in"}`;
     document.querySelector<HTMLElement>("h1")?.focus();
   }, [pathname]);
   return null;
 }
 
-function AccountPage() {
+function AccountPage({ search = false }: { search?: boolean }) {
   const { session, me, setMe, signOut } = useAuth();
   const [problem, setProblem] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
@@ -70,10 +71,12 @@ function AccountPage() {
     return () => controller.abort();
   }, [session?.token, me, retry]);
   if (!session) return <Navigate to="/login" replace />;
+  if (search && me) return <SearchPage events={me.events} onExpired={signOut} />;
   return <><PageHeading eyebrow="YOUR NEXT CHAPTER" title={me ? `You’re in, ${me.profile.name.split(" ")[0]}.` : "Welcome back."}>A big idea starts with a connection. Welcome to Hacky.</PageHeading>
     {!me && !problem && <p role="status">Loading your account…</p>}
     {problem && <><Notice error>{problem}</Notice><button className="button secondary" onClick={() => setRetry(retry + 1)}>Try again</button></>}
     {me && <div className="account-card"><span className="account-avatar" aria-hidden="true">{me.profile.name.slice(0, 1).toUpperCase()}</span><h2>{me.profile.name}</h2><p>@{me.profile.handle}</p><div className="account-events"><span className="eyebrow">YOUR EVENTS</span>{me.events.length ? me.events.map(event => <div className="account-event" key={event.slug}><strong>{event.name}</strong><span>{event.role}</span></div>) : <p>No events yet. Your organizer can help you join.</p>}</div></div>}
+    {me && <Link className="button primary" to="/search">Find people</Link>}
     <button className="button secondary" type="button" onClick={signOut}>Sign out</button></>;
 }
 
@@ -87,6 +90,7 @@ function Pages() {
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
     <Route path="/reset" element={<ResetPasswordPage />} />
     <Route path="/app" element={<AccountPage />} />
+    <Route path="/search" element={<AccountPage search />} />
     <Route path="*" element={<><PageHeading eyebrow="LET’S GET YOU BACK" title="This page wandered off.">Head back to Hacky to find your people.</PageHeading><Link className="button primary" to="/">Back to Hacky</Link></>} />
   </Routes></AuthShell>;
 }

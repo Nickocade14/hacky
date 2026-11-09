@@ -1,4 +1,4 @@
-import type { components } from "./schema";
+import type { components, operations } from "./schema";
 
 // Generated from docs/openapi.yaml; regenerate schema.d.ts with npm run api:types.
 export type RegisterBody = components["schemas"]["RegisterBody"];
@@ -10,3 +10,5 @@ export type ResetPasswordBody = components["schemas"]["ResetPasswordBody"];
 export type Me = components["schemas"]["Me"];
 export type Ok = components["schemas"]["Ok"];
 export type ApiErrorBody = components["schemas"]["ApiError"];
+export type SearchQuery = operations["search"]["parameters"]["query"];
+export type SearchResults = components["schemas"]["SearchResults"];
