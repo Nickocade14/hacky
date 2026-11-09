@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { EMBEDDING_DIMENSIONS } from "../src/models/enums.js";
-import { memberProfileText, teamProfileText, normalizeEmbedding } from "../src/embeddings.js";
+import { memberProfileText, teamProfileText, normalizeEmbedding, isEmbeddableMemberRole } from "../src/embeddings.js";
 
 test("member document describes skills offered, not skills wanted", () => {
   const source = {
@@ -27,4 +27,11 @@ test("shortened Gemini vectors are finite, 768-dimensional, and normalized", () 
   assert.ok(Math.abs(Math.hypot(...normalized) - 1) < 1e-10);
   assert.throws(() => normalizeEmbedding([1, 2, 3]), /768/);
   assert.throws(() => normalizeEmbedding(Array(EMBEDDING_DIMENSIONS).fill(0)), /zero magnitude/);
+});
+
+test("only hackers and mentors are eligible for member embeddings", () => {
+  assert.equal(isEmbeddableMemberRole("hacker"), true);
+  assert.equal(isEmbeddableMemberRole("mentor"), true);
+  assert.equal(isEmbeddableMemberRole("organizer"), false);
+  assert.equal(isEmbeddableMemberRole("sponsor"), false);
 });

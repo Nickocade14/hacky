@@ -58,6 +58,11 @@ export function teamProfileText(source: TeamEmbeddingSource): string {
   ]);
 }
 
+/** Only attendees seeking teams or mentoring are searchable through vectors. */
+export function isEmbeddableMemberRole(role: string): boolean {
+  return role === "hacker" || role === "mentor";
+}
+
 export type EmbeddingTaskType = "RETRIEVAL_DOCUMENT" | "RETRIEVAL_QUERY";
 
 const MODEL = "gemini-embedding-001";
