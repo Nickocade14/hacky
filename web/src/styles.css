@@ -320,7 +320,8 @@ form {
     position: relative;
 }
 
-.field input {
+.field input,
+.field select {
     width: 100%;
     min-height: 49px;
     padding: 12px 14px;
@@ -336,7 +337,8 @@ form {
     opacity: .8;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
     border-color: var(--action);
     outline: 2px solid var(--selection);
     outline-offset: 1px;
@@ -606,6 +608,26 @@ form {
     text-transform: capitalize;
 }
 
+.search-controls,
+.search-results {
+    display: grid;
+    gap: 14px;
+}
+
+.search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.search-result h2 {
+    margin-top: 0;
+}
+
+.search-result p + p {
+    margin-top: 8px;
+}
+
 @media(min-width:1500px) {
     .story-panel {
         padding-left: max(80px, calc((100vw - 1300px)/2));
@@ -717,7 +739,8 @@ form {
         font-size: 33px;
     }
 
-    .field input {
+    .field input,
+    .field select {
         font-size: 16px;
     }
 

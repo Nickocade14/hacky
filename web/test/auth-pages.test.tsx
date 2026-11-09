@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "../src/App";
@@ -163,6 +163,35 @@ describe("authentication pages", () => {
     expect(await screen.findByRole("form", { name: "Log in" })).not.toBeNull();
     expect(readSession()).toBeNull();
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe("/api/me");
+  });
+
+  it("searches the current event with the saved token and drops stale results", async () => {
+    const user = userEvent.setup();
+    const session = loginResult();
+    saveSession(session);
+    const person = {
+      userId: "6717a3f2c9e1b04d2a5e8f11", handle: "go_mentor", name: "Go Mentor", role: "mentor",
+      skills: ["Go"], matchedSkills: ["Go"], photoUrl: null, hackyStyle: {},
+    };
+    let finishFirst!: (response: Response) => void;
+    fetchMock.mockResolvedValueOnce(jsonResponse(session.me));
+    fetchMock.mockReturnValueOnce(new Promise<Response>((resolve) => { finishFirst = resolve; }));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ results: [person] }));
+    renderApp("/search");
+
+    const input = await screen.findByRole("searchbox", { name: "Name, handle, or skill" });
+    await user.type(input, "C++");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const [path, request] = fetchMock.mock.calls[1]!;
+    expect(path).toBe("/api/search?event=knighthacks-ix&q=C%2B%2B");
+    expect(new Headers(request?.headers).get("Authorization")).toBe(`Bearer ${session.token}`);
+
+    await user.clear(input);
+    await user.type(input, "Go");
+    expect(await screen.findByRole("heading", { name: "Go Mentor" })).not.toBeNull();
+    expect(request?.signal?.aborted).toBe(true);
+    await act(async () => { finishFirst(jsonResponse({ results: [{ ...person, name: "Old Match" }] })); });
+    expect(screen.queryByRole("heading", { name: "Old Match" })).toBeNull();
   });
 
   it("blocks mismatched reset passwords before sending a request", async () => {

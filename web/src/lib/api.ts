@@ -1,4 +1,4 @@
-import type { EmailBody, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetPasswordBody, TokenBody } from "./contracts";
+import type { EmailBody, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetPasswordBody, SearchQuery, SearchResults, TokenBody } from "./contracts";
 import { readSession } from "./session";
 
 type ErrorKind = "api" | "network" | "server" | "unavailable" | "unauthorized";
@@ -62,6 +62,12 @@ export function createApiClient(options: ClientOptions = {}) {
     forgotPassword: (body: EmailBody, signal?: AbortSignal) => request<Ok>("/auth/forgot-password", "POST", body, signal),
     resetPassword: (body: ResetPasswordBody, signal?: AbortSignal) => request<Ok>("/auth/reset-password", "POST", body, signal),
     getMe: (signal?: AbortSignal) => request<Me>("/me", "GET", undefined, signal, true),
+    searchPeople(query: SearchQuery, signal?: AbortSignal) {
+      const params = new URLSearchParams({ event: query.event, q: query.q });
+      if (query.role) params.set("role", query.role);
+      if (query.limit !== undefined) params.set("limit", String(query.limit));
+      return request<SearchResults>(`/search?${params}`, "GET", undefined, signal, true);
+    },
   };
 }
 
