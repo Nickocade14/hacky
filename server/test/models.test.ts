@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { before, after, test } from "node:test";
 import mongoose, { Types } from "mongoose";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { connectDb, disconnectDb } from "../src/db.js";
 import {
-  AuthTokenModel, issueAuthToken, consumeAuthToken,
   TeamModel, createTeam, addTeamMember,
   ConversationModel, openDm, listConversations, MessageModel, createMessage, listMessages,
   ConnectionRequestModel,
@@ -25,23 +24,6 @@ before(async () => {
 after(async () => {
   await disconnectDb();
   await replica?.stop();
-});
-
-test("concurrent token issuance leaves one live token, consumed at most once", async () => {
-  const user = id();
-  const tokens = await Promise.all(Array.from({ length: 8 }, () => issueAuthToken(user, "reset-password", 15)));
-  const rows = await AuthTokenModel.find({ user, kind: "reset-password" });
-  assert.equal(rows.length, 1);
-  const raw = tokens.find((token) => createHash("sha256").update(token).digest("hex") === rows[0].tokenHash);
-  assert.ok(raw);
-  const consumed = await Promise.all([consumeAuthToken(raw, "reset-password"), consumeAuthToken(raw, "reset-password")]);
-  assert.equal(consumed.filter(Boolean).length, 1);
-  const expired = await issueAuthToken(user, "reset-password", 15);
-  await AuthTokenModel.updateOne({ user }, { $set: { expiresAt: new Date(0) } });
-  assert.equal(await consumeAuthToken(expired, "reset-password"), null);
-  const verify = await issueAuthToken(user, "verify-email", 15);
-  assert.equal(await consumeAuthToken(verify, "reset-password"), null);
-  assert.ok(await consumeAuthToken(verify, "verify-email"));
 });
 
 test("invalid/null members return ValidationError and owners count as members", async () => {

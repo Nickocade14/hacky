@@ -13,10 +13,12 @@ export const registerBodySchema = z.object({
   password: passwordSchema,
 });
 
-export const resetPasswordBodySchema = z.object({
-  token: z.string().min(1).max(200),
-  password: passwordSchema,
-});
+const emailSchema = z.email().max(254).transform((value) => value.toLowerCase());
+const codeSchema = z.string().trim().regex(/^[0-9]{6}$/, "Enter the 6-digit code from the email");
+
+export const verifyCodeBodySchema = z.object({ email: emailSchema, code: codeSchema });
+
+export const resetCodeBodySchema = z.object({ email: emailSchema, code: codeSchema, password: passwordSchema });
 
 // Auth routes should use this helper so bcrypt never silently truncates input.
 export function hashPassword(raw: string): Promise<string> {

@@ -11,7 +11,7 @@ export const CONVERSATION_KINDS = ["dm", "mentor", "team"] as const;
 export const MESSAGE_KINDS = ["text", "card", "system"] as const;
 export const HELP_STATUS = ["open", "claimed", "resolved"] as const;
 export const EMBEDDING_OWNERS = ["member", "team"] as const;
-export const AUTH_TOKEN_KINDS = ["verify-email", "reset-password"] as const;
+export const AUTH_CODE_KINDS = ["reset-password"] as const;
 export const AGENT_ROLES = ["user", "assistant", "system"] as const;
 
 // Gemini gemini-embedding-001 at 768 dimensions (same as the old Hacky).

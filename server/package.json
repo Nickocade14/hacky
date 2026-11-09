@@ -8,7 +8,8 @@
     "start": "node --env-file=.env dist/index.js",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "test": "node --import tsx --test test/*.test.ts",
-    "db:indexes": "node --env-file=.env --import tsx src/scripts/sync-indexes.ts"
+    "db:indexes": "node --env-file=.env --import tsx src/scripts/sync-indexes.ts",
+    "db:delete-unverified": "node --env-file=.env --import tsx src/scripts/delete-unverified.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.114",

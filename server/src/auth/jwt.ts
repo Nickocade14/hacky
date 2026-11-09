@@ -5,7 +5,7 @@ import { HttpError } from "../errors.js";
 
 const TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 
-function secret(): string {
+export function secret(): string {
   const value = process.env.JWT_SECRET;
   if (!value || value.length < 32) {
     throw new Error("JWT_SECRET must be set to at least 32 characters (see server/.env.example)");
