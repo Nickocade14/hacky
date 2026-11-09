@@ -11,7 +11,9 @@ const agentMessageSchema = new Schema(
     role: { type: String, enum: AGENT_ROLES, required: true },
     parts: { type: Schema.Types.Mixed, required: true },
   },
-  { timestamps: { createdAt: true, updatedAt: false } },
+  // minimize: false keeps empty objects in parts (a card's hackyStyle: {}),
+  // so a saved reply reads back exactly as it was sent.
+  { timestamps: { createdAt: true, updatedAt: false }, minimize: false },
 );
 
 agentMessageSchema.index({ user: 1, messageId: 1 }, { unique: true });
