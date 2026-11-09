@@ -23,8 +23,8 @@ servers:
     description: Production
     variables:
       domain:
-        default: your-domain.com
-        description: The team's domain (pending)
+        default: hackymatch.me
+        description: The team's domain
   - url: http://localhost:8787
     description: Local development
 tags:
