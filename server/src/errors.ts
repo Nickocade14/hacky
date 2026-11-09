@@ -39,8 +39,8 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
     const keys = Object.keys(error.keyPattern ?? {});
     const code = keys.length === 1 && keys[0] === "email" ? "email_taken"
       : keys.length === 1 && keys[0] === "handle" ? "handle_taken" : "conflict";
-    const message = code === "email_taken" ? "Email already taken"
-      : code === "handle_taken" ? "Handle already taken" : "Already exists";
+    const message = code === "email_taken" ? "That email already has an account."
+      : code === "handle_taken" ? "That username is taken. Try another one." : "Already exists";
     res.status(409).json({ error: { code, message } });
     return;
   }
