@@ -29,7 +29,7 @@ servers:
     description: Local development
 tags:
   - name: Auth
-    description: Register, email verification, login (JWT), password reset
+    description: Register and verify with an emailed code, login (JWT), password reset with a code
   - name: Me
     description: The signed-in user
   - name: Events
@@ -71,8 +71,12 @@ paths:
     post:
       operationId: register
       tags: [Auth]
-      summary: Create an account and send the verification email
-      description: The account can't log in until the email is verified.
+      summary: Start a sign-up and email a 6-digit code
+      description: |
+        Nothing is saved as an account yet. The sign-up waits for `POST /api/auth/verify-email`
+        for 10 minutes and is then deleted, so an unverified sign-up never keeps the email or the
+        username. Registering again with the same email replaces the waiting sign-up and sends a
+        new code. The username is not reserved while waiting: whoever verifies first gets it.
       security: []
       requestBody:
         required: true
@@ -82,15 +86,15 @@ paths:
               $ref: "#/components/schemas/RegisterBody"
       responses:
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
-        "201":
-          description: Account created, verification email sent
+        "200":
+          description: Code sent
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Ok"
         "400": { $ref: "#/components/responses/BadRequest" }
         "409":
-          description: Email or handle already taken (`code` is `email_taken` or `handle_taken`)
+          description: An account already has this email or username (`code` is `email_taken` or `handle_taken`)
           content:
             application/json:
               schema:
@@ -99,25 +103,35 @@ paths:
     post:
       operationId: verifyEmail
       tags: [Auth]
-      summary: Verify the email with the token from the email link
-      description: The link opens the web page `/verify?token=...`, which calls this route. Tokens work once and expire.
+      summary: Finish the sign-up with the emailed code and log in
+      description: |
+        Creates the account and returns a JWT, so the client goes straight in. A code works once.
+        After 5 wrong codes the sign-up is deleted and the user starts again.
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenBody"
+              $ref: "#/components/schemas/VerifyCodeBody"
       responses:
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "200":
-          description: Email verified
+          description: Account created and logged in
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Ok"
+                $ref: "#/components/schemas/LoginResult"
         "400":
-          description: Token invalid, used or expired (`code` is `invalid_token`)
+          description: Invalid input, or the code is wrong, used or expired (`code` is `invalid_code`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: |
+            Someone verified the same email or username first (`email_taken` or `handle_taken`).
+            The waiting sign-up is deleted; register again.
           content:
             application/json:
               schema:
@@ -126,8 +140,10 @@ paths:
     post:
       operationId: resendVerification
       tags: [Auth]
-      summary: Send the verification email again
-      description: Always returns 200, so it doesn't reveal which emails have accounts.
+      summary: Email a new sign-up code
+      description: |
+        Always returns 200, so it doesn't reveal which emails are signing up. When a sign-up is
+        waiting, sends a new code, resets the 5 tries and gives 10 more minutes. Older codes stop working.
       security: []
       requestBody:
         required: true
@@ -138,7 +154,7 @@ paths:
       responses:
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "200":
-          description: Sent if the account exists and isn't verified
+          description: Sent if a sign-up is waiting for this email
           content:
             application/json:
               schema:
@@ -172,7 +188,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
         "403":
-          description: Email not verified yet (`code` is `email_not_verified`)
+          description: Email not verified (`code` is `email_not_verified`). Only accounts made before sign-up codes can hit this.
           content:
             application/json:
               schema:
@@ -182,8 +198,10 @@ paths:
     post:
       operationId: forgotPassword
       tags: [Auth]
-      summary: Send a password reset email
-      description: Always returns 200, so it doesn't reveal which emails have accounts. The link opens `/reset?token=...` on the web.
+      summary: Email a 6-digit password reset code
+      description: |
+        Always returns 200, so it doesn't reveal which emails have accounts. The code lasts
+        10 minutes and allows 5 tries. Asking again sends a new code and older ones stop working.
       security: []
       requestBody:
         required: true
@@ -204,24 +222,25 @@ paths:
     post:
       operationId: resetPassword
       tags: [Auth]
-      summary: Set a new password with the token from the email
+      summary: Set a new password with the emailed code and log in
+      description: Returns a JWT, so the client goes straight in. A code works once.
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ResetPasswordBody"
+              $ref: "#/components/schemas/ResetCodeBody"
       responses:
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "200":
-          description: Password changed
+          description: Password changed and logged in
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Ok"
+                $ref: "#/components/schemas/LoginResult"
         "400":
-          description: Invalid input, or token invalid, used or expired (`code` is `invalid_token`)
+          description: Invalid input, or the code is wrong, used or expired (`code` is `invalid_code`)
           content:
             application/json:
               schema:
@@ -1054,6 +1073,7 @@ components:
       example: knighthacks-ix
     Handle:
       type: string
+      description: The username. Clients label it "Username" and show it as @handle. Stored lowercase.
       pattern: "^[a-z0-9_]{3,30}$"
       example: nico_c
     Tag:
@@ -1178,14 +1198,6 @@ components:
           format: date-time
         me:
           $ref: "#/components/schemas/Me"
-    TokenBody:
-      type: object
-      required: [token]
-      properties:
-        token:
-          type: string
-          minLength: 1
-          maxLength: 200
     EmailBody:
       type: object
       required: [email]
@@ -1193,8 +1205,47 @@ components:
         email:
           type: string
           format: email
+    Code:
+      type: string
+      description: The 6-digit code from the email
+      pattern: "^[0-9]{6}$"
+      example: "482913"
+    VerifyCodeBody:
+      type: object
+      required: [email, code]
+      properties:
+        email:
+          type: string
+          format: email
+          example: nico@example.com
+        code:
+          $ref: "#/components/schemas/Code"
+    ResetCodeBody:
+      type: object
+      required: [email, code, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: nico@example.com
+        code:
+          $ref: "#/components/schemas/Code"
+        password:
+          $ref: "#/components/schemas/Password"
+    TokenBody:
+      type: object
+      deprecated: true
+      description: Old email-link body. No route uses it; kept until the web client moves to codes.
+      required: [token]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 200
     ResetPasswordBody:
       type: object
+      deprecated: true
+      description: Old email-link body. No route uses it; kept until the web client moves to ResetCodeBody.
       required: [token, password]
       properties:
         token:
