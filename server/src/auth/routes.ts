@@ -11,6 +11,7 @@ import { UserModel } from "../models/User.js";
 import { buildMe } from "../me.js";
 import { hashPassword, registerBodySchema, resetPasswordBodySchema } from "../validation/auth.js";
 import { signToken } from "./jwt.js";
+import { authRateLimit } from "./rateLimit.js";
 
 const tokenBodySchema = z.object({ token: z.string().min(1).max(200) });
 const emailBodySchema = z.object({ email: z.email().max(254).transform((value) => value.toLowerCase()) });
@@ -42,6 +43,8 @@ async function profileName(userId: Types.ObjectId) {
 // Mounted at /api/auth. No JWT needed for any of these.
 export function createAuthRouter({ mailer = createSmtpMailer() }: { mailer?: Mailer } = {}): Router {
   const router = Router();
+  const limitLogin = authRateLimit(20);
+  const limitEmailRequests = authRateLimit(5);
 
   router.post("/register", async (req, res) => {
     const body = registerBodySchema.parse(req.body);
@@ -66,8 +69,8 @@ export function createAuthRouter({ mailer = createSmtpMailer() }: { mailer?: Mai
     res.json(ok);
   });
 
-  // Always 200, so it doesn't reveal which emails have accounts.
-  router.post("/resend-verification", async (req, res) => {
+  // Eligible requests return 200 regardless of whether the account exists.
+  router.post("/resend-verification", limitEmailRequests, async (req, res) => {
     const { email } = emailBodySchema.parse(req.body);
     const user = await UserModel.findOne({ email }).select("_id emailVerified").lean();
     if (user && !user.emailVerified) {
@@ -77,7 +80,7 @@ export function createAuthRouter({ mailer = createSmtpMailer() }: { mailer?: Mai
     res.json(ok);
   });
 
-  router.post("/login", async (req, res) => {
+  router.post("/login", limitLogin, async (req, res) => {
     const { email, password } = loginBodySchema.parse(req.body);
     const user = await UserModel.findOne({ email }).select("+passwordHash emailVerified").lean();
     // Compare against a dummy hash when the email is unknown, so both cases take as long.
@@ -90,8 +93,8 @@ export function createAuthRouter({ mailer = createSmtpMailer() }: { mailer?: Mai
     res.json({ token, expiresAt, me: await buildMe(user._id) });
   });
 
-  // Always 200, so it doesn't reveal which emails have accounts.
-  router.post("/forgot-password", async (req, res) => {
+  // Eligible requests return 200 regardless of whether the account exists.
+  router.post("/forgot-password", limitEmailRequests, async (req, res) => {
     const { email } = emailBodySchema.parse(req.body);
     const user = await UserModel.findOne({ email }).select("_id").lean();
     if (user) {

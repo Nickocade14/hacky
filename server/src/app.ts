@@ -20,6 +20,10 @@ export interface AppOptions {
 
 export function createApp({ mailer, rank }: AppOptions = {}) {
   const app = express();
+  // The local Nginx proxy appends the client address to X-Forwarded-For.
+  app.set("trust proxy", (address: string, hop: number) =>
+    hop === 0 && (address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1"),
+  );
   const origins = (process.env.CORS_ORIGIN ?? "http://localhost:5173").split(",").map((origin) => origin.trim());
   app.use(cors({ origin: origins }));
   app.use(express.json({ limit: "100kb" }));
