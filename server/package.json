@@ -11,6 +11,8 @@
     "db:indexes": "node --env-file=.env --import tsx src/scripts/sync-indexes.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.114",
+    "ai": "^7.0.165",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "express": "^5.3.0",

@@ -1,4 +1,4 @@
-import { Schema, Types, model, type InferSchemaType } from "mongoose";
+import { Schema, Types, model, type ClientSession, type InferSchemaType } from "mongoose";
 import { CONVERSATION_KINDS } from "./enums.js";
 
 // kind "dm":     dmUserLow + dmUserHigh (sorted ids), one per pair per event.
@@ -79,7 +79,9 @@ export function listConversations(event: Types.ObjectId, user: Types.ObjectId) {
 // Returns the DM between a and b at this event, creating it if needed.
 // Accepting twice, or two people accepting at the same time, returns the same
 // conversation: the unique index stops a second DM.
-export async function openDm(event: Types.ObjectId, a: Types.ObjectId, b: Types.ObjectId) {
+// Inside a transaction (session set), a race surfaces as a transient error and
+// the transaction retries, so the duplicate-key fallback only runs without one.
+export async function openDm(event: Types.ObjectId, a: Types.ObjectId, b: Types.ObjectId, session?: ClientSession) {
   if (a.equals(b)) throw new Error("A DM needs two different people");
   const [low, high] = a.toString() < b.toString() ? [a, b] : [b, a];
   const filter = { event, kind: "dm" as const, dmUserLow: low, dmUserHigh: high };
@@ -88,11 +90,11 @@ export async function openDm(event: Types.ObjectId, a: Types.ObjectId, b: Types.
     return await ConversationModel.findOneAndUpdate(
       filter,
       { $setOnInsert: { members: [{ user: low, joinedAt: now }, { user: high, joinedAt: now }] } },
-      { upsert: true, new: true },
+      { upsert: true, new: true, session },
     ).orFail();
   } catch (err) {
     // Lost the race to the other request: the DM exists now, return it.
-    if ((err as { code?: number }).code === 11000) return ConversationModel.findOne(filter).orFail();
+    if ((err as { code?: number }).code === 11000 && !session) return ConversationModel.findOne(filter).orFail();
     throw err;
   }
 }
