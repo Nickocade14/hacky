@@ -40,13 +40,22 @@ void main() {
     expect(find.text(FieldRules.passwordHint), findsOneWidget);
     expect(
       find.text(
-        'We’ll send a verification link to your inbox before you log in.',
+        'We’ll email you a 6-digit code to finish creating your account.',
       ),
       findsOneWidget,
     );
   });
 
-  testWidgets('registers and opens Check your inbox with the email', (
+  testWidgets('labels the handle Username with an @', (tester) async {
+    final (:api, store: _) = fakeApi();
+    await pumpScreen(tester, registerPage(api));
+
+    expect(find.text('Username'), findsOneWidget);
+    expect(find.text('Handle'), findsNothing);
+    expect(find.text('@'), findsOneWidget);
+  });
+
+  testWidgets('registers and opens the code screen with the email', (
     tester,
   ) async {
     final (:api, store: _) = fakeApi();
@@ -55,9 +64,9 @@ void main() {
     await fillRegister(tester);
     await tapOn(tester, createButton);
 
-    expect(visits.single.route, Routes.checkEmail);
+    expect(visits.single.route, Routes.verifyEmail);
     expect(visits.single.arguments, 'ethan@example.com');
-    // The account exists now but can't log in until it's verified.
+    // Nothing is an account until the code is verified.
     await tester.runAsync(
       () => expectLater(
         api.login(
@@ -115,7 +124,26 @@ void main() {
     await fillRegister(tester, email: FakeApiClient.demoEmail);
     await tapOn(tester, createButton);
 
-    expect(find.text('That email already has an account.'), findsOneWidget);
+    expect(
+      find.text('That email already has an account. Log in instead.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('says the username is taken, and accepts a typed @', (
+    tester,
+  ) async {
+    final (:api, store: _) = fakeApi();
+    final visits = await pumpScreen(tester, registerPage(api));
+
+    await fillRegister(tester, handle: '@Demo_Hacker');
+    await tapOn(tester, createButton);
+
+    expect(
+      find.text('That username is taken. Try another one.'),
+      findsOneWidget,
+    );
+    expect(visits, isEmpty);
   });
 
   testWidgets('asks to switch to the log in tab', (tester) async {

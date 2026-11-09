@@ -275,6 +275,7 @@ class AuthField extends StatefulWidget {
     required this.controller,
     this.placeholder,
     this.hint,
+    this.prefix,
     this.password = false,
     this.keyboardType,
     this.autofillHints,
@@ -292,6 +293,9 @@ class AuthField extends StatefulWidget {
 
   /// Small help text under the field.
   final String? hint;
+
+  /// Fixed text before what the user types, like the `@` of a username.
+  final String? prefix;
   final bool password;
   final TextInputType? keyboardType;
   final Iterable<String>? autofillHints;
@@ -345,6 +349,11 @@ class _AuthFieldState extends State<AuthField> {
             decoration: InputDecoration(
               hintText: widget.placeholder,
               hintStyle: const TextStyle(color: AppColors.muted),
+              prefixText: widget.prefix,
+              prefixStyle: const TextStyle(
+                color: AppColors.muted,
+                fontSize: 16,
+              ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14,
                 vertical: 14,
