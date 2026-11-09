@@ -11,30 +11,28 @@ sequenceDiagram
     participant API as Express API
     participant DB as MongoDB
     participant Mail as Email provider
-    participant Verify as Web verification page
 
-    Attendee->>Client: Submit registration
+    Attendee->>Client: Submit name, username, email and password
     Client->>API: POST /api/auth/register
-    API->>DB: Save user and profile in one transaction
-    API->>DB: Store verification token hash
-    API->>Mail: Send verification link
-    API-->>Client: Account created
-    Mail-->>Attendee: Deliver verification email
-    Attendee->>Verify: Open link and confirm email
-    Verify->>API: POST /api/auth/verify-email
-    API->>DB: Look up and consume the verification token
-    alt Token is valid
-        API->>DB: Mark email verified
-        API-->>Verify: Email verified
-        Attendee->>Client: Submit login credentials
-        Client->>API: POST /api/auth/login
-        API->>DB: Read password hash, verification status, and profile
+    API->>DB: Check the email and username aren't taken
+    API->>DB: Save a pending sign-up (code hash, expires in 10 min)
+    API->>Mail: Send the 6-digit code
+    API-->>Client: Code sent
+    Mail-->>Attendee: Deliver the code
+    Attendee->>Client: Type the code
+    Client->>API: POST /api/auth/verify-email
+    API->>DB: Count the try and compare the code
+    alt Code is right
+        API->>DB: In one transaction, use up the sign-up and create the user and profile
         API-->>Client: JWT, expiry, and account details
-    else Token is missing, used, or expired
-        API-->>Verify: Invalid token
-        Verify-->>Attendee: Offer to resend verification email
+        Client-->>Attendee: Open Home, already logged in
+    else Wrong, expired, or 5 tries used
+        API-->>Client: Invalid code
+        Client-->>Attendee: Show the error and offer a new code
     end
 ```
+
+An unverified sign-up is deleted after 10 minutes, so it never keeps the email or the username.
 
 ## Activity diagram · Search for event participants
 
