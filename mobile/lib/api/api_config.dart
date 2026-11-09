@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 
 /// Where the API lives. Paths in docs/openapi.yaml already start with `/api`.
 abstract final class ApiConfig {
-  /// Production server. TODO: replace with the team's domain once it's bought
-  /// (docs/openapi.yaml still lists it as pending).
-  static const productionBaseUrl = 'https://your-domain.com';
+  /// Production server (the droplet behind hackymatch.me).
+  static const productionBaseUrl = 'https://hackymatch.me';
 
   /// The dev server (`npm run dev` in server/) as seen from the Android
   /// emulator: 10.0.2.2 is the host machine's localhost.
