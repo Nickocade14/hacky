@@ -1,4 +1,4 @@
-import { Schema, Types, model, type InferSchemaType } from "mongoose";
+import { Schema, Types, model, type ClientSession, type InferSchemaType } from "mongoose";
 
 // One team per person per event. The owner is always included in members and maxSize.
 // Requesting to join sends a ConnectionRequest to the owner; acceptance adds the member.
@@ -63,10 +63,10 @@ export function createTeam(input: NewTeam) {
 
 // The size check is in the filter, so two people joining at once can't
 // overfill the team. Returns null when the team is full (or doesn't exist).
-export function addTeamMember(teamId: Types.ObjectId, user: Types.ObjectId) {
+export function addTeamMember(teamId: Types.ObjectId, user: Types.ObjectId, session?: ClientSession) {
   return TeamModel.findOneAndUpdate(
     { _id: teamId, $or: [{ members: user }, { $expr: { $lt: [{ $size: "$members" }, "$maxSize"] } }] },
     { $addToSet: { members: user } },
-    { new: true },
+    { new: true, session },
   );
 }
