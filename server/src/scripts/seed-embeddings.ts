@@ -13,7 +13,7 @@
  * Live calls to Gemini may use paid API quota.
  */
 import mongoose from "mongoose";
-import { embedDocument, memberProfileText, teamProfileText } from "../embeddings.js";
+import { embedDocument, isEmbeddableMemberRole, memberProfileText, teamProfileText } from "../embeddings.js";
 import { EmbeddingModel } from "../models/Embedding.js";
 import { EventModel } from "../models/Event.js";
 import { MembershipModel } from "../models/Membership.js";
@@ -64,15 +64,18 @@ try {
 
   // Resolve member profile IDs from event memberships, not from login User docs.
   const [memberships, teams] = await Promise.all([
-    MembershipModel.find({ event: event._id }).select("user skills interests track idea summary motivations").lean(),
+    MembershipModel.find({ event: event._id }).select("user role skills interests track idea summary motivations").lean(),
     TeamModel.find({ event: event._id }).select("name idea track wantedSkills").lean(),
   ]);
-  const profiles = await ProfileModel.find({ _id: { $in: memberships.map((m) => m.user) } })
+  // Only hackers and mentors get vectors; exclude sponsors/organizers.
+  const eligibleMembers = memberships.filter((member) => isEmbeddableMemberRole(member.role));
+  const excludedMembers = memberships.filter((member) => !isEmbeddableMemberRole(member.role));
+  const profiles = await ProfileModel.find({ _id: { $in: eligibleMembers.map((m) => m.user) } })
     .select("_id handle").lean();
   const handles = new Map(profiles.map((profile) => [profile._id.toString(), profile.handle]));
 
   const jobs: Job[] = [];
-  for (const member of memberships) {
+  for (const member of eligibleMembers) {
     if (!handles.has(member.user.toString())) {
       throw new Error(`Missing Profile for membership ${member.user.toString()}.`);
     }
@@ -89,11 +92,20 @@ try {
 
   const existing = await EmbeddingModel.find({ event: event._id }).select("ownerKind ownerId").lean();
   const existingKeys = new Set(existing.map((item) => keyOf(item)));
+  const excludedIds = new Set(excludedMembers.map((member) => member.user.toString()));
+  const staleVectors = existing.filter((item) =>
+    item.ownerKind === "member" && excludedIds.has(item.ownerId.toString()),
+  );
   const pending = jobs.filter((job) => !existingKeys.has(keyOf(job)));
 
   console.log(`Database: ${mongoose.connection.db!.databaseName}`);
   console.log(`Event: ${EVENT_SLUG}`);
-  console.log(`Event memberships: ${memberships.length}; teams: ${teams.length}`);
+  console.log(`Event memberships: ${memberships.length}; eligible hacker/mentor members: ${eligibleMembers.length}; teams: ${teams.length}`);
+  console.log(`Excluded sponsor/organizer memberships: ${excludedMembers.length}`);
+  if (staleVectors.length > 0) {
+    console.warn(`WARNING: ${staleVectors.length} previously stored sponsor/organizer vector(s) still exist.`);
+    console.warn("Do not remove or regenerate shared Atlas data without team review and approval.");
+  }
   console.log(`Eligible profile/team texts: ${jobs.length}`);
   console.log(`Already embedded: ${jobs.length - pending.length}`);
   console.log(`Missing embeddings: ${pending.length}`);
