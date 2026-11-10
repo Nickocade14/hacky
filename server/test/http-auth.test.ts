@@ -33,6 +33,43 @@ test("HTTP health, JSON 404, malformed JSON and 413", async () => {
   });
 });
 
+test("auth limits use the client IP, share an email budget, and reset after 15 minutes", async (t) => {
+  let now = 0;
+  t.mock.method(performance, "now", () => now);
+
+  await withServer(createApp(), async (base) => {
+    async function post(route: string, client = "198.51.100.10", claimed = "203.0.113.1") {
+      const response = await fetch(`${base}/api/auth/${route}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Forwarded-For": `${claimed}, ${client}` },
+        body: "{}",
+      });
+      return { status: response.status, retryAfter: response.headers.get("Retry-After"), body: await response.json() };
+    }
+
+    for (const route of ["resend-verification", "forgot-password", "resend-verification", "forgot-password", "resend-verification"]) {
+      assert.equal((await post(route)).status, 400);
+    }
+    for (const route of ["resend-verification", "forgot-password"]) {
+      const blocked = await post(route, "198.51.100.10", "203.0.113.2");
+      assert.equal(blocked.status, 429);
+      assert.equal(blocked.retryAfter, "900");
+      assert.deepEqual(blocked.body, { error: { code: "rate_limited", message: "Too many requests. Try again later." } });
+    }
+    assert.equal((await post("forgot-password", "198.51.100.11")).status, 400);
+
+    for (let i = 0; i < 20; i += 1) assert.equal((await post("login")).status, 400);
+    assert.equal((await post("login")).status, 429);
+    assert.equal((await post("login", "198.51.100.11")).status, 400);
+
+    now = 15 * 60_000 - 1;
+    assert.equal((await post("login")).retryAfter, "1");
+    now += 1;
+    assert.equal((await post("login")).status, 400);
+    assert.equal((await post("forgot-password")).status, 400);
+  });
+});
+
 test("duplicate keys return the contract's registration codes without leaking key values", async () => {
   const app = express();
   app.get("/:field", (req, _res, next) => {
