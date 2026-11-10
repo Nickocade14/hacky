@@ -1,4 +1,4 @@
-import type { EmailBody, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetPasswordBody, SearchQuery, SearchResults, TokenBody } from "./contracts";
+import type { EmailBody, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetCodeBody, SearchQuery, SearchResults, VerifyCodeBody } from "./contracts";
 import { readSession } from "./session";
 
 type ErrorKind = "api" | "network" | "server" | "unavailable" | "unauthorized";
@@ -19,7 +19,7 @@ const isAbort = (error: unknown) => error instanceof Error && error.name === "Ab
 
 export function createApiClient(options: ClientOptions = {}) {
   const base = ((options.baseUrl ?? import.meta.env.VITE_API_URL)?.trim() || "/api").replace(/\/+$/, "");
-  async function request<T>(path: string, method: "GET" | "POST", body?: unknown, signal?: AbortSignal, protectedRoute = false): Promise<T> {
+  async function requestWithStatus<T>(path: string, method: "GET" | "POST", body?: unknown, signal?: AbortSignal, protectedRoute = false) {
     const headers = new Headers({ Accept: "application/json" });
     if (body !== undefined) headers.set("Content-Type", "application/json");
     if (protectedRoute) {
@@ -52,15 +52,24 @@ export function createApiClient(options: ClientOptions = {}) {
       throw new ApiClientError(kind, message, response.status, code, error?.details);
     }
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new ApiClientError("server", "Hacky sent an unexpected response. Please try again.", response.status);
-    return data as T;
+    return { data: data as T, status: response.status };
+  }
+  async function request<T>(...args: Parameters<typeof requestWithStatus>): Promise<T> {
+    return (await requestWithStatus<T>(...args)).data;
   }
   return {
-    register: (body: RegisterBody, signal?: AbortSignal) => request<Ok>("/auth/register", "POST", body, signal),
-    verifyEmail: (body: TokenBody, signal?: AbortSignal) => request<Ok>("/auth/verify-email", "POST", body, signal),
+    async register(body: RegisterBody, signal?: AbortSignal) {
+      const { status } = await requestWithStatus<Ok>("/auth/register", "POST", body, signal);
+      // The link API creates an account (201); the code API starts a pending signup (200).
+      return status === 201 ? "link" : "code";
+    },
+    verifyEmail: (body: VerifyCodeBody, signal?: AbortSignal) => request<LoginResult>("/auth/verify-email", "POST", body, signal),
+    verifyEmailLink: (token: string, signal?: AbortSignal) => request<Ok>("/auth/verify-email", "POST", { token }, signal),
     resendVerification: (body: EmailBody, signal?: AbortSignal) => request<Ok>("/auth/resend-verification", "POST", body, signal),
     login: (body: LoginBody, signal?: AbortSignal) => request<LoginResult>("/auth/login", "POST", body, signal),
     forgotPassword: (body: EmailBody, signal?: AbortSignal) => request<Ok>("/auth/forgot-password", "POST", body, signal),
-    resetPassword: (body: ResetPasswordBody, signal?: AbortSignal) => request<Ok>("/auth/reset-password", "POST", body, signal),
+    resetPassword: (body: ResetCodeBody, signal?: AbortSignal) => request<LoginResult>("/auth/reset-password", "POST", body, signal),
+    resetPasswordLink: (token: string, password: string, signal?: AbortSignal) => request<Ok>("/auth/reset-password", "POST", { token, password }, signal),
     getMe: (signal?: AbortSignal) => request<Me>("/me", "GET", undefined, signal, true),
     searchPeople(query: SearchQuery, signal?: AbortSignal) {
       const params = new URLSearchParams({ event: query.event, q: query.q });

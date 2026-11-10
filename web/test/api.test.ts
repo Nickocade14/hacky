@@ -9,14 +9,18 @@ describe("contract API client", () => {
     const getToken = vi.fn(() => "saved-jwt");
     const client = createApiClient({ baseUrl: "https://hacky.example/api/", fetch: fetcher, getToken });
     const register = { name: "Ethan", handle: "ethan_z", email: "ethan@example.com", password: "valid-password" };
+    const verify = { email: register.email, code: "012345" };
+    const reset = { email: register.email, code: "067890", password: register.password };
     await client.register(register);
-    await client.verifyEmail({ token: "verify-token" });
+    await client.verifyEmail(verify);
     await client.resendVerification({ email: register.email });
     await client.login({ email: register.email, password: register.password });
     await client.forgotPassword({ email: register.email });
-    await client.resetPassword({ token: "reset-token", password: register.password });
+    await client.resetPassword(reset);
     expect(fetcher.mock.calls.map(([url]) => String(url))).toEqual(["register", "verify-email", "resend-verification", "login", "forgot-password", "reset-password"].map(path => `https://hacky.example/api/auth/${path}`));
     expect(JSON.parse(String(fetcher.mock.calls[0]![1]?.body))).toEqual(register);
+    expect(JSON.parse(String(fetcher.mock.calls[1]![1]?.body))).toEqual(verify);
+    expect(JSON.parse(String(fetcher.mock.calls[5]![1]?.body))).toEqual(reset);
     for (const [, init] of fetcher.mock.calls) {
       expect(init?.method).toBe("POST");
       expect(new Headers(init?.headers).has("Authorization")).toBe(false);
@@ -47,10 +51,10 @@ describe("contract API client", () => {
   });
 
   it("preserves the contract's error message, code, status, and details", async () => {
-    const details = { field: "token" };
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(json({ error: { code: "invalid_token", message: "This link has expired.", details } }, 400));
+    const details = { field: "code" };
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(json({ error: { code: "invalid_code", message: "This code has expired.", details } }, 400));
     const client = createApiClient({ fetch: fetcher });
-    await expect(client.verifyEmail({ token: "used" })).rejects.toMatchObject({ message: "This link has expired.", status: 400, code: "invalid_token", details });
+    await expect(client.verifyEmail({ email: "a@example.com", code: "012345" })).rejects.toMatchObject({ message: "This code has expired.", status: 400, code: "invalid_code", details });
   });
 
   it("distinguishes network failures, unavailable routes, and unexpected HTML", async () => {
@@ -70,11 +74,12 @@ describe("contract API client", () => {
     const abort = new DOMException("Cancelled", "AbortError");
     const fetcher = vi.fn<typeof fetch>().mockRejectedValueOnce(abort);
     const client = createApiClient({ fetch: fetcher });
-    await expect(client.verifyEmail({ token: "token" })).rejects.toBe(abort);
+    const verify = { email: "a@example.com", code: "012345" };
+    await expect(client.verifyEmail(verify)).rejects.toBe(abort);
     const response = json({ ok: true });
     vi.spyOn(response, "json").mockRejectedValueOnce(abort);
     fetcher.mockResolvedValueOnce(response);
-    await expect(client.verifyEmail({ token: "token" })).rejects.toBe(abort);
+    await expect(client.verifyEmail(verify)).rejects.toBe(abort);
     expect(abort).not.toBeInstanceOf(ApiClientError);
   });
 });

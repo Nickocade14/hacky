@@ -31,8 +31,11 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Create an account and send the verification email
-         * @description The account can't log in until the email is verified.
+         * Start a sign-up and email a 6-digit code
+         * @description Nothing is saved as an account yet. The sign-up waits for `POST /api/auth/verify-email`
+         *     for 10 minutes and is then deleted, so an unverified sign-up never keeps the email or the
+         *     username. Registering again with the same email replaces the waiting sign-up and sends a
+         *     new code. The username is not reserved while waiting: whoever verifies first gets it.
          */
         post: operations["register"];
         delete?: never;
@@ -51,8 +54,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify the email with the token from the email link
-         * @description The link opens the web page `/verify?token=...`, which calls this route. Tokens work once and expire.
+         * Finish the sign-up with the emailed code and log in
+         * @description Creates the account and returns a JWT, so the client goes straight in. A code works once.
+         *     After 5 wrong codes the sign-up is deleted and the user starts again.
          */
         post: operations["verifyEmail"];
         delete?: never;
@@ -71,8 +75,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Send the verification email again
-         * @description Always returns 200, so it doesn't reveal which emails have accounts.
+         * Email a new sign-up code
+         * @description Always returns 200, so it doesn't reveal which emails are signing up. When a sign-up is
+         *     waiting, sends a new code, resets the 5 tries and gives 10 more minutes. Older codes stop working.
          */
         post: operations["resendVerification"];
         delete?: never;
@@ -108,8 +113,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Send a password reset email
-         * @description Always returns 200, so it doesn't reveal which emails have accounts. The link opens `/reset?token=...` on the web.
+         * Email a 6-digit password reset code
+         * @description Always returns 200, so it doesn't reveal which emails have accounts. The code lasts
+         *     10 minutes and allows 5 tries. Asking again sends a new code and older ones stop working.
          */
         post: operations["forgotPassword"];
         delete?: never;
@@ -127,7 +133,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Set a new password with the token from the email */
+        /**
+         * Set a new password with the emailed code and log in
+         * @description Returns a JWT, so the client goes straight in. A code works once.
+         */
         post: operations["resetPassword"];
         delete?: never;
         options?: never;
@@ -716,7 +725,10 @@ export interface components {
         ObjectId: string;
         /** @example knighthacks-ix */
         Slug: string;
-        /** @example nico_c */
+        /**
+         * @description The username. Clients label it "Username" and show it as @handle. Stored lowercase.
+         * @example nico_c
+         */
         Handle: string;
         /** @example react */
         Tag: string;
@@ -793,13 +805,43 @@ export interface components {
             expiresAt: string;
             me: components["schemas"]["Me"];
         };
-        TokenBody: {
-            token: string;
-        };
         EmailBody: {
             /** Format: email */
             email: string;
         };
+        /**
+         * @description The 6-digit code from the email
+         * @example 482913
+         */
+        Code: string;
+        VerifyCodeBody: {
+            /**
+             * Format: email
+             * @example nico@example.com
+             */
+            email: string;
+            code: components["schemas"]["Code"];
+        };
+        ResetCodeBody: {
+            /**
+             * Format: email
+             * @example nico@example.com
+             */
+            email: string;
+            code: components["schemas"]["Code"];
+            password: components["schemas"]["Password"];
+        };
+        /**
+         * @deprecated
+         * @description Old email-link body. No route uses it; kept until the web client moves to codes.
+         */
+        TokenBody: {
+            token: string;
+        };
+        /**
+         * @deprecated
+         * @description Old email-link body. No route uses it; kept until the web client moves to ResetCodeBody.
+         */
         ResetPasswordBody: {
             token: string;
             password: components["schemas"]["Password"];
@@ -1218,8 +1260,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Account created, verification email sent */
-            201: {
+            /** @description Code sent */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1228,7 +1270,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
-            /** @description Email or handle already taken (`code` is `email_taken` or `handle_taken`) */
+            /** @description An account already has this email or username (`code` is `email_taken` or `handle_taken`) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1249,21 +1291,33 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TokenBody"];
+                "application/json": components["schemas"]["VerifyCodeBody"];
             };
         };
         responses: {
-            /** @description Email verified */
+            /** @description Account created and logged in */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Ok"];
+                    "application/json": components["schemas"]["LoginResult"];
                 };
             };
-            /** @description Token invalid, used or expired (`code` is `invalid_token`) */
+            /** @description Invalid input, or the code is wrong, used or expired (`code` is `invalid_code`) */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /**
+             * @description Someone verified the same email or username first (`email_taken` or `handle_taken`).
+             *     The waiting sign-up is deleted; register again.
+             */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1287,7 +1341,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Sent if the account exists and isn't verified */
+            /** @description Sent if a sign-up is waiting for this email */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1332,7 +1386,7 @@ export interface operations {
                     "application/json": components["schemas"]["ApiError"];
                 };
             };
-            /** @description Email not verified yet (`code` is `email_not_verified`) */
+            /** @description Email not verified (`code` is `email_not_verified`). Only accounts made before sign-up codes can hit this. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1380,20 +1434,20 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ResetPasswordBody"];
+                "application/json": components["schemas"]["ResetCodeBody"];
             };
         };
         responses: {
-            /** @description Password changed */
+            /** @description Password changed and logged in */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Ok"];
+                    "application/json": components["schemas"]["LoginResult"];
                 };
             };
-            /** @description Invalid input, or token invalid, used or expired (`code` is `invalid_token`) */
+            /** @description Invalid input, or the code is wrong, used or expired (`code` is `invalid_code`) */
             400: {
                 headers: {
                     [name: string]: unknown;

@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthShell, Notice, PageHeading } from "./components";
-import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage, VerifyPage } from "./AuthPages";
+import { ForgotPasswordPage, LoginPage, RegisterPage, VerifyPage } from "./AuthPages";
+import { ResetLinkPage } from "./AuthLinkPages";
 import { SearchPage } from "./SearchPage";
 import { api, ApiClientError } from "./lib/api";
 import { clearSession, readSession, saveSession } from "./lib/session";
@@ -47,7 +48,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
 function RouteFocus() {
   const { pathname } = useLocation();
   useEffect(() => {
-    document.title = `Hacky · ${pathname === "/register" ? "Create account" : pathname === "/verify" ? "Verify email" : pathname === "/forgot-password" ? "Reset password" : pathname === "/reset" ? "Choose a password" : pathname === "/app" ? "Your account" : pathname === "/search" ? "Find people" : "Log in"}`;
+    document.title = `Hacky · ${pathname === "/register" ? "Create account" : pathname === "/verify" ? "Verify email" : pathname === "/forgot-password" || pathname === "/reset" ? "Reset password" : pathname === "/app" ? "Your account" : pathname === "/search" ? "Find people" : "Log in"}`;
     document.querySelector<HTMLElement>("h1")?.focus();
   }, [pathname]);
   return null;
@@ -88,7 +89,7 @@ function Pages() {
     <Route path="/register" element={auth.session ? <Navigate to="/app" replace /> : <RegisterPage />} />
     <Route path="/verify" element={<VerifyPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-    <Route path="/reset" element={<ResetPasswordPage />} />
+    <Route path="/reset" element={<ResetLinkPage />} />
     <Route path="/app" element={<AccountPage />} />
     <Route path="/search" element={<AccountPage search />} />
     <Route path="*" element={<><PageHeading eyebrow="LET’S GET YOU BACK" title="This page wandered off.">Head back to Hacky to find your people.</PageHeading><Link className="button primary" to="/">Back to Hacky</Link></>} />
