@@ -38,13 +38,16 @@ class ApiClient {
 
   // ---------------------------------------------------------------- auth
 
-  /// Creates the account and sends the verification email.
+  /// Starts a sign-up and emails a 6-digit code. Nothing is saved as an
+  /// account until [verifyEmail] gets the code.
   Future<void> register(RegisterBody body) =>
       _send('POST', '/api/auth/register', body: body.toJson(), auth: false);
 
-  Future<void> verifyEmail(TokenBody body) =>
-      _send('POST', '/api/auth/verify-email', body: body.toJson(), auth: false);
+  /// Creates the account with the emailed code and logs in.
+  Future<LoginResult> verifyEmail(VerifyCodeBody body) =>
+      _logIn('/api/auth/verify-email', body.toJson());
 
+  /// Emails a new sign-up code. Always succeeds, so it reveals nothing.
   Future<void> resendVerification(EmailBody body) => _send(
     'POST',
     '/api/auth/resend-verification',
@@ -53,18 +56,10 @@ class ApiClient {
   );
 
   /// Logs in and saves the JWT for later requests.
-  Future<LoginResult> login(LoginBody body) async {
-    final json = await _send(
-      'POST',
-      '/api/auth/login',
-      body: body.toJson(),
-      auth: false,
-    );
-    final result = _parse(json, LoginResult.fromJson);
-    await _tokenStore.write(result.token);
-    return result;
-  }
+  Future<LoginResult> login(LoginBody body) =>
+      _logIn('/api/auth/login', body.toJson());
 
+  /// Emails a 6-digit reset code. Always succeeds, so it reveals nothing.
   Future<void> forgotPassword(EmailBody body) => _send(
     'POST',
     '/api/auth/forgot-password',
@@ -72,12 +67,17 @@ class ApiClient {
     auth: false,
   );
 
-  Future<void> resetPassword(ResetPasswordBody body) => _send(
-    'POST',
-    '/api/auth/reset-password',
-    body: body.toJson(),
-    auth: false,
-  );
+  /// Sets the new password with the emailed code and logs in.
+  Future<LoginResult> resetPassword(ResetCodeBody body) =>
+      _logIn('/api/auth/reset-password', body.toJson());
+
+  /// Every route that answers a `LoginResult` saves its JWT the same way.
+  Future<LoginResult> _logIn(String path, Map<String, dynamic> body) async {
+    final json = await _send('POST', path, body: body, auth: false);
+    final result = _parse(json, LoginResult.fromJson);
+    await _tokenStore.write(result.token);
+    return result;
+  }
 
   /// There's no logout endpoint; the JWT is forgotten on the device.
   Future<void> logout() => _tokenStore.clear();

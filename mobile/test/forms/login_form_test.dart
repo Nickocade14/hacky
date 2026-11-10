@@ -67,22 +67,6 @@ void main() {
     expect(store.token, isNull);
   });
 
-  testWidgets('offers a resend link to an unverified user', (tester) async {
-    final (:api, store: _) = fakeApi();
-    final visits = await pumpScreen(tester, loginPage(api));
-
-    await fillLogin(
-      tester,
-      FakeApiClient.unverifiedEmail,
-      FakeApiClient.testPassword,
-    );
-    await tapOn(tester, logInButton);
-    await tapOn(tester, find.text('Resend your verification email'));
-
-    expect(visits.single.route, Routes.checkEmail);
-    expect(visits.single.arguments, FakeApiClient.unverifiedEmail);
-  });
-
   testWidgets('shows the connection message when offline', (tester) async {
     final (:api, store: _) = fakeApi();
     await pumpScreen(tester, loginPage(api));
