@@ -46,6 +46,13 @@ async function fillLogin(user: ReturnType<typeof userEvent.setup>, email = "etha
   await user.type(screen.getByLabelText("Password", { exact: true }), "correct-password");
 }
 
+async function fillRegistration(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText("Your name"), "Ethan Zeng");
+  await user.type(screen.getByLabelText("Username"), "ethan_z");
+  await user.type(screen.getByLabelText("Email address"), "ETHAN@EXAMPLE.COM");
+  await user.type(screen.getByLabelText("Password", { exact: true }), "correct-password");
+}
+
 beforeEach(() => {
   window.localStorage.clear();
   clearSession();
@@ -84,10 +91,7 @@ describe("authentication pages", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
     renderApp("/register");
 
-    await user.type(screen.getByLabelText("Your name"), "Ethan Zeng");
-    await user.type(screen.getByLabelText("Username"), "ethan_z");
-    await user.type(screen.getByLabelText("Email address"), "ETHAN@EXAMPLE.COM");
-    await user.type(screen.getByLabelText("Password", { exact: true }), "correct-password");
+    await fillRegistration(user);
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(await screen.findByRole("heading", { level: 1, name: "Check your inbox." })).not.toBeNull();
@@ -101,6 +105,21 @@ describe("authentication pages", () => {
     expect(readSession()).toBeNull();
   });
 
+  it("offers link instructions and resend when registration returns 201", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }, 201)).mockResolvedValueOnce(jsonResponse({ ok: true }));
+    renderApp("/register");
+    await fillRegistration(user);
+    await user.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByText(/Open the verification link emailed to/)).not.toBeNull();
+    expect(screen.queryByLabelText("Code")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Send a new email" }));
+    expect((await screen.findByRole("status")).textContent).toContain("If your sign-up is still active");
+    expect(String(fetchMock.mock.calls[1]?.[0])).toBe("/api/auth/resend-verification");
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({ email: "ethan@example.com" });
+  });
+
   it("keeps a legacy unverified user signed out and offers password recovery", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(jsonResponse({ error: { code: "email_not_verified", message: "Check your inbox before logging in." } }, 403));
@@ -111,7 +130,7 @@ describe("authentication pages", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Check your inbox before logging in.");
     expect(readSession()).toBeNull();
     await user.click(screen.getByRole("link", { name: "Forgot password?" }));
-    expect(screen.getByRole("button", { name: "Send code" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Send email" })).not.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -196,7 +215,7 @@ describe("authentication pages", () => {
 
   async function requestResetCode(user: ReturnType<typeof userEvent.setup>, email = "ethan@example.com") {
     await user.type(screen.getByLabelText("Email address"), email);
-    await user.click(screen.getByRole("button", { name: "Send code" }));
+    await user.click(screen.getByRole("button", { name: "Send email" }));
     return screen.findByLabelText("Code");
   }
 
@@ -269,7 +288,8 @@ describe("authentication pages", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("This code has expired.");
     await user.clear(code);
     await user.click(screen.getByRole("button", { name: "Send a new code" }));
-    expect((await screen.findByRole("status")).textContent).toContain("A new code is on its way");
+    expect((await screen.findByRole("status")).textContent).toContain("If your sign-up is still active");
+    expect(screen.getByRole("link", { name: "Back to create account" })).not.toBeNull();
     expect(String(fetchMock.mock.calls[1]?.[0])).toBe("/api/auth/resend-verification");
     expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({ email: "ethan@example.com" });
   });
@@ -317,9 +337,55 @@ describe("authentication pages", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it("takes old reset URLs to code recovery without making a request", async () => {
-    renderApp("/reset?token=old-link");
-    expect(await screen.findByRole("heading", { level: 1, name: "Forgot your password?" })).not.toBeNull();
+  it("verifies an email link on explicit submit and returns to login without a session", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
+    renderApp("/verify?token=verify-link", true);
     expect(fetchMock).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Verify my email" }));
+
+    expect((await screen.findByRole("status")).textContent).toBe("Email verified. Log in to continue.");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe("/api/auth/verify-email");
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ token: "verify-link" });
+    expect(readSession()).toBeNull();
+  });
+
+  it("resets a password from an emailed link and then clears the previous session", async () => {
+    const user = userEvent.setup();
+    saveSession(loginResult());
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
+    renderApp("/reset?token=reset-link");
+
+    await user.type(screen.getByLabelText("New password", { exact: true }), "new-password");
+    const confirmation = screen.getByLabelText("Confirm password", { exact: true });
+    await user.type(confirmation, "other-password");
+    await user.click(screen.getByRole("button", { name: "Save new password" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("passwords don’t match");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(readSession()).not.toBeNull();
+
+    await user.clear(confirmation);
+    await user.type(confirmation, "new-password");
+    await user.click(screen.getByRole("button", { name: "Save new password" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Password updated. Log in with your new password.");
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe("/api/auth/reset-password");
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ token: "reset-link", password: "new-password" });
+    expect(readSession()).toBeNull();
+  });
+
+  it("offers code recovery if a reset link is no longer accepted", async () => {
+    const user = userEvent.setup();
+    saveSession(loginResult());
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: { code: "invalid_input", message: "Invalid input" } }, 400));
+    renderApp("/reset?token=expired-link");
+    await user.type(screen.getByLabelText("New password", { exact: true }), "new-password");
+    await user.type(screen.getByLabelText("Confirm password", { exact: true }), "new-password");
+    await user.click(screen.getByRole("button", { name: "Save new password" }));
+
+    expect((await screen.findByRole("alert")).textContent).toBe("Invalid input");
+    expect(readSession()).not.toBeNull();
+    await user.click(screen.getByRole("link", { name: "Request a new email" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Forgot your password?" })).not.toBeNull();
   });
 });
