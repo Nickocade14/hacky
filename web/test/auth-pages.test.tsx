@@ -5,9 +5,18 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "../src/App";
 import { clearSession, readSession, saveSession } from "../src/lib/session";
-import type { LoginResult } from "../src/lib/contracts";
+import type { EventInfo, EventMe, LoginResult } from "../src/lib/contracts";
 
 const fetchMock = vi.fn<typeof fetch>();
+const authRequests = () => fetchMock.mock.calls.filter(([url]) => String(url).startsWith("/api/auth/"));
+const event: EventInfo = {
+  slug: "knighthacks-ix", name: "Knight Hacks IX", startsAt: null, endsAt: null, theme: {}, tracks: ["AI"],
+};
+const eventMe: EventMe = {
+  role: "hacker", verified: false, availability: "available", looking: true,
+  intake: { complete: false, skills: [], skillsWanted: [], experience: null, wantsExperienced: false, goal: null,
+    track: null, interests: [], idea: null, summary: null, motivations: [] },
+};
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -58,7 +67,11 @@ beforeEach(() => {
   clearSession();
   window.history.replaceState({}, "", "/");
   fetchMock.mockReset();
-  fetchMock.mockRejectedValue(new Error("Unexpected API call in this test"));
+  fetchMock.mockImplementation(async (path) => {
+    if (path === "/api/events/knighthacks-ix") return jsonResponse(event);
+    if (path === "/api/events/knighthacks-ix/me") return jsonResponse(eventMe);
+    throw new Error(`Unexpected API call in this test: ${String(path)}`);
+  });
   vi.stubGlobal("fetch", fetchMock);
 });
 
@@ -142,12 +155,13 @@ describe("authentication pages", () => {
     await fillLogin(user);
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect(await screen.findByRole("heading", { level: 1, name: /Ethan/ })).not.toBeNull();
-    expect(screen.getByRole("heading", { name: "Ethan Zeng", level: 2 })).not.toBeNull();
+    expect(await screen.findByRole("heading", { level: 1, name: "Ethan Zeng" })).not.toBeNull();
     expect(screen.getByText("@ethan_z")).not.toBeNull();
-    expect(screen.getByText("Knight Hacks IX", { selector: "strong" })).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Knight Hacks IX", level: 2 })).not.toBeNull();
+    expect(screen.getByRole("navigation", { name: "Main navigation" })).not.toBeNull();
+    expect(screen.queryByRole("complementary", { name: "About Hacky" })).toBeNull();
     expect(readSession()).toEqual({ token: result.token, expiresAt: result.expiresAt });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(authRequests()).toHaveLength(1);
 
     await user.click(screen.getByRole("button", { name: "Sign out" }));
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Welcome back.");
@@ -170,7 +184,7 @@ describe("authentication pages", () => {
 
     await act(async () => { finishRequest(jsonResponse(loginResult())); });
     expect(await screen.findByRole("heading", { level: 1, name: /Ethan/ })).not.toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(authRequests()).toHaveLength(1);
   });
 
   it("returns a restored but rejected session to login", async () => {
@@ -182,6 +196,48 @@ describe("authentication pages", () => {
     expect(await screen.findByRole("form", { name: "Log in" })).not.toBeNull();
     expect(readSession()).toBeNull();
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe("/api/me");
+  });
+
+  it("joins an event from Home and uses that membership on People", async () => {
+    const user = userEvent.setup();
+    const session = loginResult();
+    saveSession(session);
+    let joinCount = 0;
+    fetchMock.mockImplementation(async (path) => {
+      switch (String(path)) {
+        case "/api/me": return jsonResponse({ ...session.me, events: [] });
+        case "/api/events": return jsonResponse({ events: [event] });
+        case "/api/events/knighthacks-ix/join":
+          joinCount += 1;
+          return joinCount === 1
+            ? jsonResponse({ error: { code: "internal", message: "Couldn’t join right now." } }, 500)
+            : jsonResponse(eventMe);
+        case "/api/events/knighthacks-ix": return jsonResponse(event);
+        case "/api/events/knighthacks-ix/me": return jsonResponse(eventMe);
+        case "/api/search?event=knighthacks-ix&q=React": return jsonResponse({ results: [] });
+        default: throw new Error(`Unexpected API call in this test: ${String(path)}`);
+      }
+    });
+    renderApp("/app");
+
+    expect(await screen.findByRole("heading", { name: "Pick your hackathon" })).not.toBeNull();
+    await user.click(await screen.findByRole("button", { name: "Join" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Couldn’t join right now.");
+    expect(screen.getByRole("heading", { name: "Pick your hackathon" })).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Join" }));
+    expect(await screen.findByText("Looking for a team")).not.toBeNull();
+    const joins = fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/join"));
+    expect(joins).toHaveLength(2);
+    expect(joins[1]?.[1]?.method).toBe("POST");
+    expect(new Headers(joins[1]?.[1]?.headers).get("Authorization")).toBe(`Bearer ${session.token}`);
+
+    await user.click(screen.getByRole("link", { name: "People" }));
+    expect(screen.getByRole("link", { name: "People" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.queryByRole("complementary", { name: "About Hacky" })).toBeNull();
+    await user.type(screen.getByRole("searchbox", { name: "Name, handle, or skill" }), "React");
+    expect(await screen.findByText("No matches found.")).not.toBeNull();
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/me")).toHaveLength(1);
   });
 
   it("searches the current event with the saved token and drops stale results", async () => {
@@ -247,7 +303,7 @@ describe("authentication pages", () => {
     await user.click(screen.getByRole("button", { name: "Reset password" }));
 
     expect(await screen.findByRole("heading", { level: 1, name: /Ethan/ })).not.toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(authRequests()).toHaveLength(2);
     expect(String(fetchMock.mock.calls[1]?.[0])).toBe("/api/auth/reset-password");
     expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({ email: "ethan@example.com", code: "012345", password });
     expect(readSession()).toEqual({ token: result.token, expiresAt: result.expiresAt });
@@ -265,7 +321,7 @@ describe("authentication pages", () => {
     await user.click(screen.getByRole("button", { name: "Verify and continue" }));
 
     expect(await screen.findByRole("heading", { level: 1, name: /Ethan/ })).not.toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(authRequests()).toHaveLength(1);
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe("/api/auth/verify-email");
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ email: "ethan@example.com", code: "012345" });
     expect(readSession()).toEqual({ token: result.token, expiresAt: result.expiresAt });

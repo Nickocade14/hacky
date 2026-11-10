@@ -1,9 +1,11 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AuthShell, Notice, PageHeading } from "./components";
 import { ForgotPasswordPage, LoginPage, RegisterPage, VerifyPage } from "./AuthPages";
 import { ResetLinkPage } from "./AuthLinkPages";
 import { SearchPage } from "./SearchPage";
+import { HomePage } from "./HomePage";
+import { ProfileOverview, SignedInShell, type SignedInContext } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
 import { clearSession, readSession, saveSession } from "./lib/session";
 import type { LoginResult, Me } from "./lib/contracts";
@@ -25,7 +27,7 @@ export function useAuth() {
 function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState(readSession);
   const [me, setMe] = useState<Me | null>(null);
-  function signOut() { clearSession(); setSession(null); setMe(null); }
+  const signOut = useCallback(() => { clearSession(); setSession(null); setMe(null); }, []);
   useEffect(() => {
     if (!session) return;
     const remaining = Date.parse(session.expiresAt) - Date.now();
@@ -48,16 +50,21 @@ function AuthProvider({ children }: { children: ReactNode }) {
 function RouteFocus() {
   const { pathname } = useLocation();
   useEffect(() => {
-    document.title = `Hacky · ${pathname === "/register" ? "Create account" : pathname === "/verify" ? "Verify email" : pathname === "/forgot-password" || pathname === "/reset" ? "Reset password" : pathname === "/app" ? "Your account" : pathname === "/search" ? "Find people" : "Log in"}`;
+    const titles: Record<string, string> = {
+      "/register": "Create account", "/verify": "Verify email", "/forgot-password": "Reset password", "/reset": "Reset password",
+      "/app": "Home", "/search": "Find people", "/profile": "My profile",
+    };
+    document.title = `Hacky · ${titles[pathname] ?? "Log in"}`;
     document.querySelector<HTMLElement>("h1")?.focus();
   }, [pathname]);
   return null;
 }
 
-function AccountPage({ search = false }: { search?: boolean }) {
+function SignedInLayout() {
   const { session, me, setMe, signOut } = useAuth();
   const [problem, setProblem] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
+  const [selectedEvent, selectEvent] = useState<string>();
   useEffect(() => {
     if (!session || me) return;
     const controller = new AbortController();
@@ -70,30 +77,42 @@ function AccountPage({ search = false }: { search?: boolean }) {
       else setProblem(error instanceof Error ? error.message : "Couldn’t load your account. Try again.");
     });
     return () => controller.abort();
-  }, [session?.token, me, retry]);
+  }, [session, me, retry, setMe, signOut]);
   if (!session) return <Navigate to="/login" replace />;
-  if (search && me) return <SearchPage events={me.events} onExpired={signOut} />;
-  return <><PageHeading eyebrow="YOUR NEXT CHAPTER" title={me ? `You’re in, ${me.profile.name.split(" ")[0]}.` : "Welcome back."}>A big idea starts with a connection. Welcome to Hacky.</PageHeading>
-    {!me && !problem && <p role="status">Loading your account…</p>}
-    {problem && <><Notice error>{problem}</Notice><button className="button secondary" onClick={() => setRetry(retry + 1)}>Try again</button></>}
-    {me && <div className="account-card"><span className="account-avatar" aria-hidden="true">{me.profile.name.slice(0, 1).toUpperCase()}</span><h2>{me.profile.name}</h2><p>@{me.profile.handle}</p><div className="account-events"><span className="eyebrow">YOUR EVENTS</span>{me.events.length ? me.events.map(event => <div className="account-event" key={event.slug}><strong>{event.name}</strong><span>{event.role}</span></div>) : <p>No events yet. Your organizer can help you join.</p>}</div></div>}
-    {me && <Link className="button primary" to="/search">Find people</Link>}
-    <button className="button secondary" type="button" onClick={signOut}>Sign out</button></>;
+  const event = me?.events.find(item => item.slug === selectedEvent) ?? me?.events[0];
+  const context: SignedInContext | null = me && {
+    me, event, selectEvent, onExpired: signOut,
+    onJoined(joined) {
+      setMe({ ...me, events: [...me.events.filter(item => item.slug !== joined.slug), joined] });
+      selectEvent(joined.slug);
+    },
+  };
+  return <SignedInShell profile={me?.profile} event={event} signOut={signOut}>
+    {context ? <Outlet context={context} /> : problem ? <>
+      <Notice error>{problem}</Notice>
+      <button className="button secondary" type="button" onClick={() => setRetry(value => value + 1)}>Try again</button>
+    </> : <p role="status">Loading your account…</p>}
+  </SignedInShell>;
 }
 
 function Pages() {
   const auth = useAuth();
-  return <AuthShell><RouteFocus /><Routes>
+  return <><RouteFocus /><Routes>
     <Route path="/" element={<Navigate to={auth.session ? "/app" : "/login"} replace />} />
-    <Route path="/login" element={auth.session ? <Navigate to="/app" replace /> : <LoginPage />} />
-    <Route path="/register" element={auth.session ? <Navigate to="/app" replace /> : <RegisterPage />} />
-    <Route path="/verify" element={<VerifyPage />} />
-    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-    <Route path="/reset" element={<ResetLinkPage />} />
-    <Route path="/app" element={<AccountPage />} />
-    <Route path="/search" element={<AccountPage search />} />
-    <Route path="*" element={<><PageHeading eyebrow="LET’S GET YOU BACK" title="This page wandered off.">Head back to Hacky to find your people.</PageHeading><Link className="button primary" to="/">Back to Hacky</Link></>} />
-  </Routes></AuthShell>;
+    <Route element={<AuthShell><Outlet /></AuthShell>}>
+      <Route path="/login" element={auth.session ? <Navigate to="/app" replace /> : <LoginPage />} />
+      <Route path="/register" element={auth.session ? <Navigate to="/app" replace /> : <RegisterPage />} />
+      <Route path="/verify" element={<VerifyPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset" element={<ResetLinkPage />} />
+      <Route path="*" element={<><PageHeading eyebrow="LET’S GET YOU BACK" title="This page wandered off.">Head back to Hacky to find your people.</PageHeading><Link className="button primary" to="/">Back to Hacky</Link></>} />
+    </Route>
+    <Route element={<SignedInLayout />}>
+      <Route path="/app" element={<HomePage />} />
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/profile" element={<ProfileOverview />} />
+    </Route>
+  </Routes></>;
 }
 
 export function App() { return <AuthProvider><Pages /></AuthProvider>; }
