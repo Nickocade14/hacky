@@ -59,6 +59,8 @@ beforeEach(() => {
   fetchMock.mockImplementation(async (url, init) => {
     const path = String(url);
     if (path === "/api/me") return json(me);
+    if (path === "/api/events/" + eventSlug + "/requests") return json({ requests: [] });
+    if (path === "/api/events/" + eventSlug + "/chat") return json({ messages: [] });
     if (path === "/api/events/" + eventSlug + "/conversations") return json({ conversations: [conversation] });
     if (path === "/api/conversations/" + threadId + "/read" && init?.method === "POST") return json({ lastReadAt: createdAt });
     if (path === messagesPath + "?before=" + initialId) return json({ messages: [message(firstId, "Hi Ethan")], hasMore: false });
@@ -111,7 +113,7 @@ it("loads a conversation, retries with the same client ID, polls from the last l
 
   // The send response has a later ID than the peer reply. Poll from the last
   // message list cursor so the peer reply still arrives and my copy dedupes.
-  const poll = startInterval.mock.calls.find(([, delay]) => delay === 10_000)?.[0];
+  const poll = startInterval.mock.calls.find(([, delay]) => delay === 3_000)?.[0];
   if (!poll) throw new Error("Chat polling did not start");
   await act(async () => { await (poll as () => Promise<void>)(); });
   expect(screen.getByText("I can work on React.")).not.toBeNull();

@@ -35,7 +35,7 @@ export function LoginPage() {
     const data = new FormData(event.currentTarget);
     const login = loginValue(data);
     setAttemptedEmail(isEmailLogin(login) ? login : "");
-    void action.run(async signal => { const result = await api.login({ login, password: value(data, "password") }, signal); auth.signIn(result); navigate("/app", { replace: true }); });
+    void action.run(async signal => { const result = await api.login({ login, password: value(data, "password") }, signal); auth.signIn(result); navigate("/hacky", { replace: true }); });
   }
   return <><AuthTabs /><PageHeading eyebrow="GOOD TO SEE YOU" title="Welcome back." />
     {notice && <Notice>{notice}</Notice>}
@@ -119,7 +119,7 @@ function VerifyInbox() {
     if (!isCode(normalizedCode)) { action.setError(codeError); return; }
     void action.run(async signal => {
       auth.signIn(await api.verifyEmail({ email, code: normalizedCode }, signal));
-      navigate("/app", { replace: true });
+      navigate("/hacky", { replace: true });
     });
   }
 
@@ -175,7 +175,7 @@ export function ForgotPasswordPage() {
     if (problem) { action.setError(problem); return; }
     void action.run(async signal => {
       auth.signIn(await api.resetPassword({ email: address, code: normalizedCode, password }, signal));
-      navigate("/app", { replace: true });
+      navigate("/hacky", { replace: true });
     });
   }
 

@@ -1,13 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Notice } from "./components";
-import { PersonAvatar, useSignedIn } from "./SignedInShell";
+import { KnitAvatar } from "./workspace/KnitAvatar";
 import { api, ApiClientError } from "./lib/api";
-import { chatPath, eventPath, personPath } from "./lib/connections";
+import { eventPath, personPath } from "./lib/connections";
 import type { components, operations } from "./lib/schema";
+import { Icon } from "./workspace/icons";
 import "./chats.css";
 
-type Conversation = components["schemas"]["ConversationSummary"];
+export type Conversation = components["schemas"]["ConversationSummary"];
 type Message = components["schemas"]["Message"];
 type MessagePage = components["schemas"]["MessagePage"];
 type SendMessageBody = components["schemas"]["SendMessageBody"];
@@ -20,12 +21,12 @@ type Ok = components["schemas"]["Ok"];
 type PendingMessage = SendMessageBody & { error?: string };
 type Thread = { messages: Message[]; pending: PendingMessage[]; before?: string };
 
-const pollInterval = 10_000;
+const pollInterval = 3_000;
 const messageLimit = 4000;
 
 const conversationPath = (id: string) => "/conversations/" + encodeURIComponent(id);
 
-function getConversations(slug: string, signal: AbortSignal) {
+export function getConversations(slug: string, signal: AbortSignal) {
   return api.authenticated<ConversationList>("/events/" + encodeURIComponent(slug) + "/conversations", { signal });
 }
 
@@ -38,7 +39,7 @@ function getMessages(id: string, signal: AbortSignal, query?: MessageQuery) {
   return api.authenticated<MessagePage>(conversationPath(id) + "/messages" + search, { signal });
 }
 
-function isStatus(error: unknown, status: number) {
+export function isStatus(error: unknown, status: number) {
   return error instanceof ApiClientError && error.status === status;
 }
 
@@ -46,13 +47,13 @@ function errorText(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-function titleOf(conversation: Conversation) {
+export function titleOf(conversation: Conversation) {
   return conversation.team?.name ?? conversation.peer?.name ?? conversation.helpRequest?.title ?? "Conversation";
 }
 
 const messageBody = (message: Message) => message.kind === "card" ? "Shared a card" : message.body;
 
-function previewOf(conversation: Conversation, userId: string) {
+export function previewOf(conversation: Conversation, userId: string) {
   const last = conversation.lastMessage;
   if (!last) return conversation.helpRequest ? "Help: " + conversation.helpRequest.title : "Say hi";
   return (last.kind !== "system" && last.senderId === userId ? "You: " : "") + messageBody(last);
@@ -96,81 +97,8 @@ function mergeMessages(thread: Thread, messages: Message[], userId: string, remo
 
 const olderCursor = (page: MessagePage) => page.hasMore ? page.messages[0]?.id : undefined;
 
-export function ConversationsPage() {
-  const { me, event, onExpired } = useSignedIn();
-  if (!event) return <JoinFirst />;
-  return <ConversationListPage key={event.slug} slug={event.slug} userId={me.profile.userId} onExpired={onExpired} />;
-}
-
-function JoinFirst() {
-  return <section className="workspace-card workspace-empty">
-    <h1 tabIndex={-1}>Join an event first</h1>
-    <p>Your chats are grouped by hackathon. Pick yours on Home.</p>
-    <Link className="button primary" to="/app">Go to Home</Link>
-  </section>;
-}
-
-function ConversationListPage({ slug, userId, onExpired }: { slug: string; userId: string; onExpired: () => void }) {
-  const [conversations, setConversations] = useState<Conversation[] | null>(null);
-  const [problem, setProblem] = useState("");
-  const [revision, refresh] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    setProblem("");
-    getConversations(slug, controller.signal).then(({ conversations }) => {
-      if (!controller.signal.aborted) setConversations(conversations);
-    }).catch((error: unknown) => {
-      if (controller.signal.aborted) return;
-      if (isStatus(error, 401)) onExpired();
-      else setProblem(errorText(error, "Couldn’t load your chats."));
-    });
-    return () => controller.abort();
-  }, [slug, revision, onExpired]);
-
-  return <>
-    <header className="workspace-heading chat-list-heading">
-      <h1 tabIndex={-1}>Chats</h1>
-      <Link className="button secondary" to={eventPath("/requests", slug)}>Requests</Link>
-    </header>
-    {problem && <div className="workspace-card">
-      <Notice error>{problem}</Notice>
-      <button className="button secondary" type="button" onClick={() => refresh(value => value + 1)}>Try again</button>
-    </div>}
-    {!conversations && !problem && <p role="status">Loading chats…</p>}
-    {conversations?.length === 0 && <section className="workspace-card workspace-empty">
-      <h2>No conversations yet</h2>
-      <p>Accept a request or ask Hacky to find people.</p>
-      <Link className="button primary" to={eventPath("/hacky", slug)}>Ask Hacky</Link>
-    </section>}
-    {conversations && conversations.length > 0 && <ul className="workspace-card workspace-list chat-list" aria-label="Conversations">
-      {conversations.map(conversation => <li key={conversation.id}>
-        <Link className="chat-list-row" to={chatPath(conversation.id, slug)}>
-          <PersonAvatar name={titleOf(conversation)} photoUrl={conversation.peer?.photoUrl} />
-          <div className="chat-list-copy">
-            <strong>{titleOf(conversation)}</strong>
-            <p>{previewOf(conversation, userId)}</p>
-          </div>
-          <div className="chat-list-meta">
-            <time dateTime={conversation.lastMessageAt}>{timeOf(conversation.lastMessageAt)}</time>
-            {conversation.unreadCount > 0 && <span className="workspace-chip">{conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}<span className="visually-hidden"> unread</span></span>}
-          </div>
-        </Link>
-      </li>)}
-    </ul>}
-  </>;
-}
-
-export function ChatThreadPage() {
-  const { conversationId } = useParams();
-  const { me, event, onExpired } = useSignedIn();
-  const slug = event?.slug;
-
-  if (!slug) return <JoinFirst />;
-  if (!conversationId) return <Link className="button secondary" to={eventPath("/chats", slug)}>Back to Chats</Link>;
-  return <ChatThread key={slug + ":" + conversationId} id={conversationId} slug={slug} userId={me.profile.userId} onExpired={onExpired} />;
-}
-
-function ChatThread({ id, slug, userId, onExpired }: { id: string; slug: string; userId: string; onExpired: () => void }) {
+/** One conversation. `embedded` drops the Back link for the Hacky workspace sidebar, which has its own. */
+export function ChatThread({ id, slug, userId, onExpired, embedded = false }: { id: string; slug: string; userId: string; onExpired: () => void; embedded?: boolean }) {
   const [thread, setThread] = useState<Thread | null>(null);
   const [conversation, setConversation] = useState<Conversation>();
   const [problem, setProblem] = useState("");
@@ -365,11 +293,11 @@ function ChatThread({ id, slug, userId, onExpired }: { id: string; slug: string;
     ? lastOwn.id : undefined;
 
   return <>
-    <Link className="chat-back" to={eventPath("/chats", slug)}>Back to Chats</Link>
+    {!embedded && <Link className="chat-back" to={eventPath("/chats", slug)}>Back to Chats</Link>}
     <section className="workspace-card chat-thread">
       <header className="chat-thread-heading">
         {peer ? <Link className="chat-identity" to={personPath(peer.handle, slug)}>
-          <PersonAvatar name={title} photoUrl={peer.photoUrl} />
+          <KnitAvatar person={peer} size={40} />
           <h1 tabIndex={-1}>{title}</h1>
         </Link> : <h1 tabIndex={-1}>{title}</h1>}
       </header>
@@ -424,8 +352,15 @@ function ChatThread({ id, slug, userId, onExpired }: { id: string; slug: string;
         </div>
         <form className="chat-composer" onSubmit={submit}>
           <label htmlFor="chat-message" className="visually-hidden">Message</label>
-          <textarea id="chat-message" placeholder="Write a message…" rows={2} maxLength={messageLimit} value={draft} onChange={event => setDraft(event.target.value)} />
-          <button className="button primary" type="submit" disabled={sending || !draft.trim()}>{sending ? "Sending…" : "Send"}</button>
+          <textarea id="chat-message" placeholder="Write a message…" rows={1} maxLength={messageLimit} value={draft} enterKeyHint="send"
+            onChange={event => setDraft(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }
+            }} />
+          <button className="button primary" type="submit" disabled={sending || !draft.trim()} aria-label={sending ? "Sending…" : "Send"}><Icon name="send" /></button>
         </form>
       </>}
     </section>

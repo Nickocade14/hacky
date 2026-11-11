@@ -1,59 +1,6 @@
-/* The original Hacky app header and dashboard adapted to the mobile tab layout. */
+/* Pages inside the signed-in shell (workspace/workspace-shell.css): Home, People, profiles, Requests. */
 .workspace {
     min-height: 100dvh;
-}
-
-.workspace-header {
-    background: var(--white);
-    border-bottom: 1px solid var(--line);
-}
-
-.workspace-header-inner {
-    display: grid;
-    grid-template-columns: 1fr minmax(0, auto) 1fr;
-    align-items: center;
-    gap: 16px;
-    width: min(100%, 980px);
-    min-height: 68px;
-    margin-inline: auto;
-    padding: 0 24px;
-}
-
-.workspace-brand {
-    justify-self: start;
-    color: var(--ink);
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -.035em;
-    text-decoration: none;
-}
-
-.workspace-brand span {
-    color: var(--action);
-}
-
-.workspace-header-event {
-    grid-column: 2;
-    overflow: hidden;
-    color: var(--muted);
-    font-size: 13px;
-    text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.workspace-account {
-    grid-column: 3;
-    justify-self: end;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    white-space: nowrap;
-}
-
-.workspace-avatar-link {
-    border-radius: 50%;
-    text-decoration: none;
 }
 
 .workspace-avatar {
@@ -73,52 +20,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
-
-.workspace-sign-out {
-    min-height: 44px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-size: 13px;
-}
-
-.workspace-sign-out:hover {
-    color: var(--action);
-}
-
-.workspace-nav {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--line);
-    background: var(--white);
-}
-
-.workspace-nav a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 16px;
-    border-radius: var(--radius);
-    color: var(--muted);
-    font-size: 14px;
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.workspace-nav a:is(:hover, [aria-current="page"]) {
-    background: var(--hover);
-    color: var(--action);
-}
-
-.workspace-nav svg {
-    width: 19px;
-    height: 19px;
 }
 
 .workspace-content {
@@ -355,35 +256,7 @@
 }
 
 @media (max-width: 640px) {
-    .workspace-header-inner {
-        gap: 8px;
-        min-height: 60px;
-        padding-inline: 16px;
-    }
-
-    .workspace-account {
-        gap: 8px;
-    }
-
-    .workspace-nav {
-        position: fixed;
-        inset: auto 0 0;
-        z-index: 1;
-        padding-bottom: max(8px, env(safe-area-inset-bottom));
-        border-top: 1px solid var(--line);
-        border-bottom: 0;
-    }
-
-    .workspace-nav a {
-        flex: 1;
-        flex-direction: column;
-        gap: 3px;
-        min-height: 48px;
-        padding: 4px 8px;
-        font-size: 12px;
-    }
-
     .workspace-content {
-        padding: 20px 16px calc(82px + env(safe-area-inset-bottom));
+        padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
     }
 }
