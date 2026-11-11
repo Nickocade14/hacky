@@ -4,6 +4,7 @@ import { AuthShell, Notice, PageHeading } from "./components";
 import { ForgotPasswordPage, LoginPage, RegisterPage, VerifyPage } from "./AuthPages";
 import { ResetLinkPage } from "./AuthLinkPages";
 import { SearchPage } from "./SearchPage";
+import { HackyPage } from "./HackyPage";
 import { HomePage } from "./HomePage";
 import { ProfileOverview, SignedInShell, type SignedInContext } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
@@ -52,7 +53,7 @@ function RouteFocus() {
   useEffect(() => {
     const titles: Record<string, string> = {
       "/register": "Create account", "/verify": "Verify email", "/forgot-password": "Reset password", "/reset": "Reset password",
-      "/app": "Home", "/search": "Find people", "/profile": "My profile",
+      "/app": "Home", "/search": "Find people", "/hacky": "Hacky", "/profile": "My profile",
     };
     document.title = `Hacky · ${titles[pathname] ?? "Log in"}`;
     document.querySelector<HTMLElement>("h1")?.focus();
@@ -110,6 +111,7 @@ function Pages() {
     <Route element={<SignedInLayout />}>
       <Route path="/app" element={<HomePage />} />
       <Route path="/search" element={<SearchPage />} />
+      <Route path="/hacky" element={<HackyPage />} />
       <Route path="/profile" element={<ProfileOverview />} />
     </Route>
   </Routes></>;

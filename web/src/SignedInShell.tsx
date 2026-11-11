@@ -27,6 +27,7 @@ export function PersonAvatar({ name, photoUrl }: { name: string; photoUrl?: stri
 const navigation = [
   { path: "/app", label: "Home", icon: "M3 10 12 3l9 7v10h-6v-6H9v6H3z" },
   { path: "/search", label: "People", icon: "M15 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2M3 12a3 3 0 0 0 2-5m16 5a3 3 0 0 1-2-5" },
+  { path: "/hacky", label: "Hacky", icon: "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" },
   { path: "/profile", label: "Me", icon: "M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 20v-1a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v1" },
 ];
 

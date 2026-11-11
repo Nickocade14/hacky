@@ -1,0 +1,281 @@
+/* 12 Hacky chat: the mobile Hacky tab (mobile/lib/widgets/hacky_chat_widgets.dart) on web. */
+.hacky {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    min-height: calc(100dvh - 210px);
+}
+
+.hacky-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hacky-header h1 {
+    font-size: 20px;
+}
+
+.workspace .hacky-header p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.hacky-avatar {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    object-fit: contain;
+    border-radius: 50%;
+    background: var(--hover);
+}
+
+.hacky-avatar.small {
+    width: 32px;
+    height: 32px;
+}
+
+.hacky-thread {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.hacky-welcome {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    text-align: center;
+}
+
+.hacky-welcome img {
+    width: 120px;
+    height: auto;
+}
+
+.hacky-welcome h2 {
+    font-size: 22px;
+    letter-spacing: -.02em;
+}
+
+.workspace .hacky-welcome p {
+    max-width: 42ch;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.hacky-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.hacky-chip {
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--action);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.hacky-chip:hover:not(:disabled) {
+    background: var(--hover);
+}
+
+.hacky-chip:disabled {
+    color: var(--disabled-ink);
+}
+
+.hacky-turn {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+}
+
+.hacky-turn-body {
+    display: grid;
+    gap: 10px;
+}
+
+.workspace .hacky-bubble,
+.workspace .hacky-thinking {
+    width: fit-content;
+    max-width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: 4px var(--radius) var(--radius) var(--radius);
+    background: var(--white);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.workspace .hacky-thinking {
+    color: var(--muted);
+}
+
+.hacky-user {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+}
+
+.workspace .hacky-user-bubble {
+    max-width: 85%;
+    padding: 11px 14px;
+    border-radius: var(--radius) 4px var(--radius) var(--radius);
+    background: var(--action);
+    color: var(--on-action);
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.workspace .hacky-user-bubble.failed {
+    background: var(--disabled);
+    color: var(--disabled-ink);
+}
+
+.workspace .hacky-failed {
+    color: var(--danger);
+    font-size: 13px;
+}
+
+.link-button {
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--action);
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.hacky-cards {
+    display: grid;
+    gap: 10px;
+}
+
+.hacky-card {
+    gap: 10px;
+    padding: 14px;
+}
+
+.hacky-card-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.hacky-card-head h3 {
+    font-size: 15px;
+}
+
+.workspace .hacky-card-head p,
+.workspace .workspace .hacky-status {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.workspace .hacky-why {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.hacky-skills li {
+    background: var(--paper);
+    color: var(--ink);
+}
+
+.hacky-skills li.matched {
+    background: var(--hover);
+    color: var(--action);
+}
+
+.workspace .hacky-status {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.hacky-intro {
+    display: grid;
+    gap: 8px;
+}
+
+.hacky-intro label {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.hacky-intro textarea,
+.hacky-composer input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--white);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+}
+
+.hacky-intro textarea {
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.hacky-intro textarea:focus,
+.hacky-composer input:focus {
+    border-color: var(--focus);
+    outline: 2px solid var(--selection);
+}
+
+.workspace .hacky-intro .button.secondary {
+    margin-top: 0;
+}
+
+.hacky-composer {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px 0;
+    background: var(--paper);
+}
+
+.hacky-composer input {
+    min-height: 48px;
+    padding: 0 14px;
+}
+
+.workspace .hacky-composer .button {
+    width: auto;
+    min-height: 48px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .hacky {
+        min-height: calc(100dvh - 190px);
+    }
+
+    .hacky-composer {
+        bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+}
