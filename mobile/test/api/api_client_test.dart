@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:mobile/api/api_client.dart';
 import 'package:mobile/api/api_exception.dart';
 import 'package:mobile/api/models/auth.dart';
+import 'package:mobile/api/models/chat.dart';
 import 'package:mobile/api/token_store.dart';
 
 const baseUrl = 'https://api.test';
@@ -468,6 +469,30 @@ void main() {
         client.forgotPassword(const EmailBody(email: 'a@b.co')),
         throwsA(isA<ApiException>().having((e) => e.code, 'code', 'timeout')),
       );
+    });
+
+    test('a message to Hacky waits longer, for the AI answer', () async {
+      final client = ApiClient(
+        tokenStore: store,
+        baseUrl: baseUrl,
+        timeout: const Duration(milliseconds: 20),
+        chatTimeout: const Duration(seconds: 5),
+        httpClient: MockClient((_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          return jsonResponse({
+            'message': {'id': 'a1', 'role': 'assistant', 'parts': <Object>[]},
+          }, 200);
+        }),
+      );
+
+      final answer = await client.sendChat(
+        'knighthacks-ix',
+        const ChatBody(
+          message: ChatMessage(id: 'u1', role: ChatRole.user, parts: []),
+        ),
+      );
+
+      expect(answer.id, 'a1');
     });
   });
 

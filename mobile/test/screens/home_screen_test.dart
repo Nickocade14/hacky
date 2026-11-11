@@ -9,7 +9,6 @@ import 'package:mobile/home/event_dates.dart';
 import 'package:mobile/routes.dart';
 import 'package:mobile/screens/home_screen.dart';
 import 'package:mobile/shell/app_tab.dart';
-import 'package:mobile/widgets/home_cards.dart';
 
 import '../support/screen_harness.dart';
 
@@ -38,7 +37,6 @@ final openedTabs = <AppTab>[];
 
 Widget home(FakeApiClient api) => HomeScreen(
   api: api,
-  me: demoMe,
   eventSlug: fakeEventSlug,
   onOpenTab: openedTabs.add,
 );
@@ -64,7 +62,6 @@ void main() {
     for (final track in ['AI', 'Health', 'Fintech', 'Education']) {
       expect(find.text(track), findsOneWidget);
     }
-    expect(find.text('Ask Hacky'), findsOneWidget);
     expect(find.text('1 new'), findsOneWidget);
     expect(find.text('MY TEAM'), findsOneWidget);
     expect(find.text('No team yet'), findsOneWidget);
@@ -134,19 +131,6 @@ void main() {
     expect(find.text('Create a team'), findsNothing);
     expect(find.text('Byte Me'), findsOneWidget);
     expect(find.text('1 of 4 members · You lead it'), findsOneWidget);
-  });
-
-  testWidgets('the avatar opens Me and Ask Hacky opens the Hacky tab', (
-    tester,
-  ) async {
-    final (:api, store: _) = signedInFakeApi();
-    await pumpScreen(tester, home(api));
-    await tester.pumpAndSettle();
-
-    await tapOn(tester, find.byKey(HomeHeader.avatarKey));
-    await tapOn(tester, find.text('Ask Hacky'));
-
-    expect(openedTabs, [AppTab.me, AppTab.hacky]);
   });
 
   testWidgets('Requests opens 09 for this event', (tester) async {

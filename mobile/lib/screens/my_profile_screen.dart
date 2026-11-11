@@ -356,7 +356,7 @@ class _SaveButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
         child: busy
-            ? const Row(
+            ? Row(
                 mainAxisSize: MainAxisSize.min,
                 spacing: 8,
                 children: [
@@ -367,7 +367,7 @@ class _SaveButton extends StatelessWidget {
                       color: AppColors.disabledInk,
                     ),
                   ),
-                  Text('Saving…'),
+                  const Text('Saving…'),
                 ],
               )
             : const Text('Save'),

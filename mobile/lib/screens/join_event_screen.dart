@@ -75,7 +75,7 @@ class _JoinEventScreenState extends State<JoinEventScreen>
             ),
             if (_joinError != null) Notice(_joinError!, error: true),
             if (_events.isEmpty)
-              const Text(
+              Text(
                 'No events to join right now. Check back soon.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.muted),
@@ -121,7 +121,7 @@ class JoinEventCard extends StatelessWidget {
               children: [
                 Text(
                   event.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.ink,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -129,7 +129,7 @@ class JoinEventCard extends StatelessWidget {
                 ),
                 Text(
                   EventDates.format(event.startsAt, event.endsAt),
-                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  style: TextStyle(color: AppColors.muted, fontSize: 13),
                 ),
               ],
             ),

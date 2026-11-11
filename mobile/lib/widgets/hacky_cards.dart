@@ -72,7 +72,7 @@ class QuietLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(color: AppColors.muted, fontSize: 14, height: 1.5),
+      style: TextStyle(color: AppColors.muted, fontSize: 14, height: 1.5),
     );
   }
 }
@@ -176,7 +176,7 @@ class CardHead extends StatelessWidget {
     return Row(
       spacing: 12,
       children: [
-        PersonAvatar(name: person.name),
+        PersonAvatar.of(person, size: 52),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +189,7 @@ class CardHead extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.ink,
                       fontSize: 15,
                       fontWeight: _bold,
@@ -202,7 +202,7 @@ class CardHead extends StatelessWidget {
                 facts.join(' · '),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
               ),
             ],
           ),
@@ -223,7 +223,7 @@ class _ClosestTag extends StatelessWidget {
         border: Border.all(color: AppColors.line),
         borderRadius: BorderRadius.circular(5),
       ),
-      child: const Text(
+      child: Text(
         'Closest fit',
         style: TextStyle(
           color: AppColors.muted,
@@ -347,7 +347,7 @@ class PersonMatchCard extends StatelessWidget {
               why,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.ink, fontSize: 14),
+              style: TextStyle(color: AppColors.ink, fontSize: 14),
             ),
           if (match.shownSkills.isNotEmpty)
             SkillTags(skills: match.shownSkills, matched: match.matchedSkills),
@@ -395,7 +395,7 @@ class TeamMatchCard extends StatelessWidget {
             match.wantedSkills.isEmpty
                 ? 'Looking for any skills'
                 : 'Looking for',
-            style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           if (match.wantedSkills.isNotEmpty)
             SkillTags(skills: match.wantedSkills),
@@ -454,7 +454,7 @@ class ProfileResultCard extends StatelessWidget {
               line,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.ink, fontSize: 14),
+              style: TextStyle(color: AppColors.ink, fontSize: 14),
             ),
           if (part.skills.isNotEmpty) SkillTags(skills: part.skills),
           CardActionsRow(

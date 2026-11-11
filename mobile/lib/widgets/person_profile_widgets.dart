@@ -42,14 +42,14 @@ class ProfileHeaderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(child: PersonAvatar(name: person.name, size: 76)),
+          Center(child: PersonAvatar.ofProfile(person, size: 88)),
           const SizedBox(height: 14),
           Semantics(
             header: true,
             child: Text(
               person.name,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontSize: 22,
                 fontWeight: _bold,
@@ -61,7 +61,7 @@ class ProfileHeaderCard extends StatelessWidget {
           Text(
             handleLine(person),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted, fontSize: 14),
+            style: TextStyle(color: AppColors.muted, fontSize: 14),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -111,7 +111,7 @@ class ProfileText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(color: AppColors.ink, fontSize: 15, height: 1.55),
+      style: TextStyle(color: AppColors.ink, fontSize: 15, height: 1.55),
     );
   }
 }
@@ -165,14 +165,14 @@ class ProfileLinksRow extends StatelessWidget {
         for (final (label, url) in entries(links))
           ActionChip(
             key: Key('person-link-${label.toLowerCase()}'),
-            avatar: const Icon(Icons.link, size: 16, color: AppColors.action),
+            avatar: Icon(Icons.link, size: 16, color: AppColors.action),
             label: Text(label),
             tooltip: url,
             onPressed: () => _copy(context, label, url),
             backgroundColor: AppColors.white,
-            side: const BorderSide(color: AppColors.line),
+            side: BorderSide(color: AppColors.line),
             shape: const StadiumBorder(),
-            labelStyle: const TextStyle(
+            labelStyle: TextStyle(
               color: AppColors.action,
               fontSize: 13,
               fontWeight: _bold,

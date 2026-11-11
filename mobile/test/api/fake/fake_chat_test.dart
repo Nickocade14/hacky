@@ -105,6 +105,16 @@ void main() {
     expect(handlesOf(answer), ['jordan_ux']);
   });
 
+  test('a request that names no skill shows everyone it fits, like the server', () async {
+    final hackers = await fake.sendChat(slug, ask('Help me find a teammate'));
+    // Hackers still looking for a team (Leo isn't).
+    expect(handlesOf(hackers), ['maya_ml', 'priya_codes', 'jordan_ux']);
+    expect(cardsOf(hackers).first['reason'], isNot(contains('Knows')));
+
+    final mentors = await fake.sendChat(slug, ask('Find a mentor'));
+    expect(handlesOf(mentors), ['sam_mentor']);
+  });
+
   test('says so in text only when nobody matches', () async {
     final answer = await fake.sendChat(slug, ask('Anyone into COBOL?'));
 

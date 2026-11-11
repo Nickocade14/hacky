@@ -64,7 +64,7 @@ class _IntroComposerState extends State<IntroComposer>
               minLines: 3,
               maxLines: 6,
               maxLength: 600,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Your intro',
                 counterText: '',
                 fillColor: AppColors.paper,
@@ -81,7 +81,7 @@ class _IntroComposerState extends State<IntroComposer>
                 Expanded(
                   child: Text(
                     problem ?? (count > 400 ? '$count/500' : ''),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 12,
                       height: 1.4,
@@ -181,7 +181,7 @@ class IntroHead extends StatelessWidget {
     return Row(
       spacing: 12,
       children: [
-        PersonAvatar(name: to.name),
+        PersonAvatar.of(to, size: 44),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +189,7 @@ class IntroHead extends StatelessWidget {
             children: [
               Text(
                 'Intro to ${team?.name ?? to.name}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.ink,
                   fontSize: 16,
                   fontWeight: _bold,
@@ -199,7 +199,7 @@ class IntroHead extends StatelessWidget {
                 team == null
                     ? '@${to.handle}'
                     : 'Goes to ${IntroRules.firstName(to.name)}, the team lead',
-                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
               ),
             ],
           ),
@@ -297,13 +297,13 @@ class RequestStatusLine extends StatelessWidget {
       child: Row(
         spacing: 6,
         children: [
-          const Icon(Icons.check, color: AppColors.action, size: 18),
+          Icon(Icons.check, color: AppColors.action, size: 18),
           Expanded(
             child: Text(
               conversationId != null
                   ? 'You’re connected with ${IntroRules.firstName(to.name)}'
                   : 'Request sent',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontSize: 14,
                 fontWeight: _bold,

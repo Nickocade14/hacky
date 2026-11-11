@@ -124,3 +124,32 @@ class HackyLook {
   @override
   int get hashCode => Object.hash(color, flair, move);
 }
+
+/// Which knit avatar a person gets: their chosen color, or a steady one
+/// picked from their id so a list of people doesn't look identical. Same
+/// rule and art as the web (web/src/workspace/KnitAvatar.tsx), so a person
+/// looks the same in both.
+abstract final class KnitAvatarArt {
+  static String asset({
+    required Map<String, dynamic> hackyStyle,
+    required String seed,
+  }) {
+    final colors = [for (final option in HackyLook.colors) option.id];
+    final chosen = hackyStyle['color'];
+    final color = chosen is String && colors.contains(chosen)
+        ? chosen
+        : colors[_hash(seed) % colors.length];
+    return 'assets/mascots/avatars/knit-$color-none.webp';
+  }
+
+  /// The web's hash: 31 * value + the first UTF-16 unit of each character,
+  /// kept to 32 bits.
+  static int _hash(String text) {
+    var value = 0;
+    for (final rune in text.runes) {
+      final unit = rune > 0xFFFF ? 0xD800 + ((rune - 0x10000) >> 10) : rune;
+      value = (value * 31 + unit) & 0xFFFFFFFF;
+    }
+    return value;
+  }
+}

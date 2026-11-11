@@ -20,7 +20,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tapOn(tester, find.text('Find a teammate who knows React'));
+    await tester.enterText(
+      find.byKey(ChatComposer.fieldKey),
+      'Find a teammate who knows React',
+    );
+    await tester.pump();
+    await tapOn(tester, find.byKey(ChatComposer.sendKey));
 
     expect(find.textContaining('Here\'s who could help', skipOffstage: false), findsOneWidget);
     expect(find.byType(PersonMatchCard, skipOffstage: false), findsNWidgets(2));

@@ -1,0 +1,70 @@
+# Temporary: lives only on the scratch branch tmp/mobile-preview. Runs the mobile
+# checks and builds the Flutter app for the web with the fake API, then saves
+# both to scratch branches so they can be read without the Actions UI.
+name: Mobile preview (temporary)
+
+on:
+  pull_request:
+    branches: [main]
+
+# Only the newest push matters.
+concurrency:
+  group: mobile-preview
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+      - name: Analyze and test
+        working-directory: mobile
+        run: |
+          set +e
+          mkdir -p /tmp/out
+          flutter pub get > /tmp/out/pubget.txt 2>&1 || true
+          flutter analyze > /tmp/out/analyze.txt 2>&1; echo "exit $?" >> /tmp/out/analyze.txt
+          flutter test -r expanded > /tmp/out/test.txt 2>&1; echo "exit $?" >> /tmp/out/test.txt
+          true
+      - name: Publish results
+        if: always()
+        run: |
+          cd /tmp/out && git init -q -b tmp/mobile-preview-checks
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -q -m "Checks for $GITHUB_SHA"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" tmp/mobile-preview-checks
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+      - name: Build for the web with the fake API
+        working-directory: mobile
+        run: |
+          set +e
+          mkdir -p /tmp/out
+          flutter create --platforms=web . > /tmp/out/create.txt 2>&1 || true
+          flutter build web --release --dart-define=FAKE_API=true --no-web-resources-cdn > /tmp/out/build.txt 2>&1; echo "exit $?" >> /tmp/out/build.txt
+          cp -r build/web /tmp/out/web 2>/dev/null || true
+      - name: Publish build
+        if: always()
+        run: |
+          cd /tmp/out && git init -q -b tmp/mobile-preview-build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -q -m "Web preview of $GITHUB_SHA"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" tmp/mobile-preview-build

@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/app.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/shell/app_tab.dart';
-import 'package:mobile/shell/app_tab_bar.dart';
+import 'package:mobile/shell/shell_header.dart';
 import 'package:mobile/theme.dart';
+import 'package:mobile/widgets/hacky_chat_widgets.dart';
 
 import 'support/screen_harness.dart';
 
 Future<void> pumpApp(WidgetTester tester, FakeApiClient api) async {
+  HackyFilm.debugStill = true;
   tester.view.physicalSize = const Size(1200, 2700);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -30,6 +32,39 @@ void main() {
     expect(theme.textTheme.bodyMedium?.fontFamily, AppTheme.fontFamily);
   });
 
+  testWidgets('follows the phone\'s dark mode, and switching repaints', (
+    tester,
+  ) async {
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    addTearDown(() => AppColors.use(AppPalette.light));
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    final (:api, :store) = fakeApi();
+    store.token = 'fake-jwt:${FakeApiClient.demoEmail}';
+    await pumpApp(tester, api);
+
+    Color pageColor() => tester
+        .widget<Scaffold>(find.byType(Scaffold).first)
+        .backgroundColor ??
+        Theme.of(tester.element(find.byType(Scaffold).first))
+            .scaffoldBackgroundColor;
+    Color? titleColor() =>
+        tester.widget<Text>(find.text(HackyBrief.title)).style?.color;
+
+    expect(AppColors.isDark, isTrue);
+    expect(pageColor(), AppPalette.dark.paper);
+    expect(titleColor(), AppPalette.dark.ink);
+
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+    await tester.pumpAndSettle();
+
+    expect(AppColors.isDark, isFalse);
+    expect(pageColor(), AppPalette.light.paper);
+    // A const-free widget deep in the tree picked up the new palette too.
+    expect(titleColor(), AppPalette.light.ink);
+    // And the user is still where they were.
+    expect(find.text(HackyBrief.title), findsOneWidget);
+  });
+
   testWidgets('skips log in when the saved token is still valid', (
     tester,
   ) async {
@@ -37,8 +72,10 @@ void main() {
     store.token = 'fake-jwt:${FakeApiClient.demoEmail}';
     await pumpApp(tester, api);
 
+    // Lands on Hacky; the header shows the event.
     expect(find.text('Knight Hacks IX'), findsOneWidget);
-    expect(find.byKey(AppTabBar.keyOf(AppTab.home)), findsOneWidget);
+    expect(find.text(HackyBrief.title), findsOneWidget);
+    expect(find.byKey(ShellHeader.keyOf(AppTab.home)), findsOneWidget);
   });
 
   testWidgets('drops a saved token the server rejects', (tester) async {
@@ -86,7 +123,7 @@ void main() {
     expect(find.text('Knight Hacks IX'), findsOneWidget);
     expect(store.token, isNotNull);
 
-    await tapOn(tester, find.byKey(AppTabBar.keyOf(AppTab.me)));
+    await tapOn(tester, find.byKey(ShellHeader.keyOf(AppTab.me)));
     expect(find.text('Ethan Zeng\n@ethan_z'), findsOneWidget);
     await tapOn(tester, find.text('Sign out'));
     expect(find.text('Welcome back.'), findsOneWidget);

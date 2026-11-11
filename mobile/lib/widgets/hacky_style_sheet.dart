@@ -178,7 +178,7 @@ class _ColorPicker extends StatelessWidget {
                 side: BorderSide(
                   color: option.id == value ? AppColors.action : AppColors.line,
                 ),
-                labelStyle: const TextStyle(
+                labelStyle: TextStyle(
                   color: AppColors.ink,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,

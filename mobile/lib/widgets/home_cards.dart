@@ -1,8 +1,9 @@
 // The blocks of 05 Home (mobile/design/home-wireframes.svg), top to bottom.
+// The wordmark, my avatar and Ask Hacky moved to the shell's header and
+// button, which every page shares.
 
 import 'package:flutter/material.dart';
 
-import '../api/models/auth.dart';
 import '../api/models/events.dart';
 import '../api/models/search.dart';
 import '../api/models/teams.dart';
@@ -15,37 +16,6 @@ const _bold = FontWeight.w700;
 
 String _capitalize(String word) =>
     word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}';
-
-/// "hacky." on the left and my avatar on the right (→ 08).
-class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key, required this.me, required this.onOpenMe});
-
-  final Me me;
-  final VoidCallback onOpenMe;
-
-  static const avatarKey = Key('home-avatar');
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(
-          child: Align(alignment: Alignment.centerLeft, child: Wordmark()),
-        ),
-        Semantics(
-          button: true,
-          label: 'My profile',
-          child: InkWell(
-            key: avatarKey,
-            customBorder: const CircleBorder(),
-            onTap: onOpenMe,
-            child: PersonAvatar(name: me.profile.name, size: 40),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 /// YOUR EVENT: my role, the event, its dates and tracks, then "Looking for a
 /// team" and my availability, which save right away.
@@ -78,7 +48,7 @@ class EventCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             event.name,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.ink,
               fontSize: 24,
               fontWeight: _bold,
@@ -89,7 +59,7 @@ class EventCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             EventDates.format(event.startsAt, event.endsAt),
-            style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           if (event.tracks.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -105,7 +75,7 @@ class EventCard extends StatelessWidget {
           MergeSemantics(
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Looking for a team',
                     style: TextStyle(
@@ -177,11 +147,11 @@ class AvailabilityPicker extends StatelessWidget {
             color: active ? AppColors.white : null,
             borderRadius: AppTheme.borderRadius,
             boxShadow: active
-                ? const [
+                ? [
                     BoxShadow(
                       color: AppColors.shadow,
                       blurRadius: 5,
-                      offset: Offset(0, 1),
+                      offset: const Offset(0, 1),
                     ),
                   ]
                 : null,
@@ -196,60 +166,6 @@ class AvailabilityPicker extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// The knit Hacky with "Ask Hacky" (→ 12).
-class AskHackyCard extends StatelessWidget {
-  const AskHackyCard({super.key, required this.onOpen});
-
-  final VoidCallback onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      color: AppColors.stage,
-      onTap: onOpen,
-      child: const Row(
-        spacing: 14,
-        children: [
-          KnitHacky(height: 72),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 4,
-              children: [
-                Text(
-                  'Ask Hacky',
-                  style: TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 17,
-                    fontWeight: _bold,
-                  ),
-                ),
-                Text(
-                  '“Find me a frontend teammate”',
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 13,
-                    height: 1.45,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Open chat →',
-                  style: TextStyle(
-                    color: AppColors.action,
-                    fontSize: 13,
-                    fontWeight: _bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -270,8 +186,8 @@ class RequestsRow extends StatelessWidget {
       child: Row(
         spacing: 10,
         children: [
-          const Icon(Icons.mail_outline, color: AppColors.ink, size: 20),
-          const Expanded(
+          Icon(Icons.mail_outline, color: AppColors.ink, size: 20),
+          Expanded(
             child: Text(
               'Requests',
               style: TextStyle(
@@ -282,7 +198,7 @@ class RequestsRow extends StatelessWidget {
             ),
           ),
           if (newCount > 0) CountBadge('$newCount new'),
-          const Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
+          Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
         ],
       ),
     );
@@ -306,7 +222,7 @@ class MyTeamCard extends StatelessWidget {
         children: [
           const SectionLabel('My team'),
           if (team == null) ...[
-            const Text(
+            Text(
               'No team yet',
               style: TextStyle(color: AppColors.muted, fontSize: 14),
             ),
@@ -314,7 +230,7 @@ class MyTeamCard extends StatelessWidget {
           ] else ...[
             Text(
               team.name,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontSize: 17,
                 fontWeight: _bold,
@@ -323,7 +239,7 @@ class MyTeamCard extends StatelessWidget {
             Text(
               '${team.size} of ${team.maxSize} members'
               '${team.isOwner ? ' · You lead it' : ''}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
             ),
           ],
         ],
@@ -365,7 +281,7 @@ class PeopleSuggestionsSection extends StatelessWidget {
         if (skill == null)
           AppCard(
             onTap: onOpenMe,
-            child: const Text(
+            child: Text(
               'Add skills you want to learn on your profile, and people who '
               'know them show up here.',
               style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.5),
@@ -374,7 +290,7 @@ class PeopleSuggestionsSection extends StatelessWidget {
         else if (people.isEmpty)
           Text(
             'No one here knows $skill yet.',
-            style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
           )
         else
           for (final person in people)

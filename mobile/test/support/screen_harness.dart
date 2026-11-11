@@ -4,7 +4,10 @@ import 'package:mobile/api/models/auth.dart';
 import 'package:mobile/api/token_store.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/api/fake/fake_world.dart';
+import 'package:mobile/hacky/chat_start.dart';
+import 'package:mobile/screens/hacky_chat_screen.dart';
 import 'package:mobile/theme.dart';
+import 'package:mobile/widgets/hacky_chat_widgets.dart';
 
 /// A token store that only lives in memory.
 class MemoryTokenStore implements TokenStore {
@@ -70,6 +73,10 @@ const demoMe = Me(
 /// Shows [screen] on a phone-sized view. Any navigation lands on a stub page
 /// and is recorded in the returned list.
 Future<List<Visit>> pumpScreen(WidgetTester tester, Widget screen) async {
+  // Hacky's clips would keep `pumpAndSettle` waiting; show their still frames.
+  HackyFilm.debugStill = true;
+  // Each test starts without a "New chat" from another test.
+  HackyChatScreen.defaultStartStore = MemoryChatStartStore();
   tester.view.physicalSize = const Size(1200, 2700);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -99,6 +106,8 @@ Widget inPage(Widget form) => Scaffold(
 /// Taps the widget found by [finder] after scrolling it into view.
 Future<void> tapOn(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
+  // The scroll moves the widget on the next frame; tap where it is then.
+  await tester.pump();
   await tester.tap(finder);
   await tester.pumpAndSettle();
 }

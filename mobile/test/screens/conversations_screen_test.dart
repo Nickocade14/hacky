@@ -224,12 +224,91 @@ void main() {
     final visits = await pumpScreen(tester, chats(api));
     await tester.pumpAndSettle();
 
-    await tapOn(tester, find.widgetWithText(TextButton, 'Requests'));
+    await tapOn(tester, find.byKey(ConversationsScreen.seeAllKey));
 
     expect(visits.single.route, Routes.requests);
     expect(
       (visits.single.arguments as RequestsArgs).eventSlug,
       fakeEventSlug,
     );
+  });
+
+  testWidgets('shows my event and the requests waiting on me', (tester) async {
+    final api = ChatsFakeApi();
+    await pumpScreen(tester, chats(api));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EventBadge), findsOneWidget);
+    expect(find.text('Knight Hacks IX'), findsOneWidget);
+    expect(find.text('You’re here as a hacker'), findsOneWidget);
+    expect(find.text('REQUESTS'), findsOneWidget);
+    expect(find.byType(InboxRequestRow), findsOneWidget);
+    expect(find.text('Jordan Lee'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Accept'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Not now'), findsOneWidget);
+    // The one I answered "Not now" before waits under See all.
+    expect(find.text('See all · 1 hidden'), findsOneWidget);
+  });
+
+  testWidgets('Accept opens the new chat and the request leaves', (
+    tester,
+  ) async {
+    final api = ChatsFakeApi();
+    final visits = await pumpScreen(tester, chats(api));
+    await tester.pumpAndSettle();
+
+    await tapOn(tester, find.widgetWithText(FilledButton, 'Accept'));
+
+    expect(visits.single.route, Routes.chatThread);
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InboxRequestRow), findsNothing);
+    final names = [
+      for (final row in tester.widgetList<ConversationRow>(
+        find.byType(ConversationRow),
+      ))
+        row.conversation.peer!.name,
+    ];
+    expect(names, ['Jordan Lee', 'Priya Shah']);
+  });
+
+  testWidgets('Not now hides the request without telling them', (tester) async {
+    final api = ChatsFakeApi();
+    await pumpScreen(tester, chats(api));
+    await tester.pumpAndSettle();
+
+    await tapOn(tester, find.widgetWithText(OutlinedButton, 'Not now'));
+
+    expect(find.byType(InboxRequestRow), findsNothing);
+    expect(find.text('Hidden. Jordan Lee isn’t told.'), findsOneWidget);
+    expect(find.text('See all · 2 hidden'), findsOneWidget);
+    expect(find.textContaining('Nothing waiting.'), findsOneWidget);
+  });
+
+  testWidgets('reloads by itself and tells the shell what is waiting', (
+    tester,
+  ) async {
+    final api = ChatsFakeApi();
+    final id = await tester.runAsync(api.priyaChatId);
+    final waiting = <int>[];
+    await pumpScreen(
+      tester,
+      ConversationsScreen(
+        api: api,
+        eventSlug: fakeEventSlug,
+        onWaitingChanged: waiting.add,
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Jordan's request and Priya's unread message.
+    expect(waiting, [2]);
+
+    await tester.runAsync(() => api.markRead(id!));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    expect(waiting, [2, 1]);
+    expect(find.byType(CountBadge), findsNothing);
   });
 }

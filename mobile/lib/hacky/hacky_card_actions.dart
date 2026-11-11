@@ -85,4 +85,20 @@ class SentRequests {
 
   void remember(SendRequestBody body, RequestResult result) =>
       _sent[_key(body.toUserId, body.teamId)] = result;
+
+  /// Brings back what `GET /api/events/{slug}/requests` already knows when
+  /// the chat opens: the requests I sent and the people I'm connected with.
+  /// Without it, the cards in my history would offer Connect again after a
+  /// restart.
+  void restore(Iterable<ConnectionRequest> requests) {
+    for (final request in requests) {
+      if (request.status == ConnectionStatus.accepted ||
+          request.direction == RequestDirection.outgoing) {
+        _sent.putIfAbsent(
+          _key(request.person.userId, request.team?.id),
+          () => RequestResult(request: request),
+        );
+      }
+    }
+  }
 }
