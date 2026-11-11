@@ -6,6 +6,7 @@ import '../api/models/auth.dart';
 import '../api/models/chat.dart';
 import '../api/models/requests.dart';
 import '../auth/error_text.dart';
+import '../hacky/chat_start.dart';
 import '../hacky/hacky_card_actions.dart';
 import '../hacky/hacky_parts.dart';
 import '../routes.dart';
@@ -25,15 +26,22 @@ import '../widgets/hacky_chat_widgets.dart';
 /// chat and stays above the history. While Hacky answers, the thinking clip
 /// shows and Send waits. A message that fails stays with Retry. Hacky's
 /// cards open 07 (`Navigate.toPerson`) and send connection requests
-/// (`sendRequest`). "New chat" clears what's on screen; Hacky keeps the
-/// history.
+/// (`sendRequest`). "New chat" starts the chat over on this device
+/// ([ChatStartStore]); Hacky keeps the history.
 class HackyChatScreen extends StatefulWidget {
   const HackyChatScreen({
     super.key,
     required this.api,
     required this.me,
     required this.eventSlug,
+    this.startStore,
   });
+
+  /// Where New chat is remembered; null uses [defaultStartStore].
+  final ChatStartStore? startStore;
+
+  /// Set once at launch (lib/main.dart). In memory until then, as in tests.
+  static ChatStartStore defaultStartStore = MemoryChatStartStore();
 
   final ApiClient api;
 
@@ -89,11 +97,23 @@ class _HackyChatScreenState extends State<HackyChatScreen>
     super.dispose();
   }
 
+  ChatStartStore get _startStore =>
+      widget.startStore ?? HackyChatScreen.defaultStartStore;
+
+  String get _userId => widget.me.profile.userId;
+
   Future<void> _loadHistory() async {
     final history = await widget.api.getChatHistory(widget.eventSlug);
+    String? start;
+    try {
+      start = await _startStore.read(_userId, widget.eventSlug);
+    } catch (_) {
+      // Unreadable storage: show the whole history.
+    }
     if (!mounted) return;
+    final startAt = history.indexWhere((message) => message.id == start);
     setState(() {
-      _cleared = 0;
+      _cleared = startAt + 1;
       _messages
         ..clear()
         ..addAll(history);
@@ -113,10 +133,20 @@ class _HackyChatScreenState extends State<HackyChatScreen>
       action: () async {},
     );
     if (!confirmed || !mounted) return;
+    // The newest message the server has: a failed one of mine isn't there.
+    final last = _messages
+        .where((message) => !_failures.containsKey(message.id))
+        .lastOrNull;
     setState(() {
       _cleared = _messages.length;
       _failures.clear();
     });
+    if (last == null) return;
+    try {
+      await _startStore.write(_userId, widget.eventSlug, last.id);
+    } catch (_) {
+      // Not saved: the fresh start lasts until the app closes.
+    }
   }
 
   /// Sends [text] as my next message.

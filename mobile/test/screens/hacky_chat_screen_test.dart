@@ -8,6 +8,7 @@ import 'package:mobile/api/fake/fake_world.dart';
 import 'package:mobile/api/models/chat.dart';
 import 'package:mobile/api/models/requests.dart';
 import 'package:mobile/auth/error_text.dart';
+import 'package:mobile/hacky/chat_start.dart';
 import 'package:mobile/routes.dart';
 import 'package:mobile/screens/hacky_chat_screen.dart';
 import 'package:mobile/widgets/confirm_action_dialog.dart';
@@ -149,6 +150,41 @@ void main() {
     expect(find.textContaining('Priya does Go'), findsNothing);
     expect(find.text(HackyBrief.title), findsOneWidget);
     expect(newChatButton(tester).onPressed, isNull);
+  });
+
+  testWidgets('a new chat stays new when the chat opens again', (
+    tester,
+  ) async {
+    final api = ScriptedChatApi()
+      ..history = [
+        user('Find me a backend teammate'),
+        hacky([textPart('Priya does Go and Postgres.')]),
+      ];
+    final store = MemoryChatStartStore();
+    Widget screen() => HackyChatScreen(
+      key: UniqueKey(),
+      api: api,
+      me: demoMe,
+      eventSlug: fakeEventSlug,
+      startStore: store,
+    );
+    await pumpScreen(tester, screen());
+    await tester.pumpAndSettle();
+    await tapOn(tester, find.byKey(NewChatButton.buttonKey));
+    await tapOn(tester, find.byKey(ConfirmActionDialog.confirmKey));
+
+    // Hacky answers something new, then the app restarts.
+    api.history = [
+      ...api.history!,
+      user('And a designer?'),
+      hacky([textPart('Jordan designs in Figma.')], id: 'a2'),
+    ];
+    await pumpScreen(tester, screen());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Find me a backend teammate'), findsNothing);
+    expect(find.text('And a designer?'), findsOneWidget);
+    expect(find.textContaining('Jordan designs'), findsOneWidget);
   });
 
   testWidgets('loads my history on open', (tester) async {

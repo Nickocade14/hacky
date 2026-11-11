@@ -4,6 +4,8 @@ import 'package:mobile/api/models/auth.dart';
 import 'package:mobile/api/token_store.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/api/fake/fake_world.dart';
+import 'package:mobile/hacky/chat_start.dart';
+import 'package:mobile/screens/hacky_chat_screen.dart';
 import 'package:mobile/theme.dart';
 import 'package:mobile/widgets/hacky_chat_widgets.dart';
 
@@ -73,6 +75,8 @@ const demoMe = Me(
 Future<List<Visit>> pumpScreen(WidgetTester tester, Widget screen) async {
   // Hacky's clips would keep `pumpAndSettle` waiting; show their still frames.
   HackyFilm.debugStill = true;
+  // Each test starts without a "New chat" from another test.
+  HackyChatScreen.defaultStartStore = MemoryChatStartStore();
   tester.view.physicalSize = const Size(1200, 2700);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
