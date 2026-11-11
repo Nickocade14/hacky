@@ -8,7 +8,7 @@ abstract final class FieldRules {
   static final _code = RegExp(r'^[0-9]{6}$');
 
   static const handleHint = '3–30 lowercase letters, numbers, or underscores.';
-  static const passwordHint = 'At least 8 characters. Up to 72 UTF-8 bytes.';
+  static const passwordHint = 'At least 8 characters.';
 
   /// Trimmed and lowercased, like the web sends it.
   static String normalizeEmail(String value) => value.trim().toLowerCase();

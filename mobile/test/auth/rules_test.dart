@@ -21,7 +21,7 @@ void main() {
     test('rejects 73 UTF-8 bytes', () {
       expect(
         PasswordRules.problem('${'🦄' * 18}a'),
-        contains('at most 72 UTF-8 bytes'),
+        contains('too long'),
       );
     });
   });

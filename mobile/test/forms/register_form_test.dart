@@ -95,7 +95,7 @@ void main() {
 
     await fillRegister(tester, password: '${'🦄' * 18}a');
     await tapOn(tester, createButton);
-    expect(find.textContaining('at most 72 UTF-8 bytes'), findsOneWidget);
+    expect(find.textContaining('too long'), findsOneWidget);
     expect(visits, isEmpty);
   });
 
