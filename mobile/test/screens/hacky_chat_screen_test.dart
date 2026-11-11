@@ -119,7 +119,10 @@ void main() {
 
     expect(api.sent, ['Find a mentor']);
     expect(find.text('Find a mentor'), findsOneWidget);
-    expect(find.textContaining('I didn\'t find anyone'), findsOneWidget);
+    expect(
+      find.text('@sam_mentor · Mentor', skipOffstage: false),
+      findsOneWidget,
+    );
     // The brief stays above the history.
     expect(find.byType(HackyBrief, skipOffstage: false), findsOneWidget);
     expect(newChatButton(tester).onPressed, isNotNull);

@@ -561,15 +561,27 @@ mixin FakeEndpoints {
     ].join(' ').toLowerCase();
     final words = text
         .split(RegExp(r'[^a-z0-9+#]+'))
-        .where((w) => w.length > 1)
+        .where((w) => w.length > 1 && !_filler.contains(w))
         .toList();
-    final mentorsOnly = words.any((w) => w.startsWith('mentor'));
-    final matches = [
+    final mentorsOnly = RegExp(r'\bmentor(s|ship)?\b').hasMatch(text);
+    final people = [
       for (final p in world.people.values)
-        if (!world.isBlocked(p.userId) &&
-            (!mentorsOnly || p.membership!.role == MemberRole.mentor))
-          (person: p, skills: _skillsMatching(p, words)),
-    ].where((m) => m.skills.isNotEmpty).take(10).toList();
+        if (!world.isBlocked(p.userId)) p,
+    ];
+    // Like the server (server/src/chat/candidates.ts): when only filler is
+    // left ("Find a mentor"), everyone who fits the ask is a candidate.
+    // Otherwise the people whose skills the message names.
+    final matches = words.isEmpty
+        ? [
+            for (final p in people)
+              if (_fitsIntent(p, mentorsOnly))
+                (person: p, skills: const <String>[]),
+          ].take(10).toList()
+        : [
+            for (final p in people)
+              if (!mentorsOnly || p.membership!.role == MemberRole.mentor)
+                (person: p, skills: _skillsMatching(p, words)),
+          ].where((m) => m.skills.isNotEmpty).take(10).toList();
 
     final id = world.newId();
     final answer = ChatMessage(
@@ -612,6 +624,27 @@ mixin FakeEndpoints {
     return answer;
   }
 
+  /// Words that say what kind of person is wanted but name no skill, from
+  /// the server's FILLER list.
+  static const _filler = {
+    'find', 'need', 'want', 'looking', 'someone', 'somebody', 'people',
+    'person', 'teammate', 'teammates', 'team', 'mentor', 'mentors', 'help',
+    'who', 'knows', 'know', 'good', 'with', 'for', 'whos', 'anyone',
+    'anybody', 'an', 'the', 'at', 'or', 'and', 'to', 'in', 'on', 'of', 'me',
+    'my', 'is', 'are', 'can', 'could', 'please', 'pick', 'track', 'what',
+    'how', 'some', 'any',
+  };
+
+  /// The server's intent filter: mentors who aren't offline, or hackers
+  /// still looking for a team.
+  static bool _fitsIntent(FakePerson person, bool mentor) {
+    final m = person.membership!;
+    return mentor
+        ? m.role == MemberRole.mentor &&
+              m.availability != Availability.offline
+        : m.role == MemberRole.hacker && m.looking;
+  }
+
   /// [person]'s skills that one of [words] names: a whole word of the skill
   /// ("go", "ux"), or part of it for words of 3+ letters ("torch"), so
   /// short words like "on" don't match "python".
@@ -648,7 +681,11 @@ mixin FakeEndpoints {
         'matchedSkills': matched,
         if (mentor) 'availability': m.availability.name,
       },
-      'reason': m.intake.summary ?? 'Knows ${matched.join(', ')}.',
+      'reason':
+          m.intake.summary ??
+          (matched.isEmpty
+              ? (mentor ? 'Mentoring here.' : 'Looking for a team.')
+              : 'Knows ${matched.join(', ')}.'),
     };
   }
 
