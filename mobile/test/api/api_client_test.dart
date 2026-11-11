@@ -183,21 +183,15 @@ void main() {
           password: 'secret-pass',
         ),
       );
-      await client.verifyEmail(const TokenBody(token: 'verify-token'));
       await client.resendVerification(
         const EmailBody(email: 'nico@example.com'),
       );
       await client.forgotPassword(const EmailBody(email: 'nico@example.com'));
-      await client.resetPassword(
-        const ResetPasswordBody(token: 'reset-token', password: 'new-password'),
-      );
 
       expect(requests.map((r) => '${r.method} ${r.url.path}'), [
         'POST /api/auth/register',
-        'POST /api/auth/verify-email',
         'POST /api/auth/resend-verification',
         'POST /api/auth/forgot-password',
-        'POST /api/auth/reset-password',
       ]);
       expect(jsonDecode(requests[0].body), {
         'name': 'Nicolas Cadena',
@@ -205,15 +199,67 @@ void main() {
         'email': 'nico@example.com',
         'password': 'secret-pass',
       });
-      expect(jsonDecode(requests[1].body), {'token': 'verify-token'});
-      expect(jsonDecode(requests[2].body), {'email': 'nico@example.com'});
-      expect(jsonDecode(requests[4].body), {
-        'token': 'reset-token',
+      expect(jsonDecode(requests[1].body), {'email': 'nico@example.com'});
+      for (final request in requests) {
+        expect(request.headers.containsKey('Authorization'), isFalse);
+      }
+    });
+
+    test('verify-email and reset-password send the code and log in', () async {
+      final client = clientWith(
+        (_) async => jsonResponse({
+          'token': 'code-jwt',
+          'expiresAt': '2026-11-10T12:00:00.000Z',
+          'me': meJson,
+        }, 200),
+      );
+
+      final verified = await client.verifyEmail(
+        const VerifyCodeBody(email: 'nico@example.com', code: '482913'),
+      );
+      expect(verified.me.profile.handle, 'nico_c');
+      expect(store.token, 'code-jwt');
+
+      store.token = null;
+      await client.resetPassword(
+        const ResetCodeBody(
+          email: 'nico@example.com',
+          code: '123456',
+          password: 'new-password',
+        ),
+      );
+      expect(store.token, 'code-jwt');
+
+      expect(requests.map((r) => '${r.method} ${r.url.path}'), [
+        'POST /api/auth/verify-email',
+        'POST /api/auth/reset-password',
+      ]);
+      expect(jsonDecode(requests[0].body), {
+        'email': 'nico@example.com',
+        'code': '482913',
+      });
+      expect(jsonDecode(requests[1].body), {
+        'email': 'nico@example.com',
+        'code': '123456',
         'password': 'new-password',
       });
       for (final request in requests) {
         expect(request.headers.containsKey('Authorization'), isFalse);
       }
+    });
+
+    test('a wrong code throws invalid_code and saves no token', () async {
+      final client = clientWith(
+        (_) async => apiError(400, 'invalid_code', 'That code is wrong'),
+      );
+
+      await expectLater(
+        client.verifyEmail(
+          const VerifyCodeBody(email: 'nico@example.com', code: '000000'),
+        ),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'invalid_code')),
+      );
+      expect(store.token, isNull);
     });
 
     test('a taken handle throws handle_taken with status 409', () async {
@@ -256,7 +302,11 @@ void main() {
 
       await expectLater(
         client.resetPassword(
-          const ResetPasswordBody(token: 't', password: 'short'),
+          const ResetCodeBody(
+            email: 'a@b.co',
+            code: '123456',
+            password: 'short',
+          ),
         ),
         throwsA(
           isA<ApiException>()
