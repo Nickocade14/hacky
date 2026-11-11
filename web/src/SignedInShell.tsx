@@ -73,21 +73,24 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
     <div className="hk-main">
       <header className="hk-header">
         <div className="hk-header-side">
-          <button type="button" className={`hk-icon hk-chats-toggle${waiting ? " attention" : ""}`} aria-expanded={open} aria-controls="hk-sidebar"
-            aria-label={waiting ? `Chats, ${waiting} waiting` : "Chats"} title="Chats" onClick={() => setOpen(value => !value)}>
-            <Icon name="chat" />
+          <button type="button" className={`hk-nav-link hk-chats-toggle${waiting ? " attention" : ""}`} aria-expanded={open} aria-controls="hk-sidebar"
+            aria-label={waiting ? `Chats, ${waiting} waiting` : "Chats"} onClick={() => setOpen(value => !value)}>
+            <Icon name="chat" /><span className="hk-nav-label">Chats</span>
           </button>
           <button type="button" className="hk-icon" aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`} onClick={toggle}>
             <Icon name={theme === "dark" ? "sun" : "moon"} />
           </button>
         </div>
-        <Link className="hk-title" to={eventPath("/hacky", slug)} aria-current={current("/hacky")}>
+        <Link className="hk-title" to={eventPath("/hacky", slug)}>
           <span className="hk-title-name">Hacky</span>
           <span className="hk-title-event">{event?.name ?? "Find your people"}</span>
         </Link>
         <nav className="hk-header-side end" aria-label="Main navigation">
-          <Link className="hk-icon" to={eventPath("/search", slug)} aria-label="People" title="People" aria-current={current("/search")}><Icon name="people" /></Link>
-          <Link className="hk-icon" to="/app" aria-label="Home" title="Events and team" aria-current={current("/app")}><Icon name="events" /></Link>
+          <Link className="hk-nav-link hk-nav-hacky" to={eventPath("/hacky", slug)} aria-current={current("/hacky")}>
+            <img src="/assets/mascots/hacky-knit.webp" alt="" /><span>Hacky</span>
+          </Link>
+          <Link className="hk-nav-link" to={eventPath("/search", slug)} aria-current={current("/search")}><Icon name="people" /><span>People</span></Link>
+          <Link className="hk-nav-link" to="/app" aria-current={current("/app")}><Icon name="events" /><span>Home</span></Link>
           <Link className="hk-icon hk-me" to="/profile" aria-label="My profile" title="My profile" aria-current={current("/profile")}>
             {me ? <KnitAvatar person={me.profile} size={36} /> : <span className="hk-avatar" />}
           </Link>

@@ -178,7 +178,7 @@ describe("authentication pages", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "What can I help you with?" })).not.toBeNull();
     expect(screen.getByText("@ethan_z")).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Hacky Knight Hacks IX", current: "page" })).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Hacky", current: "page" })).not.toBeNull();
     expect(screen.getByRole("navigation", { name: "Main navigation" })).not.toBeNull();
     expect(screen.queryByRole("complementary", { name: "About Hacky" })).toBeNull();
     expect(readSession()).toEqual({ token: result.token, expiresAt: result.expiresAt });
