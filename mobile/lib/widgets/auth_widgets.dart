@@ -349,14 +349,23 @@ class _AuthFieldState extends State<AuthField> {
             decoration: InputDecoration(
               hintText: widget.placeholder,
               hintStyle: TextStyle(color: AppColors.muted),
-              prefixText: widget.prefix,
-              prefixStyle: TextStyle(
-                color: AppColors.muted,
-                fontSize: 16,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
+              // Always shown, like the web's "@" box, so the placeholder
+              // doesn't jump when the field gets the focus.
+              prefixIcon: widget.prefix == null
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 14, right: 2),
+                      child: Text(
+                        widget.prefix!,
+                        style: TextStyle(color: AppColors.muted, fontSize: 16),
+                      ),
+                    ),
+              prefixIconConstraints: const BoxConstraints(),
+              contentPadding: EdgeInsets.fromLTRB(
+                widget.prefix == null ? 14 : 0,
+                14,
+                14,
+                14,
               ),
               suffixIcon: widget.password ? _toggle() : null,
             ),
