@@ -13,6 +13,9 @@ import { connectDb, disconnectDb } from "../src/db.js";
 import { HttpError } from "../src/errors.js";
 import { AgentMessageModel } from "../src/models/AgentMessage.js";
 import { BlockModel } from "../src/models/Block.js";
+import { ConnectionRequestModel } from "../src/models/ConnectionRequest.js";
+import { ConversationModel, openDm } from "../src/models/Conversation.js";
+import { TeamModel } from "../src/models/Team.js";
 import { EventModel } from "../src/models/Event.js";
 import { MembershipModel } from "../src/models/Membership.js";
 import { ProfileModel } from "../src/models/Profile.js";
@@ -250,4 +253,47 @@ test("a person blocked later disappears from old cards", async () => {
   const history = await call("GET", "/api/events/knighthacks-ix/chat");
   const reply = history.body.messages.find((m: any) => m.id === `reply-${happyId}`);
   assert.deepEqual(reply.parts.map((p: any) => p.type), ["text"]);
+});
+
+test("never suggests people the viewer already requested, chats with or teams with", async () => {
+  const event = (await EventModel.findOne({ slug: "knighthacks-ix" }).lean())!._id;
+  const other = (await EventModel.findOne({ slug: "demo-hacks" }).lean())!._id;
+  const viewer = ids.viewer;
+  const react = { skills: ["React"] };
+  const sent = await person("sent_to_dev", event, react);
+  const asked = await person("asked_me_dev", event, react);
+  const notNow = await person("not_now_dev", event, react);
+  const friend = await person("friend_dev", event, react);
+  const mentee = await person("mentor_chat", event, { ...react, role: "mentor", looking: false });
+  const mate = await person("teammate_dev", event, react);
+  const owner = await person("team_owner", event, react);
+  await person("fresh_dev", event, react);
+  // A request at another event doesn't count here.
+  const elsewhereFriend = await person("other_event_dev", event, react);
+
+  await ConnectionRequestModel.create([
+    { event, from: viewer, to: sent, intro: "Hi" },
+    { event, from: asked, to: viewer, intro: "Hi" },
+    { event, from: notNow, to: viewer, intro: "Hi", hiddenAt: new Date() },
+    { event, from: viewer, to: owner, intro: "Can I join?", team: new Types.ObjectId() },
+    { event: other, from: viewer, to: elsewhereFriend, intro: "Hi" },
+  ]);
+  await openDm(event, viewer, friend);
+  await ConversationModel.create({
+    event, kind: "mentor", helpRequest: new Types.ObjectId(),
+    members: [{ user: viewer }, { user: mentee }],
+  });
+  await TeamModel.create({ event, owner: mate, members: [mate, viewer], name: "Team Mate" });
+
+  calls = [];
+  nextRank = async () => ({ reply: "", matches: [] });
+  assert.equal((await post("Find a teammate who knows React")).status, 200);
+  assert.equal((await post("Find a mentor who knows React")).status, 200);
+  const seen = calls.flatMap((input) => input.candidates.map((c) => c.line)).join("\n");
+  for (const hidden of ["sent_to_dev", "asked_me_dev", "not_now_dev", "friend_dev", "mentor_chat", "teammate_dev", "team_owner"]) {
+    assert.equal(seen.includes(`(@${hidden})`), false, hidden);
+  }
+  for (const shown of ["fresh_dev", "other_event_dev", "react_dev"]) {
+    assert.equal(seen.includes(`(@${shown})`), true, shown);
+  }
 });

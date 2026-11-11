@@ -1,6 +1,9 @@
 import type { PipelineStage, Types } from "mongoose";
+import { ConnectionRequestModel } from "../models/ConnectionRequest.js";
+import { ConversationModel } from "../models/Conversation.js";
 import { MembershipModel } from "../models/Membership.js";
 import { ProfileModel } from "../models/Profile.js";
+import { TeamModel } from "../models/Team.js";
 
 export type Intent = "mentor" | "teammate";
 
@@ -27,6 +30,23 @@ export function searchTerms(text: string): string {
     .map((word) => word.replace(/^[^\p{L}\p{N}+#.]+|[^\p{L}\p{N}+#]+$/gu, ""))
     .filter((word) => word.length > 1 && !FILLER.has(word))
     .join(" ");
+}
+
+// People the viewer is already in touch with at this event, so Hacky doesn't
+// suggest them again: a request either way (pending, accepted or set aside
+// with "Not now", personal or to join a team), any chat they share (DM,
+// mentor or team) and their teammates.
+export async function alreadyInTouch(event: Types.ObjectId, viewer: Types.ObjectId): Promise<Types.ObjectId[]> {
+  const [requests, conversations, teams] = await Promise.all([
+    ConnectionRequestModel.find({ event, $or: [{ from: viewer }, { to: viewer }] }).select("from to").lean(),
+    ConversationModel.find({ event, "members.user": viewer }).select("members.user").lean(),
+    TeamModel.find({ event, members: viewer }).select("members").lean(),
+  ]);
+  return [
+    ...requests.flatMap((request) => [request.from, request.to]),
+    ...conversations.flatMap((conversation) => conversation.members.map((member) => member.user)),
+    ...teams.flatMap((team) => team.members),
+  ].filter((id) => !id.equals(viewer));
 }
 
 export type CandidateRow = {
