@@ -4,7 +4,7 @@ import { NoObjectGeneratedError } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import { Types } from "mongoose";
 import { matchedSkills, searchTerms, summaryLine, type CandidateRow } from "../src/chat/candidates.js";
-import { buildInstructions, buildPrompt, createGeminiRanker, geminiRanker, type RankInput } from "../src/chat/gemini.js";
+import { buildInstructions, buildPrompt, chatProvider, createRanker, defaultRanker, type RankInput } from "../src/chat/gemini.js";
 import { HttpError } from "../src/errors.js";
 
 const row = (over: Partial<CandidateRow> = {}): CandidateRow => ({
@@ -40,14 +40,37 @@ const mockReturning = (text: string) => new MockLanguageModelV4({
   }) as any,
 });
 
-test("no API key answers 503 before any network call", async () => {
-  const saved = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  delete process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  try {
-    await assert.rejects(geminiRanker(input), (error: unknown) =>
-      error instanceof HttpError && error.status === 503 && error.code === "ai_unavailable");
-  } finally {
-    if (saved !== undefined) process.env.GOOGLE_GENERATIVE_AI_API_KEY = saved;
+// Runs `body` with these env vars set (undefined deletes), then restores them.
+async function withEnv(vars: Record<string, string | undefined>, body: () => Promise<void> | void) {
+  const saved = Object.fromEntries(Object.keys(vars).map((name) => [name, process.env[name]]));
+  const apply = (values: Record<string, string | undefined>) => {
+    for (const [name, value] of Object.entries(values)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  };
+  apply(vars);
+  try { await body(); } finally { apply(saved); }
+}
+
+const offline = (error: unknown) => error instanceof HttpError && error.status === 503 && error.code === "ai_unavailable";
+
+test("no API key for the chosen provider answers 503 before any network call", async () => {
+  await withEnv({ AI_PROVIDER: undefined, GOOGLE_GENERATIVE_AI_API_KEY: undefined }, async () => {
+    await assert.rejects(defaultRanker(input), offline);
+  });
+  // A Gemini key doesn't help when Claude is chosen, and the other way around.
+  await withEnv({ AI_PROVIDER: "anthropic", ANTHROPIC_API_KEY: undefined, GOOGLE_GENERATIVE_AI_API_KEY: "dummy" }, async () => {
+    await assert.rejects(defaultRanker(input), offline);
+  });
+  await withEnv({ AI_PROVIDER: "google", GOOGLE_GENERATIVE_AI_API_KEY: undefined, ANTHROPIC_API_KEY: "dummy" }, async () => {
+    await assert.rejects(defaultRanker(input), offline);
+  });
+});
+
+test("AI_PROVIDER picks Claude or Gemini, and defaults to Gemini", async () => {
+  for (const [value, provider] of [[undefined, "google"], ["google", "google"], ["anthropic", "anthropic"], [" Anthropic ", "anthropic"], ["openai", "google"]] as const) {
+    await withEnv({ AI_PROVIDER: value }, () => assert.equal(chatProvider(), provider, String(value)));
   }
 });
 
@@ -67,8 +90,8 @@ test("the prompt has every ref, the viewer and the message, one line per person"
 
 test("parses the model's JSON and rejects bad output", async () => {
   const answer = { reply: "Here you go.", matches: [{ ref: "p1", reason: "Builds Node APIs." }] };
-  assert.deepEqual(await createGeminiRanker(mockReturning(JSON.stringify(answer)))(input), answer);
-  await assert.rejects(createGeminiRanker(mockReturning("not json"))(input), (error) => NoObjectGeneratedError.isInstance(error));
+  assert.deepEqual(await createRanker(mockReturning(JSON.stringify(answer)))(input), answer);
+  await assert.rejects(createRanker(mockReturning("not json"))(input), (error) => NoObjectGeneratedError.isInstance(error));
 });
 
 test("matchedSkills matches whole words, including C++", () => {
