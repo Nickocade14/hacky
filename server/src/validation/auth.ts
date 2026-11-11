@@ -4,7 +4,7 @@ import { z } from "zod";
 // OpenAPI minLength counts Unicode code points; bcrypt's limit counts UTF-8 bytes.
 export const passwordSchema = z.string()
   .refine((value) => [...value].length >= 8, "Password must contain at least 8 characters")
-  .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "Password must be at most 72 UTF-8 bytes");
+  .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "That password is too long. Try a shorter one.");
 
 export const registerBodySchema = z.object({
   name: z.string().trim().min(1).max(80),

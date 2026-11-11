@@ -12,8 +12,8 @@ abstract final class PasswordRules {
       return 'Use at least 8 characters for your password.';
     }
     if (utf8.encode(password).length > maxBytes) {
-      return 'Your password is too long. Use at most 72 UTF-8 bytes '
-          '(emoji can count as several bytes).';
+      // bcrypt only reads 72 bytes; emoji count as several.
+      return 'That password is too long. Try a shorter one.';
     }
     return null;
   }

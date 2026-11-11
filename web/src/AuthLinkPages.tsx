@@ -58,7 +58,7 @@ export function ResetLinkPage() {
     <PageHeading eyebrow="A FRESH START" title="Choose a new password." />
     {valid ? <form onSubmit={submit} aria-label="Reset password with a link" aria-busy={action.busy}>
       <Field id="link-password" label="New password" type="password" name="password" autoComplete="new-password"
-        minLength={8} maxLength={72} placeholder="Make it a good one" hint="At least 8 characters. Up to 72 UTF-8 bytes." required />
+        minLength={8} maxLength={72} placeholder="Make it a good one" hint="At least 8 characters." required />
       <Field id="link-password-confirm" label="Confirm password" type="password" name="confirm" autoComplete="new-password" required />
       {action.error && <Notice error>{action.error}</Notice>}
       <SubmitButton busy={action.busy}>Save new password</SubmitButton>

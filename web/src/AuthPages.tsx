@@ -72,7 +72,7 @@ export function RegisterPage() {
       <Field id="register-name" label="Your name" name="name" autoComplete="name" placeholder="What should we call you?" maxLength={80} required />
       <Field id="register-handle" label="Username" prefix="@" name="handle" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="your_handle" pattern="[a-z0-9_]{3,30}" minLength={3} maxLength={30} title="3–30 lowercase letters, numbers, or underscores" hint="3–30 lowercase letters, numbers, or underscores." required />
       <Field id="register-email" label="Email address" name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={254} required />
-      <Field id="register-password" label="Password" name="password" type="password" autoComplete="new-password" placeholder="Make it a good one" minLength={8} maxLength={72} hint="At least 8 characters. Up to 72 UTF-8 bytes." required />
+      <Field id="register-password" label="Password" name="password" type="password" autoComplete="new-password" placeholder="Make it a good one" minLength={8} maxLength={72} hint="At least 8 characters." required />
       {action.error && <Notice error>{action.error}</Notice>}
       <SubmitButton busy={action.busy}>Create account</SubmitButton>
     </form>
@@ -197,7 +197,7 @@ export function ForgotPasswordPage() {
     {email ? <form onSubmit={event => reset(event, email)} aria-label="Reset password" aria-busy={action.busy}>
       <CodeField id="reset-code" code={code} onChange={setCode} />
       <Field id="reset-password" label="New password" type="password" name="password" autoComplete="new-password"
-        minLength={8} maxLength={72} placeholder="Make it a good one" hint="At least 8 characters. Up to 72 UTF-8 bytes." required />
+        minLength={8} maxLength={72} placeholder="Make it a good one" hint="At least 8 characters." required />
       {resent && !action.error && <Notice>If an account exists for this email, check your inbox for new instructions.</Notice>}
       {action.error && <Notice error>{action.error}</Notice>}
       <SubmitButton busy={action.busy}>Reset password</SubmitButton>
