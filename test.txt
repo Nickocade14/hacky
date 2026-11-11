@@ -1,0 +1,461 @@
+Resolving dependencies...
+Downloading packages...
+  code_assets 1.2.1 (2.2.0 available)
+  cupertino_icons 1.0.9 (2.0.0 available)
+  hooks 2.0.2 (2.2.0 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.18.3 (1.19.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  record_use 0.6.0 (1.1.1 available)
+  test_api 0.7.12 (0.7.15 available)
+  vector_math 2.4.0 (2.4.4 available)
+Got dependencies!
+9 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/runner/work/hacky/hacky/mobile/test/app_test.dart
+00:00 +0: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: starts at log in without a saved session, with the theme
+00:01 +1: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: starts at log in without a saved session, with the theme
+00:01 +2: /home/runner/work/hacky/hacky/mobile/test/screens/search_people_screen_test.dart: partial text finds people on the server, matches in bold
+00:01 +3: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: follows the phone's dark mode, and switching repaints
+00:01 +4: /home/runner/work/hacky/hacky/mobile/test/screens/search_people_screen_test.dart: typing fast sends one search for the last text
+00:01 +5: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: skips log in when the saved token is still valid
+00:01 +6: /home/runner/work/hacky/hacky/mobile/test/screens/search_people_screen_test.dart: a slow older reply never replaces newer results
+00:01 +7: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: drops a saved token the server rejects
+00:02 +8: /home/runner/work/hacky/hacky/mobile/test/screens/search_people_screen_test.dart: shows the no-results state
+00:02 +9: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: register, enter the code, open Me and sign out end to end
+00:02 +10: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: register, enter the code, open Me and sign out end to end
+00:02 +11: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: register, enter the code, open Me and sign out end to end
+00:02 +12: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: register, enter the code, open Me and sign out end to end
+00:02 +13: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: register, enter the code, open Me and sign out end to end
+00:03 +14: /home/runner/work/hacky/hacky/mobile/test/app_test.dart: register, enter the code, open Me and sign out end to end
+00:03 +15: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: shows the profile, then the event part
+00:05 +16: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_actions_test.dart: long-press my message → confirm → it is gone for everyone
+00:05 +17: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: saves a changed name and tells the shell
+00:06 +18: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: saves a changed name and tells the shell
+00:06 +19: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: saves a changed name and tells the shell
+00:06 +20: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_actions_test.dart: a failed unsend shows the error and keeps the message
+00:06 +21: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: shows Saving… while the save runs
+00:06 +22: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: shows Saving… while the save runs
+00:07 +23: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: shows Saving… while the save runs
+00:07 +24: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_actions_test.dart: a mentor chat has View profile but no Block
+00:07 +25: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: field errors show under each field and nothing is sent
+00:08 +26: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: links get https:// when it is left out
+00:08 +27: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: shows loading, then the messages with mine on the right
+00:08 +28: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: shows loading, then the messages with mine on the right
+00:09 +29: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: adds and removes skills as chips
+00:09 +30: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: adds and removes skills as chips
+00:09 +31: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: shows an empty thread, and the first message
+00:10 +32: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: saves experience, goal, track, idea and looking
+00:10 +33: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: saves experience, goal, track, idea and looking
+00:10 +34: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: saves experience, goal, track, idea and looking
+00:10 +35: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: a failed message can be removed
+00:10 +36: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: says so when only the profile part saved
+00:10 +37: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: says so when only the profile part saved
+00:11 +38: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: a failed older page can be tried again
+00:11 +39: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: a failed older page can be tried again
+00:11 +40: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: an expired session goes back to log in
+00:11 +41: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: an expired session goes back to log in
+00:11 +42: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: a failed load can be retried
+00:11 +43: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: without an event only the profile part shows
+00:11 +44: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: without an event only the profile part shows
+00:11 +45: /home/runner/work/hacky/hacky/mobile/test/screens/chat_thread_screen_test.dart: the header opens 07 Person profile
+00:11 +46: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: changes the Hacky style and saves it
+00:11 +47: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: changes the Hacky style and saves it
+00:12 +48: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: sign out forgets the token and returns to log in
+00:12 +49: /home/runner/work/hacky/hacky/mobile/test/screens/my_profile_screen_test.dart: sign out with unsaved changes asks first
+00:12 +50: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_block_test.dart: ••• → Block explains what happens; Cancel keeps the page
+00:13 +51: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_fake_cards_test.dart: the fake answers a teammate search with person cards
+00:14 +52: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_fake_cards_test.dart: the fake answers a teammate search with person cards
+00:14 +53: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_fake_cards_test.dart: the fake answers a teammate search with person cards
+00:14 +54: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_fake_cards_test.dart: the fake answers a teammate search with person cards
+00:15 +55: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: first time: the brief with its starting points
+00:15 +56: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: first time: the brief with its starting points
+00:16 +57: /home/runner/work/hacky/hacky/mobile/test/screens/auth_screen_test.dart: shows the mascot and wordmark on top, without the h. logo
+00:17 +58: /home/runner/work/hacky/hacky/mobile/test/screens/auth_screen_test.dart: shows the mascot and wordmark on top, without the h. logo
+00:17 +59: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: a new chat stays new when the chat opens again
+00:17 +60: /home/runner/work/hacky/hacky/mobile/test/screens/auth_screen_test.dart: switching tabs crossfades only the form, in place
+00:17 +61: /home/runner/work/hacky/hacky/mobile/test/screens/auth_screen_test.dart: switching tabs crossfades only the form, in place
+00:17 +62: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: a failed history load can be retried
+00:17 +63: /home/runner/work/hacky/hacky/mobile/test/screens/auth_screen_test.dart: the links under each form switch tabs too
+00:17 +64: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: sends what I type and shows the answer
+00:17 +65: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: sends what I type and shows the answer
+00:18 +66: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: shows Hacky is thinking while it answers, and Send waits
+00:18 +67: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: a message that fails can be retried
+00:18 +68: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: an expired session goes back to log in
+00:18 +69: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: shows the web texts and checks the email locally
+00:18 +70: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: shows the web texts and checks the email locally
+00:19 +71: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: shows the web texts and checks the email locally
+00:19 +72: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: shows the web texts and checks the email locally
+00:19 +73: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: shows the web texts and checks the email locally
+00:19 +74: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: shows the web texts and checks the email locally
+00:19 +75: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: a team card asks its lead to join
+00:19 +76: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: asks for the code the same way whether or not the account exists
+00:20 +77: /home/runner/work/hacky/hacky/mobile/test/screens/hacky_chat_screen_test.dart: Hacky's drafted intro can be edited and sent
+00:20 +78: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: the code and a new password log in and open Home
+00:20 +79: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: the code and a new password log in and open Home
+00:20 +80: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: checks the code and password before calling the server
+00:20 +81: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: a wrong code shows the server message
+00:21 +82: /home/runner/work/hacky/hacky/mobile/test/screens/forgot_password_screen_test.dart: can go back and use a different email
+00:21 +83: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with the demo data shows loading, then incoming, hidden and accepted requests
+00:21 +84: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with the demo data shows loading, then incoming, hidden and accepted requests
+00:21 +85: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with the demo data shows loading, then incoming, hidden and accepted requests
+00:22 +86: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: names the email and asks for the code
+00:22 +87: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: names the email and asks for the code
+00:23 +88: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: names the email and asks for the code
+00:23 +89: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with the demo data a name opens their profile
+00:23 +90: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: checks the code locally before calling the server
+00:23 +91: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: checks the code locally before calling the server
+00:23 +92: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: checks the code locally before calling the server
+00:23 +93: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: checks the code locally before calling the server
+00:23 +94: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests a row is busy while its action runs and ignores more taps
+00:23 +95: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests a row is busy while its action runs and ignores more taps
+00:23 +96: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: a wrong code shows the server message
+00:23 +97: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: a wrong code shows the server message
+00:23 +98: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests a failed Not now shows the error and keeps the request
+00:24 +99: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: a taken username offers to go back to create account
+00:24 +100: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests a failed load can be retried
+00:24 +101: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: sends a new code
+00:24 +102: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests empty tabs show the knit Hacky
+00:24 +103: /home/runner/work/hacky/hacky/mobile/test/screens/verify_email_screen_test.dart: shows the connection message when offline
+00:24 +104: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests pull to refresh loads new requests
+00:24 +105: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests pull to refresh loads new requests
+00:24 +106: /home/runner/work/hacky/hacky/mobile/test/screens/requests_screen_test.dart: with scripted requests a failed refresh keeps the list and shows the error
+00:25 +107: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: shows loading, then the profile and its sections
+00:26 +108: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: shows loading, then my chats with unread badges
+00:26 +109: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: shows loading, then my chats with unread badges
+00:26 +110: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: a link tap copies it
+00:26 +111: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: a link tap copies it
+00:26 +112: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: a link tap copies it
+00:26 +113: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: shows the empty state
+00:26 +114: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: Connect checks the intro, sends it and shows Request sent
+00:26 +115: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: Connect checks the intro, sends it and shows Request sent
+00:26 +116: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: Connect checks the intro, sends it and shows Request sent
+00:27 +117: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: Connect checks the intro, sends it and shows Request sent
+00:27 +118: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: a failed refresh keeps the list and says why
+00:27 +119: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: a failed send stays in the sheet with the error
+00:27 +120: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: a row opens 11, and the badge goes when I come back
+00:27 +121: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: Accept connects, then Message opens 11
+00:27 +122: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: Accept connects, then Message opens 11
+00:27 +123: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: shows my event and the requests waiting on me
+00:27 +124: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: a failed accept shows the error and keeps the buttons
+00:27 +125: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: Accept opens the new chat and the request leaves
+00:27 +126: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: Accept opens the new chat and the request leaves
+00:27 +127: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: someone I am connected with gets Message → 11
+00:27 +128: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: someone I am connected with gets Message → 11
+00:27 +129: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: reloads by itself and tells the shell what is waiting
+00:27 +130: /home/runner/work/hacky/hacky/mobile/test/screens/conversations_screen_test.dart: reloads by itself and tells the shell what is waiting
+00:27 +131: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: a failed load can be retried
+00:28 +132: /home/runner/work/hacky/hacky/mobile/test/screens/person_profile_screen_test.dart: an expired session goes back to log in
+00:28 +133: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +134: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +135: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +136: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +137: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +138: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +139: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +140: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +141: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +142: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +143: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:28 +144: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: shows loading, then the event
+00:29 +145: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: opens on Hacky, with the header and no Ask Hacky button
+00:29 +146: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: opens on Hacky, with the header and no Ask Hacky button
+00:29 +147: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: opens on Hacky, with the header and no Ask Hacky button
+00:30 +148: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: opens on Hacky, with the header and no Ask Hacky button
+00:30 +149: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: opens on Hacky, with the header and no Ask Hacky button
+00:30 +150: /home/runner/work/hacky/hacky/mobile/test/screens/home_screen_test.dart: Requests opens 09 for this event
+00:30 +151: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: the header switches pages and keeps them loaded
+00:30 +152: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: the header switches pages and keeps them loaded
+00:30 +153: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: the header switches pages and keeps them loaded
+00:32 +154: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: shows the web texts and hints
+00:32 +155: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: shows the web texts and hints
+00:32 +156: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: shows the web texts and hints
+00:32 +157: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: shows the web texts and hints
+00:32 +158: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: shows the web texts and hints
+00:32 +159: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: shows the web texts and hints
+00:32 +160: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: a connection problem can be retried
+00:32 +161: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: labels the handle Username with an @
+00:32 +162: /home/runner/work/hacky/hacky/mobile/test/shell/signed_in_shell_test.dart: sign out on Me forgets the token and returns to log in
+00:33 +163: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: registers and opens the code screen with the email
+00:33 +164: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: registers and opens the code screen with the email
+00:33 +165: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: applies the web password rules before calling the server
+00:34 +166: /home/runner/work/hacky/hacky/mobile/test/forms/register_form_test.dart: checks the name and handle
+00:34 +167: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: shows the web texts and checks empty fields locally
+00:34 +168: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: shows the web texts and checks empty fields locally
+00:34 +169: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: shows the web texts and checks empty fields locally
+00:34 +170: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: shows the web texts and checks empty fields locally
+00:35 +171: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: logs in with a normalized email and opens Home
+00:35 +172: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: logs in with a normalized email and opens Home
+00:35 +173: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: logs in with a normalized email and opens Home
+00:35 +174: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: logs in with a normalized email and opens Home
+00:35 +175: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: logs in with the username "demo_hacker"
+00:36 +176: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: logs in with the username " @Demo_Hacker "
+00:36 +177: /home/runner/work/hacky/hacky/mobile/test/home/home_data_test.dart: loads the event, my membership, my team and my requests
+00:36 +178: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: checks the email or username locally
+00:36 +179: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: checks the email or username locally
+00:36 +180: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: checks the email or username locally
+00:36 +181: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: checks the email or username locally
+00:36 +182: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: shows the server message for a wrong password
+00:36 +183: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: shows the connection message when offline
+00:36 +184: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: opens forgot password, and asks to switch tabs
+00:36 +185: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: opens forgot password, and asks to switch tabs
+00:36 +186: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: opens forgot password, and asks to switch tabs
+00:36 +187: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: opens forgot password, and asks to switch tabs
+00:36 +188: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: opens forgot password, and asks to switch tabs
+00:36 +189: /home/runner/work/hacky/hacky/mobile/test/forms/login_form_test.dart: the password field can be shown and hidden
+00:37 +190: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: starts idle and sends nothing for empty or blank text
+00:37 +191: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: starts idle and sends nothing for empty or blank text
+00:37 +192: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: starts idle and sends nothing for empty or blank text
+00:37 +193: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: starts idle and sends nothing for empty or blank text
+00:37 +194: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: starts idle and sends nothing for empty or blank text
+00:37 +195: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: starts idle and sends nothing for empty or blank text
+00:37 +196: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: starts idle and sends nothing for empty or blank text
+00:37 +197: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: waits 300 ms after the last keystroke, then asks once
+00:37 +198: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: trims the text and caps it at 100 characters
+00:37 +199: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: an older answer never overwrites a newer one
+00:37 +200: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: a reply for text the user already changed is dropped
+00:37 +201: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: clearing the text goes idle and drops the pending answer
+00:37 +202: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: keeps the shown results while the next search runs
+00:37 +203: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: the role filter asks right away with the same text
+00:37 +204: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: a role without text stays idle
+00:37 +205: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: submit skips the rest of the debounce
+00:37 +206: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: a failure can be retried
+00:37 +207: /home/runner/work/hacky/hacky/mobile/test/people/people_search_test.dart: searches the fake server with partial matches
+00:38 +208: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: ProfileDraft no changes means no body
+00:38 +209: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: ProfileDraft sends only the changed fields, trimmed
+00:38 +210: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: ProfileDraft an empty bio clears it with null
+00:38 +211: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: ProfileDraft links go as one object, normalized, without cleared ones
+00:38 +212: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: ProfileDraft a new Hacky look keeps the other style keys
+00:38 +213: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: ProfileDraft validate lists each bad field
+00:38 +214: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: IntakeDraft no changes means no body
+00:38 +215: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: IntakeDraft sends only the changed fields, with null to clear
+00:38 +216: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: IntakeDraft validate catches a too long idea
+00:38 +217: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: HackyLook reads a saved style, with defaults for unknown values
+00:38 +218: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: HackyLook only tints colors other than the original
+00:38 +219: /home/runner/work/hacky/hacky/mobile/test/profile/profile_draft_test.dart: FieldErrors maps list, dotted and pointer paths to fields
+00:38 +220: /home/runner/work/hacky/hacky/mobile/test/chats/chat_time_test.dart: ChatTime.ago says now under a minute
+00:38 +221: /home/runner/work/hacky/hacky/mobile/test/chats/chat_time_test.dart: ChatTime.ago counts minutes, then hours today
+00:38 +222: /home/runner/work/hacky/hacky/mobile/test/chats/chat_time_test.dart: ChatTime.ago says Yesterday, then the weekday, then the date
+00:38 +223: /home/runner/work/hacky/hacky/mobile/test/chats/chat_time_test.dart: ClientId.next makes distinct UUID v4s
+00:38 +224: /home/runner/work/hacky/hacky/mobile/test/chats/conversation_text_test.dart: title is the peer, or the team in a team chat
+00:38 +225: /home/runner/work/hacky/hacky/mobile/test/chats/conversation_text_test.dart: subtitle is the role, or the help request in a mentor chat
+00:38 +226: /home/runner/work/hacky/hacky/mobile/test/chats/conversation_text_test.dart: preview marks my messages and keeps system ones as they are
+00:38 +227: /home/runner/work/hacky/hacky/mobile/test/chats/conversation_text_test.dart: unread caps at 99+
+00:39 +228: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: starts from the newest page
+00:39 +229: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: adds older pages on top, once
+00:39 +230: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: adds newer pages and moves the cursor
+00:39 +231: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: a sent message replaces its pending copy but keeps the cursor
+00:39 +232: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: a refresh that brings my message first also clears the copy
+00:39 +233: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: failed, retrying and discard
+00:39 +234: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: lastSavedFrom finds my newest saved message
+00:39 +235: /home/runner/work/hacky/hacky/mobile/test/chats/thread_messages_test.dart: remove takes out an unsent message and keeps the cursors
+00:39 +236: /home/runner/work/hacky/hacky/mobile/test/chats/chat_data_test.dart: ConversationsData loads me and my conversations
+00:39 +237: /home/runner/work/hacky/hacky/mobile/test/chats/chat_data_test.dart: ChatThreadData loads the conversation and its newest page
+00:39 +238: /home/runner/work/hacky/hacky/mobile/test/chats/chat_data_test.dart: ChatThreadData has no conversation when the list lacks it
+00:39 +239: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_text_test.dart: plain text is one run
+00:39 +240: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_text_test.dart: finds @handle mentions
+00:39 +241: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_text_test.dart: emails and too-short handles are not mentions
+00:39 +242: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_text_test.dart: keeps **bold** runs, with mentions inside them
+00:40 +243: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: reads text parts and skips empty and unknown ones
+00:40 +244: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: reads people and mentors from search_people
+00:40 +245: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: a closest search keeps its note; noMatch is a note
+00:40 +246: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: reads team cards with spots left
+00:40 +247: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: skips a card that does not fit, keeps the rest
+00:40 +248: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: reads a profile and a draft intro
+00:40 +249: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: a failed tool is a note
+00:40 +250: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: a question shows its say line, options and answer
+00:40 +251: /home/runner/work/hacky/hacky/mobile/test/hacky/hacky_parts_test.dart: textOf joins the text parts
+00:40 +252: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestLists.from splits requests the way the tabs show them, in order
+00:40 +253: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestLists.from an accepted request that was hidden counts as accepted
+00:40 +254: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestLists.from no requests means both tabs are empty
+00:40 +255: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: replacing swaps one request by id and keeps the order
+00:40 +256: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: hiddenOn copies the request with hiddenAt set
+00:40 +257: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestKind.of a request with a team is a team join
+00:40 +258: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestKind.of personal requests follow the other person’s role
+00:40 +259: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestTexts ago gives a short relative time
+00:40 +260: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestTexts subtitle shows the handle and when it was sent or accepted
+00:40 +261: /home/runner/work/hacky/hacky/mobile/test/requests/request_lists_test.dart: RequestTexts source and team lines
+00:40 +262: /home/runner/work/hacky/hacky/mobile/test/api/search_test.dart: search GETs /api/search with event and q
+00:40 +263: /home/runner/work/hacky/hacky/mobile/test/api/search_test.dart: search sends role and limit when given, and encodes q
+00:40 +264: /home/runner/work/hacky/hacky/mobile/test/api/search_test.dart: search refuses an empty or too long q without calling the server
+00:40 +265: /home/runner/work/hacky/hacky/mobile/test/api/search_test.dart: search refuses a limit outside 1 to 50
+00:40 +266: /home/runner/work/hacky/hacky/mobile/test/api/search_test.dart: search throws forbidden when I am not in the event
+00:40 +267: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: listEvents GETs /api/events with the bearer token and unwraps events
+00:40 +268: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: getEvent GETs the event by slug
+00:40 +269: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: getEvent encodes the slug so it stays one path segment
+00:40 +270: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: getEvent throws not_found for an unknown event
+00:40 +271: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: joinEvent POSTs an empty body by default and parses EventMe
+00:40 +272: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: joinEvent sends the role when given
+00:40 +273: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: getEventMe GETs my membership
+00:40 +274: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: getEventMe throws forbidden when I am not a member
+00:40 +275: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: updateEventMe PATCHes only the fields that are set
+00:40 +276: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: updateEventMe sends null to clear a nullable field
+00:40 +277: /home/runner/work/hacky/hacky/mobile/test/api/events_test.dart: an unknown Availability is an invalid_response
+00:41 +278: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: login posts the LoginBody as JSON without a bearer header
+00:41 +279: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: login parses the LoginResult and saves the token
+00:41 +280: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: login a wrong password throws the server error and keeps no token
+00:41 +281: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: login an unverified email throws email_not_verified
+00:41 +282: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: other auth routes send their bodies to the contract paths
+00:41 +283: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: other auth routes verify-email and reset-password send the code and log in
+00:41 +284: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: other auth routes a wrong code throws invalid_code and saves no token
+00:41 +285: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: other auth routes a taken handle throws handle_taken with status 409
+00:41 +286: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: other auth routes invalid input errors include the field details
+00:41 +287: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: other auth routes logout forgets the token
+00:41 +288: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: authenticated routes send Authorization: Bearer with the stored token
+00:41 +289: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: authenticated routes send no Authorization header when logged out
+00:41 +290: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: authenticated routes a 401 forgets the expired token
+00:41 +291: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: authenticated routes other errors keep the token
+00:41 +292: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a non-JSON error page becomes http_<status>
+00:41 +293: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body JSON without an error object becomes http_<status>
+00:41 +294: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a success that breaks the contract throws invalid_response
+00:41 +295: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body an unknown MemberRole throws invalid_response
+00:41 +296: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a connection failure throws network_error
+00:41 +297: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a slow server throws timeout
+00:41 +298: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a message to Hacky waits longer, for the AI answer
+00:41 +299: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a message to Hacky waits longer, for the AI answer
+00:41 +300: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a message to Hacky waits longer, for the AI answer
+00:41 +301: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a message to Hacky waits longer, for the AI answer
+00:41 +302: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a message to Hacky waits longer, for the AI answer
+00:41 +303: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: errors without the contract body a message to Hacky waits longer, for the AI answer
+00:41 +304: /home/runner/work/hacky/hacky/mobile/test/api/api_client_test.dart: a trailing slash on the base URL is ignored
+00:41 +305: loading /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart
+00:42 +305: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: listConversations GETs my conversations in the event
+00:42 +306: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: listConversations parses a mentor chat with its help request
+00:42 +307: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: listConversations parses a team chat without a peer
+00:42 +308: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: listMessages GETs the newest page without cursors
+00:42 +309: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: listMessages sends before and limit
+00:42 +310: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: listMessages sends after
+00:42 +311: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: listMessages refuses before and after together, and a bad limit
+00:42 +312: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: sendMessage POSTs clientId and body and unwraps the message
+00:42 +313: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: sendMessage throws forbidden when blocked
+00:42 +314: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: deleteMessage DELETEs the message
+00:42 +315: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: deleteMessage throws forbidden for someone else's message
+00:42 +316: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: deleteMessage throws not_found when it is already gone
+00:42 +317: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: markRead POSTs to the read route and returns lastReadAt
+00:42 +318: /home/runner/work/hacky/hacky/mobile/test/api/conversations_test.dart: markRead throws not_found for an unknown conversation
+00:42 +319: /home/runner/work/hacky/hacky/mobile/test/api/token_store_test.dart: SecureTokenStore writes, reads and clears the JWT
+00:42 +320: /home/runner/work/hacky/hacky/mobile/test/api/people_test.dart: getPerson GETs the person by event and handle
+00:42 +321: /home/runner/work/hacky/hacky/mobile/test/api/people_test.dart: getPerson is both a PublicProfile and a Membership
+00:42 +322: /home/runner/work/hacky/hacky/mobile/test/api/people_test.dart: getPerson throws not_found when blocked or not in the event
+00:42 +323: /home/runner/work/hacky/hacky/mobile/test/api/people_test.dart: getPerson a missing relation is an invalid_response
+00:42 +324: /home/runner/work/hacky/hacky/mobile/test/api/people_test.dart: PersonSummary parses the compact person
+00:42 +325: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: getMyTeam GETs my team in the event
+00:43 +326: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: getMyTeam returns null when I am on no team
+00:43 +327: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: getMyTeam a body without team is an invalid_response
+00:43 +328: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: createTeam POSTs the name and only the optional fields that are set
+00:43 +329: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: createTeam sends every field when given
+00:43 +330: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: createTeam throws conflict when I am already on a team
+00:43 +331: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: getTeam GETs the team with its members
+00:43 +332: /home/runner/work/hacky/hacky/mobile/test/api/teams_test.dart: TeamRef parses id and name
+00:43 +333: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: the history starts empty
+00:43 +334: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: answers with text and a card per person whose skills match
+00:43 +335: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: asking for a mentor only shows mentors, as mentor cards
+00:43 +336: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: short words only match whole skills
+00:43 +337: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: leaves out people I blocked
+00:43 +338: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: a request that names no skill shows everyone it fits, like the server
+00:43 +339: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: says so in text only when nobody matches
+00:43 +340: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: keeps the history, oldest first
+00:43 +341: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: only accepts user messages
+00:43 +342: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_chat_test.dart: 403s outside my events
+00:43 +343: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: listConversations has the DM with Priya, with one unread message
+00:43 +344: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: listConversations puts the newest activity first
+00:43 +345: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: listConversations 403s outside my events
+00:43 +346: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: listMessages returns the newest page oldest first
+00:43 +347: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: listMessages pages with limit, before and after
+00:43 +348: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: listMessages 404s for unknown conversations
+00:43 +349: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: sendMessage adds my message and keeps it read for me
+00:43 +350: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: sendMessage a retry with the same clientId returns the same message
+00:43 +351: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: sendMessage rejects an empty body
+00:43 +352: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: deleteMessage removes my message from the pages and the list
+00:43 +353: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: deleteMessage 404s when it is already gone
+00:43 +354: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: deleteMessage 403s for their messages and system messages
+00:43 +355: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: after a block the DM stays listed but sending 403s
+00:43 +356: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: markRead clears the unread count
+00:43 +357: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: markRead 403s for a conversation I am not in
+00:43 +358: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_conversations_test.dart: a mutual request opens a DM that shows up in the list
+00:44 +359: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: matches part of a name or handle, case-insensitive
+00:44 +360: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: ranks starts-with, then contains, then skills
+00:44 +361: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: skill matches list the matched skills
+00:44 +362: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: filters by role and respects limit
+00:44 +363: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: leaves me out
+00:44 +364: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: returns an empty list when nothing matches
+00:44 +365: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: validates q and limit like the real client
+00:44 +366: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_search_test.dart: 403s outside my events
+00:44 +367: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: listEvents and getEvent return Knight Hacks IX
+00:44 +368: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: a member from the host getMe can read their membership
+00:44 +369: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: a non-member gets 403 until they join
+00:44 +370: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: mentors join unverified, and joining again keeps the membership
+00:44 +371: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: joining shows up in fakeApplyChanges
+00:44 +372: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: joinEvent 404s for an unknown event
+00:44 +373: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: updateEventMe applies a partial update
+00:44 +374: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_events_test.dart: updateEventMe clears a field with Nullable(null)
+00:44 +375: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_me_test.dart: updateProfile changes only the fields that are set
+00:44 +376: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_me_test.dart: updateProfile sets and clears the bio
+00:44 +377: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_me_test.dart: updateProfile rejects invalid input like the server
+00:44 +378: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_me_test.dart: fakeApplyChanges shows edits in the host getMe result
+00:44 +379: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_me_test.dart: a signed-out user gets the host 401
+00:44 +380: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_me_test.dart: each user gets their own data
+00:45 +381: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_teams_test.dart: I start on no team
+00:45 +382: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_teams_test.dart: the seeded team has Maya as owner and Leo as member
+00:45 +383: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_teams_test.dart: createTeam makes me owner and first member
+00:45 +384: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_teams_test.dart: a second team is a conflict
+00:45 +385: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_teams_test.dart: createTeam validates like the server
+00:45 +386: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_teams_test.dart: getTeam 404s for an unknown team
+00:45 +387: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: serves the other endpoints and shows profile edits in me
+00:45 +388: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: the other endpoints need a login
+00:45 +389: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: register saves nothing until the code, which logs in
+00:45 +390: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: the first sign-up to verify gets the username
+00:45 +391: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: resets the password with the code and logs in
+00:45 +392: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: rejects a wrong password and taken email or handle
+00:45 +393: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: a stale token gets a 401 and is forgotten
+00:45 +394: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_api_client_test.dart: the offline email fails like a lost connection
+00:45 +395: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: listRequests lists the seeded requests newest first
+00:45 +396: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: listRequests includes what I send and hide
+00:45 +397: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: listRequests Leo's hidden request makes him an incoming relation
+00:45 +398: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: listRequests 403s outside my events
+00:45 +399: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: sendRequest creates a pending outgoing request
+00:45 +400: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: sendRequest a request back to Jordan accepts theirs and opens a DM
+00:45 +401: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: sendRequest sending the same request twice is a conflict
+00:45 +402: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: sendRequest rejects links, empty intros, unknown people and myself
+00:45 +403: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: sendRequest a team request must go to the owner
+00:45 +404: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: sendRequest I can't ask to join a team while on one
+00:45 +405: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: acceptRequest accepts Jordan's request and opens a DM
+00:45 +406: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: acceptRequest accepting twice returns the same conversation
+00:45 +407: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: acceptRequest a team join request adds them to my team
+00:45 +408: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: acceptRequest a full team is a conflict
+00:45 +409: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: acceptRequest only the recipient can accept, and unknown ids 404
+00:45 +410: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: hideRequest sets hiddenAt on an incoming request
+00:45 +411: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: hideRequest can't hide my own outgoing request
+00:45 +412: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: blockUser hides them from search, their profile, requests and teams
+00:45 +413: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: blockUser blocking twice is fine
+00:45 +414: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_requests_test.dart: blockUser can't block myself
+00:46 +415: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_people_test.dart: getPerson returns a full, realistic profile
+00:46 +416: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_people_test.dart: the mentor is a mentor
+00:46 +417: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_people_test.dart: relations come from the seeded requests
+00:46 +418: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_people_test.dart: getPerson 404s for an unknown handle
+00:46 +419: /home/runner/work/hacky/hacky/mobile/test/api/fake/fake_people_test.dart: getPerson 403s outside my events
+00:46 +420: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: listRequests GETs my requests in the event and unwraps them
+00:46 +421: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: listRequests returns an empty list when there are none
+00:46 +422: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: listRequests throws forbidden when I am not in the event
+00:46 +423: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: listRequests a request with an unknown status is an invalid_response
+00:46 +424: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: sendRequest POSTs toUserId and intro, plus source and teamId when set
+00:46 +425: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: sendRequest leaves out source and teamId when not set
+00:46 +426: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: sendRequest a mutual request comes back accepted with a conversation
+00:46 +427: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: sendRequest throws conflict when already requested
+00:46 +428: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: acceptRequest POSTs to the accept route with no body
+00:46 +429: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: acceptRequest throws conflict when the team is full
+00:46 +430: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: hideRequest POSTs to the hide route
+00:46 +431: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: hideRequest throws not_found for an unknown request
+00:46 +432: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: blockUser POSTs the userId to /api/blocks
+00:46 +433: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: blockUser throws invalid_input for a bad userId
+00:46 +434: /home/runner/work/hacky/hacky/mobile/test/api/requests_test.dart: hiddenAt is read when present
+00:46 +435: /home/runner/work/hacky/hacky/mobile/test/api/me_test.dart: getMe GETs /api/me with the bearer token
+00:46 +436: /home/runner/work/hacky/hacky/mobile/test/api/me_test.dart: updateProfile PATCHes only the fields that are set
+00:46 +437: /home/runner/work/hacky/hacky/mobile/test/api/me_test.dart: updateProfile sends bio: null to clear the bio
+00:46 +438: /home/runner/work/hacky/hacky/mobile/test/api/me_test.dart: updateProfile refuses an empty body without calling the server
+00:46 +439: /home/runner/work/hacky/hacky/mobile/test/api/me_test.dart: updateProfile throws the field details on invalid input
+00:47 +440: /home/runner/work/hacky/hacky/mobile/test/app_router_test.dart: opens 07 Person profile with the handle, and comes back
+00:48 +441: /home/runner/work/hacky/hacky/mobile/test/app_router_test.dart: opens 09 Requests
+00:48 +442: /home/runner/work/hacky/hacky/mobile/test/app_router_test.dart: opens 11 Chat thread
+00:48 +443: All tests passed!
+exit 0
