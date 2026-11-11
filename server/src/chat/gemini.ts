@@ -1,3 +1,4 @@
+import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { Output, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
@@ -5,6 +6,9 @@ import { HttpError } from "../errors.js";
 import type { Intent } from "./candidates.js";
 
 // Only file that imports the AI SDK. Routes depend on the Ranker type.
+// AI_PROVIDER in server/.env picks the model: "google" (Gemini, the default)
+// or "anthropic" (Claude). Each needs its own key; the prompt, the output
+// schema and the checks in routes.ts are the same for both.
 
 export const CHAT_TIMEOUT_MS = 45_000; // under mobile's 60 s chat timeout
 
@@ -58,14 +62,34 @@ MESSAGE:
 ${input.text}`;
 }
 
+type Provider = "google" | "anthropic";
+
+const PROVIDERS: Record<Provider, { key: string; model: () => LanguageModel; options?: Parameters<typeof generateText>[0]["providerOptions"] }> = {
+  google: {
+    key: "GOOGLE_GENERATIVE_AI_API_KEY",
+    model: () => google(process.env.GEMINI_CHAT_MODEL ?? "gemini-3.8-flash"),
+    options: { google: { thinkingConfig: { thinkingLevel: "minimal" } } },
+  },
+  anthropic: {
+    key: "ANTHROPIC_API_KEY",
+    model: () => anthropic(process.env.ANTHROPIC_CHAT_MODEL ?? "claude-haiku-5-5"),
+  },
+};
+
+// Read on every call, so `pm2 reload --update-env` is enough to switch.
+export function chatProvider(): Provider {
+  return process.env.AI_PROVIDER?.trim().toLowerCase() === "anthropic" ? "anthropic" : "google";
+}
+
 // Tests pass a MockLanguageModelV4 as `model`.
-export function createGeminiRanker(model?: LanguageModel): Ranker {
+export function createRanker(model?: LanguageModel): Ranker {
   return async (input) => {
-    if (!model && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    const provider = PROVIDERS[chatProvider()];
+    if (!model && !process.env[provider.key]) {
       throw new HttpError(503, "ai_unavailable", "Hacky is offline right now. Please try again later.");
     }
     const { output } = await generateText({
-      model: model ?? google(process.env.GEMINI_CHAT_MODEL ?? "gemini-3.8-flash"),
+      model: model ?? provider.model(),
       instructions: buildInstructions(input),
       prompt: buildPrompt(input),
       output: Output.object({ schema: rankOutputSchema }),
@@ -73,10 +97,10 @@ export function createGeminiRanker(model?: LanguageModel): Ranker {
       maxOutputTokens: 600,
       maxRetries: 1,
       timeout: CHAT_TIMEOUT_MS,
-      providerOptions: { google: { thinkingConfig: { thinkingLevel: "minimal" } } },
+      providerOptions: model ? undefined : provider.options,
     });
     return output;
   };
 }
 
-export const geminiRanker: Ranker = createGeminiRanker();
+export const defaultRanker: Ranker = createRanker();

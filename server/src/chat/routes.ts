@@ -9,7 +9,7 @@ import { viewerId } from "../me.js";
 import { AgentMessageModel } from "../models/AgentMessage.js";
 import { ProfileModel } from "../models/Profile.js";
 import { type CandidateRow, intentOf, loadCandidates, matchedSkills, summaryLine } from "./candidates.js";
-import { type RankOutput, type Ranker, geminiRanker } from "./gemini.js";
+import { type RankOutput, type Ranker, defaultRanker } from "./gemini.js";
 
 export const chatQuerySchema = z.object({
   format: z.enum(["stream", "json"]).default("stream"),
@@ -143,7 +143,7 @@ function assistantParts(out: RankOutput | null, refs: Map<string, CandidateRow>,
 }
 
 // Mounted at /api/events after requireAuth.
-export function createChatRouter({ rank = geminiRanker }: { rank?: Ranker } = {}): Router {
+export function createChatRouter({ rank = defaultRanker }: { rank?: Ranker } = {}): Router {
   const router = Router();
 
   router.get("/:slug/chat", async (req, res) => {
