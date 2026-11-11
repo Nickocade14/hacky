@@ -181,7 +181,7 @@ class IntroHead extends StatelessWidget {
     return Row(
       spacing: 12,
       children: [
-        PersonAvatar(name: to.name),
+        PersonAvatar.of(to, size: 44),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

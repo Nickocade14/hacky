@@ -182,7 +182,7 @@ class RequestSender extends StatelessWidget {
         child: Row(
           spacing: 12,
           children: [
-            PersonAvatar(name: person.name, size: 44),
+            PersonAvatar.of(person, size: 44),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -27,6 +27,24 @@ class AppColors {
   static const shadow = Color(0x12243247);
   static const orbit = Color(0xFFC9D9ED);
   static const globe = action;
+
+  // Workspace tokens, also in web/src/theme.css: the Chats background, the
+  // message bubbles and the role chips.
+  static const sidebar = Color(0xFFEEF1F5);
+  static const incomingBubble = wash;
+  static const outgoingBubble = action;
+  static const outgoingText = onAction;
+  static const link = action;
+  static const hackerInk = Color(0xFF24558C);
+  static const hackerWash = Color(0xFFE6EFFA);
+  static const mentorInk = Color(0xFF39604F);
+  static const mentorWash = Color(0xFFE8F0EB);
+  static const sponsorInk = Color(0xFF805915);
+  static const sponsorWash = Color(0xFFF6E9C9);
+
+  // The little crown on "Find mentor" (web/src/hacky.css .hk-crown).
+  static const crown = Color(0xFFF1B938);
+  static const crownLine = Color(0xFFA8741A);
 }
 
 /// The app's ThemeData: Lato, the web palette and the web's 12px radius.
@@ -74,31 +92,6 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.white,
-        surfaceTintColor: AppColors.white,
-        indicatorColor: AppColors.hover,
-        elevation: 0,
-        height: 68,
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
-            fontFamily: fontFamily,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: states.contains(WidgetState.selected)
-                ? AppColors.action
-                : AppColors.muted,
-          ),
-        ),
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            size: 22,
-            color: states.contains(WidgetState.selected)
-                ? AppColors.action
-                : AppColors.muted,
-          ),
-        ),
-      ),
       cardTheme: CardThemeData(
         color: AppColors.white,
         shadowColor: AppColors.shadow,
@@ -113,6 +106,18 @@ class AppTheme {
           foregroundColor: AppColors.onAction,
           disabledBackgroundColor: AppColors.disabled,
           disabledForegroundColor: AppColors.disabledInk,
+          shape: RoundedRectangleBorder(borderRadius: borderRadius),
+          textStyle: const TextStyle(
+            fontFamily: fontFamily,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: AppColors.white,
+          foregroundColor: AppColors.link,
+          side: const BorderSide(color: AppColors.line),
           shape: RoundedRectangleBorder(borderRadius: borderRadius),
           textStyle: const TextStyle(
             fontFamily: fontFamily,

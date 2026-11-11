@@ -176,7 +176,7 @@ class CardHead extends StatelessWidget {
     return Row(
       spacing: 12,
       children: [
-        PersonAvatar(name: person.name),
+        PersonAvatar.of(person, size: 52),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -5,31 +5,58 @@
 
 import 'package:flutter/material.dart';
 
+import '../api/api_config.dart';
+import '../api/models/auth.dart';
 import '../api/models/people.dart';
+import '../people/person_labels.dart';
+import '../profile/hacky_style.dart';
+import '../shell/shell_scope.dart';
 import '../theme.dart';
 import 'auth_widgets.dart';
 
 const _bold = FontWeight.w700;
 
-/// The page of a signed-in screen: a title bar on the paper background and a
-/// scrollable [body]. Pushed screens (07, 09, 11) get a back arrow by
-/// themselves; tab screens don't.
+/// The page of a signed-in screen: its title, the buttons that go with it,
+/// and a scrollable [body] on the paper background.
+///
+/// Inside the shell the header is already there, so the title is a heading
+/// at the top of the page, like the web's pages. Pushed screens (07, 09, 11)
+/// get a title bar with a back arrow.
 class SignedInPage extends StatelessWidget {
   const SignedInPage({
     super.key,
     required this.title,
     required this.body,
     this.actions = const [],
+    this.headingInShell = true,
   });
 
   final String title;
   final Widget body;
 
-  /// Buttons on the right of the title bar.
+  /// Buttons on the right of the title.
   final List<Widget> actions;
+
+  /// False for Hacky: the shell's header already says it.
+  final bool headingInShell;
 
   @override
   Widget build(BuildContext context) {
+    if (ShellScope.maybeOf(context) != null) {
+      return ColoredBox(
+        color: AppColors.paper,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (headingInShell) PageTitle(title: title, actions: actions),
+              Expanded(child: body),
+            ],
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -49,8 +76,51 @@ class SignedInPage extends StatelessWidget {
   }
 }
 
+/// The title at the top of a page inside the shell, with its buttons on the
+/// right ("My profile" · Save).
+class PageTitle extends StatelessWidget {
+  const PageTitle({super.key, required this.title, this.actions = const []});
+
+  final String title;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560, minHeight: 44),
+          child: Row(
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 24,
+                      fontWeight: _bold,
+                      letterSpacing: -0.6,
+                    ),
+                  ),
+                ),
+              ),
+              ...actions,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The content column of a signed-in page: 16px side padding, 16px between
-/// blocks, at most 560px wide on tablets and the web.
+/// blocks, at most 560px wide on tablets and the web. Inside the shell it
+/// leaves room at the bottom for the Ask Hacky button.
 class PageColumn extends StatelessWidget {
   const PageColumn({super.key, required this.children});
 
@@ -58,9 +128,10 @@ class PageColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final clearance = ShellScope.maybeOf(context)?.bottomClearance ?? 0;
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + clearance),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -130,12 +201,50 @@ class AppCard extends StatelessWidget {
   }
 }
 
-/// A round avatar with the person's initials. Photos and the knit Hacky
-/// avatar (`hackyStyle`) can come later; the name is always shown beside it.
+/// A person's avatar: their photo (unless they chose to show their Hacky),
+/// else a knit Hacky in their color. Same rule and art as the web
+/// (web/src/workspace/KnitAvatar.tsx). Decorative: the name is always shown
+/// beside it.
 class PersonAvatar extends StatelessWidget {
-  const PersonAvatar({super.key, required this.name, this.size = 40});
+  const PersonAvatar({
+    super.key,
+    required this.name,
+    this.userId,
+    this.hackyStyle = const {},
+    this.photoUrl,
+    this.size = 40,
+  });
+
+  /// The avatar of a person from a list, card, request or chat.
+  PersonAvatar.of(PersonSummary person, {Key? key, double size = 40})
+    : this(
+        key: key,
+        name: person.name,
+        userId: person.userId,
+        hackyStyle: person.hackyStyle,
+        photoUrl: person.photoUrl,
+        size: size,
+      );
+
+  /// The avatar of a full profile (mine, or a person's page).
+  PersonAvatar.ofProfile(PublicProfile profile, {Key? key, double size = 40})
+    : this(
+        key: key,
+        name: profile.name,
+        userId: profile.userId,
+        hackyStyle: profile.hackyStyle,
+        photoUrl: profile.photoUrl,
+        size: size,
+      );
 
   final String name;
+
+  /// Picks the knit color when the person hasn't chosen one.
+  final String? userId;
+  final Map<String, dynamic> hackyStyle;
+
+  /// Absolute, or relative to the site (`/assets/people/aya.webp`).
+  final String? photoUrl;
   final double size;
 
   static String initials(String name) => name
@@ -146,26 +255,41 @@ class PersonAvatar extends StatelessWidget {
       .map((word) => String.fromCharCode(word.runes.first).toUpperCase())
       .join();
 
+  /// The photo's address, or null when the person shows their Hacky.
+  String? get _photo {
+    final url = photoUrl;
+    if (url == null || url.isEmpty || hackyStyle['avatar'] == 'hacky') {
+      return null;
+    }
+    return Uri.parse(ApiConfig.productionBaseUrl).resolve(url).toString();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final letters = initials(name);
+    final knit = Image.asset(
+      KnitAvatarArt.asset(hackyStyle: hackyStyle, seed: userId ?? name),
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+    );
+    final photo = _photo;
     return ExcludeSemantics(
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: AppColors.action,
-          shape: BoxShape.circle,
-        ),
-        child: Text(
-          letters.isEmpty ? '?' : letters,
-          style: TextStyle(
-            color: AppColors.onAction,
-            fontSize: size * 0.36,
-            fontWeight: _bold,
-          ),
-        ),
+      child: SizedBox.square(
+        dimension: size,
+        child: photo == null
+            ? knit
+            : ClipOval(
+                child: ColoredBox(
+                  color: AppColors.wash,
+                  child: Image.network(
+                    photo,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => knit,
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -210,6 +334,63 @@ class TagChip extends StatelessWidget {
           color: strong ? AppColors.action : AppColors.ink,
           fontSize: 12,
           fontWeight: _bold,
+        ),
+      ),
+    );
+  }
+}
+
+/// A person's role as a small label, colored like the web's (.hk-role):
+/// blue for hackers, green for mentors, sand for sponsors and organizers.
+class RoleChip extends StatelessWidget {
+  const RoleChip(this.role, {super.key});
+
+  final MemberRole role;
+
+  @override
+  Widget build(BuildContext context) {
+    final (ink, wash) = switch (role) {
+      MemberRole.hacker => (AppColors.hackerInk, AppColors.hackerWash),
+      MemberRole.mentor => (AppColors.mentorInk, AppColors.mentorWash),
+      MemberRole.sponsor ||
+      MemberRole.organizer => (AppColors.sponsorInk, AppColors.sponsorWash),
+    };
+    return QuietTag(PersonLabels.role(role), ink: ink, wash: wash, bold: true);
+  }
+}
+
+/// A small squared label beside a name: a team, "Pending", a help request.
+class QuietTag extends StatelessWidget {
+  const QuietTag(
+    this.label, {
+    super.key,
+    this.ink = AppColors.muted,
+    this.wash = AppColors.wash,
+    this.bold = false,
+  });
+
+  final String label;
+  final Color ink;
+  final Color wash;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: wash,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: ink,
+          fontSize: 12.5,
+          height: 1.45,
+          fontWeight: bold ? _bold : FontWeight.w400,
         ),
       ),
     );
@@ -266,7 +447,7 @@ class PersonRow extends StatelessWidget {
       child: Row(
         spacing: 14,
         children: [
-          PersonAvatar(name: person.name, size: 44),
+          PersonAvatar.of(person, size: 44),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

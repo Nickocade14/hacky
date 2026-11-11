@@ -156,7 +156,7 @@ class SearchHitRow extends StatelessWidget {
       child: Row(
         spacing: 14,
         children: [
-          PersonAvatar(name: hit.name, size: 44),
+          PersonAvatar.of(hit, size: 44),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

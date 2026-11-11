@@ -42,7 +42,7 @@ class ProfileHeaderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(child: PersonAvatar(name: person.name, size: 76)),
+          Center(child: PersonAvatar.ofProfile(person, size: 88)),
           const SizedBox(height: 14),
           Semantics(
             header: true,
