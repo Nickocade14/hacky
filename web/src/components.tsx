@@ -80,6 +80,6 @@ export function useFormAction() {
 
 export function passwordProblem(value: string): string | null {
   if ([...value].length < 8) return "Use at least 8 characters for your password.";
-  if (new TextEncoder().encode(value).length > 72) return "Your password is too long. Use at most 72 UTF-8 bytes (emoji can count as several bytes).";
+  if (new TextEncoder().encode(value).length > 72) return "That password is too long. Try a shorter one.";
   return null;
 }

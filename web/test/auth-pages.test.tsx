@@ -294,7 +294,7 @@ describe("authentication pages", () => {
 
   it.each([
     { boundary: "seven Unicode code points", password: "🦄".repeat(7), message: "at least 8 characters" },
-    { boundary: "73 UTF-8 bytes", password: `${"🦄".repeat(18)}a`, message: "at most 72 UTF-8 bytes" },
+    { boundary: "73 UTF-8 bytes", password: `${"🦄".repeat(18)}a`, message: "too long" },
   ])("blocks a password with $boundary before calling reset", async ({ password, message }) => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
