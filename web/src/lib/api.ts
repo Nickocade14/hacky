@@ -1,4 +1,4 @@
-import type { EmailBody, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetCodeBody, SearchQuery, SearchResults, VerifyCodeBody } from "./contracts";
+import type { EmailBody, EventInfo, EventList, EventMe, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetCodeBody, SearchQuery, SearchResults, VerifyCodeBody } from "./contracts";
 import { readSession } from "./session";
 
 type ErrorKind = "api" | "network" | "server" | "unavailable" | "unauthorized";
@@ -71,6 +71,10 @@ export function createApiClient(options: ClientOptions = {}) {
     resetPassword: (body: ResetCodeBody, signal?: AbortSignal) => request<LoginResult>("/auth/reset-password", "POST", body, signal),
     resetPasswordLink: (token: string, password: string, signal?: AbortSignal) => request<Ok>("/auth/reset-password", "POST", { token, password }, signal),
     getMe: (signal?: AbortSignal) => request<Me>("/me", "GET", undefined, signal, true),
+    listEvents: (signal?: AbortSignal) => request<EventList>("/events", "GET", undefined, signal, true),
+    getEvent: (slug: string, signal?: AbortSignal) => request<EventInfo>(`/events/${encodeURIComponent(slug)}`, "GET", undefined, signal, true),
+    getEventMe: (slug: string, signal?: AbortSignal) => request<EventMe>(`/events/${encodeURIComponent(slug)}/me`, "GET", undefined, signal, true),
+    joinEvent: (slug: string, signal?: AbortSignal) => request<EventMe>(`/events/${encodeURIComponent(slug)}/join`, "POST", undefined, signal, true),
     searchPeople(query: SearchQuery, signal?: AbortSignal) {
       const params = new URLSearchParams({ event: query.event, q: query.q });
       if (query.role) params.set("role", query.role);
