@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { NoObjectGeneratedError } from "ai";
+import { NoObjectGeneratedError, NoOutputGeneratedError } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import { Types } from "mongoose";
 import { matchedSkills, searchTerms, summaryLine, type CandidateRow } from "../src/chat/candidates.js";
 import { buildInstructions, buildPrompt, chatProvider, createRanker, defaultRanker, type RankInput } from "../src/chat/gemini.js";
+import { toHttpError } from "../src/chat/routes.js";
 import { HttpError } from "../src/errors.js";
 
 const row = (over: Partial<CandidateRow> = {}): CandidateRow => ({
@@ -92,6 +93,22 @@ test("parses the model's JSON and rejects bad output", async () => {
   const answer = { reply: "Here you go.", matches: [{ ref: "p1", reason: "Builds Node APIs." }] };
   assert.deepEqual(await createRanker(mockReturning(JSON.stringify(answer)))(input), answer);
   await assert.rejects(createRanker(mockReturning("not json"))(input), (error) => NoObjectGeneratedError.isInstance(error));
+});
+
+test("a reply cut off before the JSON is a 502, not a 500", async () => {
+  // What Claude did with thinking on: it ran out of output tokens first.
+  const cutOff = new MockLanguageModelV4({
+    doGenerate: async () => ({
+      content: [],
+      finishReason: { unified: "length", raw: "max_tokens" },
+      usage,
+      warnings: [],
+    }) as any,
+  });
+  const error = await createRanker(cutOff)(input).then(() => null, (failure: unknown) => failure);
+  assert.ok(NoOutputGeneratedError.isInstance(error));
+  const mapped = toHttpError(error);
+  assert.ok(mapped instanceof HttpError && mapped.status === 502 && mapped.code === "ai_bad_response");
 });
 
 test("matchedSkills matches whole words, including C++", () => {

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { APICallError, LoadAPIKeyError, NoObjectGeneratedError, RetryError } from "ai";
+import { APICallError, LoadAPIKeyError, NoObjectGeneratedError, NoOutputGeneratedError, RetryError } from "ai";
 import { Router } from "express";
 import mongoose from "mongoose";
 import { z } from "zod";
@@ -75,7 +75,7 @@ export function toHttpError(error: unknown): unknown {
   if (LoadAPIKeyError.isInstance(err)) {
     return new HttpError(503, "ai_unavailable", "Hacky is offline right now. Please try again later.");
   }
-  if (NoObjectGeneratedError.isInstance(err)) {
+  if (NoObjectGeneratedError.isInstance(err) || NoOutputGeneratedError.isInstance(err)) {
     return new HttpError(502, "ai_bad_response", "Hacky got confused. Please try again.");
   }
   return err;
