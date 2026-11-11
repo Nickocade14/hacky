@@ -18,12 +18,17 @@ import { Icon } from "./workspace/icons";
 // history, sends each message with ?format=json, shows Hacky's text and person or
 // mentor cards, and sends connection requests from the cards.
 
-/** The four starting points under the brief: what the button says, and what it asks Hacky. */
+/**
+ * The four starting points under the brief: what the button says, and what it asks Hacky.
+ * "Help me find a teammate" and "Who’s looking for a team?" carry no search words on purpose:
+ * the server then ranks everyone who fits for me (server/src/chat/candidates.ts), instead of
+ * only the people whose profile happens to contain a word from the prompt.
+ */
 export const starters = [
-  { label: "Find hackers", prompt: "Find a teammate for my project", art: "/assets/people/mika.webp" },
+  { label: "Find hackers", prompt: "Help me find a teammate", art: "/assets/people/mika.webp" },
   { label: "Pick a track", prompt: "Help me pick a track", art: "/assets/shortcuts/event.svg" },
   { label: "Find mentor", prompt: "Find a mentor", art: "/assets/people/aya.webp", crown: true },
-  { label: "Open teams", prompt: "Who’s looking for a team?", art: "/assets/shortcuts/sponsor.svg" },
+  { label: "Who’s looking?", prompt: "Who’s looking for a team?", art: "/assets/shortcuts/sponsor.svg" },
 ] as const;
 
 const clips = {
