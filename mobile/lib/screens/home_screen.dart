@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
-import '../api/models/auth.dart';
 import '../api/models/events.dart';
 import '../api/models/teams.dart';
 import '../auth/error_text.dart';
@@ -13,27 +12,25 @@ import '../widgets/app_widgets.dart';
 import '../widgets/create_team_sheet.dart';
 import '../widgets/home_cards.dart';
 
-/// 05 Home with event (Home tab, mobile/design/home-wireframes.svg).
+/// 05 Home with event (mobile/design/home-wireframes.svg): my event, my
+/// team, my requests and people I might like.
 ///
 /// Loads [HomeData] for [eventSlug]. "Looking for a team" and availability
-/// save right away (`PATCH /api/events/{slug}/me`). The avatar and Ask Hacky
-/// switch tabs through [onOpenTab]; Requests and people push 09 and 07.
+/// save right away (`PATCH /api/events/{slug}/me`). Requests and people push
+/// 09 and 07; "Add skills you want to learn" opens Me through [onOpenTab].
+/// The shell's header and Ask Hacky button lead everywhere else.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.api,
-    required this.me,
     required this.eventSlug,
     required this.onOpenTab,
   });
 
   final ApiClient api;
-
-  /// The signed-in user, for the avatar.
-  final Me me;
   final String eventSlug;
 
-  /// Switches the shell's tab (avatar → Me, Ask Hacky → Hacky).
+  /// Switches the shell's page (the suggestions' nudge → Me).
   final ValueChanged<AppTab> onOpenTab;
 
   @override
@@ -151,37 +148,31 @@ class _HomeScreenState extends State<HomeScreen> with ScreenLoad<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final data = _data;
-    return Scaffold(
-      body: SafeArea(
-        child: switch ((data, problem)) {
-          (null, final String message) => ProblemView(
-            message: message,
-            onRetry: () => runLoad(_load),
-          ),
-          (null, _) => const LoadingView(label: 'Loading your event…'),
-          (final HomeData loaded, _) => RefreshIndicator(
-            onRefresh: _refresh,
-            child: _content(loaded),
-          ),
-        },
-      ),
+    return SignedInPage(
+      title: 'Home',
+      body: switch ((data, problem)) {
+        (null, final String message) => ProblemView(
+          message: message,
+          onRetry: () => runLoad(_load),
+        ),
+        (null, _) => const LoadingView(label: 'Loading your event…'),
+        (final HomeData loaded, _) => RefreshIndicator(
+          onRefresh: _refresh,
+          child: _content(loaded),
+        ),
+      },
     );
   }
 
   Widget _content(HomeData data) {
     return PageColumn(
       children: [
-        HomeHeader(
-          me: widget.me,
-          onOpenMe: () => widget.onOpenTab(AppTab.me),
-        ),
         EventCard(
           event: data.event,
           membership: data.membership,
           onLookingChanged: _setLooking,
           onAvailabilityChanged: _setAvailability,
         ),
-        AskHackyCard(onOpen: () => widget.onOpenTab(AppTab.hacky)),
         RequestsRow(newCount: data.newRequestCount, onOpen: _openRequests),
         MyTeamCard(team: data.team, onCreate: _createTeam),
         PeopleSuggestionsSection(

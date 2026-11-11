@@ -12,7 +12,7 @@ abstract final class Routes {
   /// Ask for a reset code, then type it with the new password.
   static const forgotPassword = '/forgot-password';
 
-  /// The signed-in shell with the tab bar (05 Home first).
+  /// The signed-in shell: the header and its pages (12 Hacky first).
   /// Argument: the signed-in user (`Me?`). Loaded from the API when null.
   static const home = '/home';
 
@@ -49,7 +49,7 @@ class ChatThreadArgs {
   final String conversationId;
 }
 
-/// Opens the pushed signed-in screens (07, 09, 11) on top of the tab bar.
+/// Opens the pushed signed-in screens (07, 09, 11) on top of the shell.
 /// Each one returns when the user comes back, so the caller can reload.
 abstract final class Navigate {
   static Future<void> toPerson(

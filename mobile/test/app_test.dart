@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/app.dart';
 import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/shell/app_tab.dart';
-import 'package:mobile/shell/app_tab_bar.dart';
+import 'package:mobile/shell/shell_header.dart';
 import 'package:mobile/theme.dart';
+import 'package:mobile/widgets/hacky_chat_widgets.dart';
 
 import 'support/screen_harness.dart';
 
 Future<void> pumpApp(WidgetTester tester, FakeApiClient api) async {
+  HackyFilm.debugStill = true;
   tester.view.physicalSize = const Size(1200, 2700);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -37,8 +39,10 @@ void main() {
     store.token = 'fake-jwt:${FakeApiClient.demoEmail}';
     await pumpApp(tester, api);
 
+    // Lands on Hacky; the header shows the event.
     expect(find.text('Knight Hacks IX'), findsOneWidget);
-    expect(find.byKey(AppTabBar.keyOf(AppTab.home)), findsOneWidget);
+    expect(find.text(HackyBrief.title), findsOneWidget);
+    expect(find.byKey(ShellHeader.keyOf(AppTab.home)), findsOneWidget);
   });
 
   testWidgets('drops a saved token the server rejects', (tester) async {
@@ -86,7 +90,7 @@ void main() {
     expect(find.text('Knight Hacks IX'), findsOneWidget);
     expect(store.token, isNotNull);
 
-    await tapOn(tester, find.byKey(AppTabBar.keyOf(AppTab.me)));
+    await tapOn(tester, find.byKey(ShellHeader.keyOf(AppTab.me)));
     expect(find.text('Ethan Zeng\n@ethan_z'), findsOneWidget);
     await tapOn(tester, find.text('Sign out'));
     expect(find.text('Welcome back.'), findsOneWidget);
