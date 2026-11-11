@@ -60,6 +60,7 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
     else if (phone) setOpen(false);
   }, [chatsRoute, phone, pathname]);
 
+  const onHacky = pathname === "/hacky" || chatsRoute;
   const tab = pathname.startsWith("/people/") ? "/search" : pathname;
   const current = (path: string) => tab === path ? "page" as const : undefined;
   const slug = event?.slug;
@@ -86,7 +87,6 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
           <span className="hk-title-event">{event?.name ?? "Find your people"}</span>
         </Link>
         <nav className="hk-header-side end" aria-label="Main navigation">
-          <Link className="hk-nav-link hk-nav-ask" to={eventPath("/hacky", slug)} aria-current={current("/hacky")}><Icon name="ask" /><span>Ask Hacky</span></Link>
           <Link className="hk-nav-link" to={eventPath("/search", slug)} aria-current={current("/search")}><Icon name="people" /><span>People</span></Link>
           <Link className="hk-nav-link" to="/app" aria-current={current("/app")}><Icon name="events" /><span>Home</span></Link>
           <Link className="hk-icon hk-me" to="/profile" aria-label="My profile" title="My profile" aria-current={current("/profile")}>
@@ -95,6 +95,10 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
         </nav>
       </header>
       {children}
+      {/* Everywhere but Hacky itself, a way back to the chat with Hacky. */}
+      {me && !onHacky && <Link className="hk-ask-fab" to={eventPath("/hacky", slug)}>
+        <img src="/assets/mascots/hacky-knit.webp" alt="" /><span>Ask Hacky</span>
+      </Link>}
     </div>
   </div>;
 }

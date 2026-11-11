@@ -83,7 +83,7 @@ describe("Hacky chat page", () => {
     renderHacky();
 
     expect(await screen.findByRole("heading", { level: 1, name: "What can I help you with?" })).not.toBeNull();
-    expect(screen.getByRole("link", { name: /Hacky/, current: "page" })).not.toBeNull();
+    expect(screen.queryByRole("link", { name: "Ask Hacky" })).toBeNull();
     await user.click(screen.getByRole("button", { name: "Find hackers" }));
 
     const card = await screen.findByRole("article", { name: "Owen Castellano" });
