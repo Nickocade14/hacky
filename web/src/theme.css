@@ -12,3 +12,21 @@
   --success: #39604f; --success-wash: #e8f0eb; --danger: #a12b35; --danger-wash: #fdf0f1;
   --shadow: #24324712; --orbit: #c9d9ed; --globe: var(--action); --radius: 12px;
 }
+/* Workspace tokens (sidebar, bubbles, role chips) and the dark palette, also from hacky-primitives.css. */
+:root {
+  --sidebar: #eef1f5; --scroll: #929eaf; --overlay: #14203380; --ease: cubic-bezier(.16, 1, .3, 1);
+  --incoming-bubble: #e9edf3; --outgoing-bubble: #0866d9; --outgoing-text: #fff; --link: #0866d9;
+  --hacker-ink: #24558c; --hacker-bg: #e6effa; --mentor-ink: #39604f; --mentor-bg: #e8f0eb;
+  --sponsor-ink: #805915; --sponsor-bg: #f6e9c9;
+}
+:root[data-theme=dark] {
+  color-scheme: dark;
+  --ink: #edf1f7; --muted: #adb7c5; --paper: #181c24; --white: #242a35; --line: #404b5c;
+  --wash: #2d3542; --stage: #252f3e; --hover: #303d50; --selection: #27476f;
+  --disabled: #323b49; --disabled-ink: #acb6c6; --focus: #80b5ff;
+  --success: #c5dbcc; --success-wash: #30463d; --danger: #ff9aa2; --danger-wash: #46282c;
+  --shadow: #0006; --orbit: #3a4a61; --sidebar: #1e242e; --scroll: #6c788b; --overlay: #0b121db3;
+  --incoming-bubble: #2d3542; --link: #80b5ff;
+  --hacker-ink: #bad8ff; --hacker-bg: #283e5b; --mentor-ink: #c5dbcc; --mentor-bg: #30463d;
+  --sponsor-ink: #efd097; --sponsor-bg: #493e29;
+}
