@@ -34,7 +34,7 @@ const FILLER = new Set([
   "find", "need", "want", "looking", "someone", "somebody", "anyone", "people",
   "person", "teammate", "teammates", "team", "teams", "mentor", "mentors",
   "help", "who", "knows", "know", "good", "with", "for", "the", "and",
-  "to", "in", "on", "of", "a", "an", "me", "my", "i", "can", "please", "a",
+  "to", "in", "on", "of", "a", "an", "me", "my", "i", "can", "please",
 ]);
 
 export function keywordTerms(query: string): string {
