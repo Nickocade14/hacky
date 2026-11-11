@@ -47,7 +47,6 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 const fetchMock = vi.fn<typeof fetch>();
 let postCount = 0;
-let poll: (() => Promise<void>) | undefined;
 let sent: Message | undefined;
 
 beforeEach(() => {
@@ -56,15 +55,6 @@ beforeEach(() => {
   saveSession({ token: "test-jwt", expiresAt: new Date(Date.now() + 60_000).toISOString() });
   postCount = 0;
   sent = undefined;
-  poll = undefined;
-  const startTimer = window.setInterval.bind(window);
-  vi.spyOn(window, "setInterval").mockImplementation((handler, timeout, ...args) => {
-    if (timeout === 10_000 && typeof handler === "function") {
-      poll = handler as () => Promise<void>;
-      return startTimer(() => {}, timeout);
-    }
-    return startTimer(handler, timeout, ...args);
-  });
   fetchMock.mockReset();
   fetchMock.mockImplementation(async (url, init) => {
     const path = String(url);
@@ -97,6 +87,7 @@ afterEach(() => {
 });
 
 it("loads a conversation, retries with the same client ID, polls from the last listed message and unsends", async () => {
+  const startInterval = vi.spyOn(window, "setInterval");
   const user = userEvent.setup();
   render(<MemoryRouter initialEntries={["/chats"]}><App /></MemoryRouter>);
   const link = await screen.findByRole("link", { name: /Maya/ });
@@ -109,9 +100,9 @@ it("loads a conversation, retries with the same client ID, polls from the last l
   expect(await screen.findByText("Hi Ethan")).not.toBeNull();
 
   await user.type(screen.getByLabelText("Message"), "Sounds good!");
-  await user.click(screen.getByRole("button", { name: "Send", exact: true }));
-  await user.click(await screen.findByRole("button", { name: "Retry", exact: true }));
-  await screen.findByRole("button", { name: "Unsend", exact: true });
+  await user.click(screen.getByRole("button", { name: /^Send$/ }));
+  await user.click(await screen.findByRole("button", { name: /^Retry$/ }));
+  await screen.findByRole("button", { name: /^Unsend$/ });
   const sends = fetchMock.mock.calls.filter(([path, init]) => String(path) === messagesPath && init?.method === "POST");
   expect(sends).toHaveLength(2);
   expect(sends[1]?.[1]?.body).toBe(sends[0]?.[1]?.body);
@@ -120,12 +111,13 @@ it("loads a conversation, retries with the same client ID, polls from the last l
 
   // The send response has a later ID than the peer reply. Poll from the last
   // message list cursor so the peer reply still arrives and my copy dedupes.
-  expect(poll).toBeDefined();
-  await act(async () => { await poll?.(); });
+  const poll = startInterval.mock.calls.find(([, delay]) => delay === 10_000)?.[0];
+  if (!poll) throw new Error("Chat polling did not start");
+  await act(async () => { await (poll as () => Promise<void>)(); });
   expect(screen.getByText("I can work on React.")).not.toBeNull();
   expect(screen.getAllByText("Sounds good!")).toHaveLength(1);
 
-  await user.click(screen.getByRole("button", { name: "Unsend", exact: true }));
+  await user.click(screen.getByRole("button", { name: /^Unsend$/ }));
   await user.click(screen.getByRole("button", { name: "Unsend for everyone" }));
   await waitFor(() => expect(screen.queryByText("Sounds good!")).toBeNull());
 });

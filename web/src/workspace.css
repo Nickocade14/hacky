@@ -242,8 +242,93 @@
     font-size: 14px;
 }
 
-.workspace-event-status dd {
+.workspace-event-status input[type="checkbox"] {
+    appearance: none;
+    display: flex;
+    align-items: center;
+    width: 42px;
+    height: 24px;
     margin: 0;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--line);
+    cursor: pointer;
+}
+
+.workspace-event-status input[type="checkbox"]::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--white);
+}
+
+.workspace-event-status input[type="checkbox"]:checked {
+    justify-content: flex-end;
+    border-color: var(--action);
+    background: var(--action);
+}
+
+.workspace-event-status input[type="checkbox"]:disabled {
+    opacity: .65;
+    cursor: default;
+}
+
+.workspace-segments {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius);
+    background: var(--paper);
+}
+
+.workspace-segments button {
+    flex: 1;
+    min-height: 40px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    text-transform: capitalize;
+}
+
+.workspace-segments button[aria-pressed="true"] {
+    background: var(--white);
+    color: var(--action);
+    font-weight: 700;
+}
+
+.workspace-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.workspace-shortcut:hover {
+    border-color: var(--action);
+}
+
+.workspace-hacky-shortcut {
+    background: var(--stage);
+}
+
+.workspace-hacky-shortcut img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+}
+
+.workspace-person-link {
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.workspace-person-link:hover strong {
+    text-decoration: underline;
 }
 
 .workspace .button {

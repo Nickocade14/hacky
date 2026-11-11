@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Notice } from "./components";
 import { PersonAvatar, useSignedIn } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
+import { chatPath, eventPath, personPath } from "./lib/connections";
 import type { components, operations } from "./lib/schema";
 import "./chats.css";
 
@@ -23,7 +24,6 @@ const pollInterval = 10_000;
 const messageLimit = 4000;
 
 const conversationPath = (id: string) => "/conversations/" + encodeURIComponent(id);
-const chatHref = (id: string, slug: string) => "/chats/" + encodeURIComponent(id) + "?event=" + encodeURIComponent(slug);
 
 function getConversations(slug: string, signal: AbortSignal) {
   return api.authenticated<ConversationList>("/events/" + encodeURIComponent(slug) + "/conversations", { signal });
@@ -130,7 +130,7 @@ function ConversationListPage({ slug, userId, onExpired }: { slug: string; userI
   return <>
     <header className="workspace-heading chat-list-heading">
       <h1 tabIndex={-1}>Chats</h1>
-      <Link className="button secondary" to="/requests">Requests</Link>
+      <Link className="button secondary" to={eventPath("/requests", slug)}>Requests</Link>
     </header>
     {problem && <div className="workspace-card">
       <Notice error>{problem}</Notice>
@@ -140,11 +140,11 @@ function ConversationListPage({ slug, userId, onExpired }: { slug: string; userI
     {conversations?.length === 0 && <section className="workspace-card workspace-empty">
       <h2>No conversations yet</h2>
       <p>Accept a request or ask Hacky to find people.</p>
-      <Link className="button primary" to="/hacky">Ask Hacky</Link>
+      <Link className="button primary" to={eventPath("/hacky", slug)}>Ask Hacky</Link>
     </section>}
     {conversations && conversations.length > 0 && <ul className="workspace-card workspace-list chat-list" aria-label="Conversations">
       {conversations.map(conversation => <li key={conversation.id}>
-        <Link className="chat-list-row" to={chatHref(conversation.id, slug)}>
+        <Link className="chat-list-row" to={chatPath(conversation.id, slug)}>
           <PersonAvatar name={titleOf(conversation)} photoUrl={conversation.peer?.photoUrl} />
           <div className="chat-list-copy">
             <strong>{titleOf(conversation)}</strong>
@@ -162,16 +162,11 @@ function ConversationListPage({ slug, userId, onExpired }: { slug: string; userI
 
 export function ChatThreadPage() {
   const { conversationId } = useParams();
-  const [query] = useSearchParams();
-  const { me, event, selectEvent, onExpired } = useSignedIn();
-  const slug = me.events.find(item => item.slug === query.get("event"))?.slug ?? event?.slug;
-
-  useEffect(() => {
-    if (slug && slug !== event?.slug) selectEvent(slug);
-  }, [slug, event?.slug, selectEvent]);
+  const { me, event, onExpired } = useSignedIn();
+  const slug = event?.slug;
 
   if (!slug) return <JoinFirst />;
-  if (!conversationId) return <Link className="button secondary" to="/chats">Back to Chats</Link>;
+  if (!conversationId) return <Link className="button secondary" to={eventPath("/chats", slug)}>Back to Chats</Link>;
   return <ChatThread key={slug + ":" + conversationId} id={conversationId} slug={slug} userId={me.profile.userId} onExpired={onExpired} />;
 }
 
@@ -370,10 +365,10 @@ function ChatThread({ id, slug, userId, onExpired }: { id: string; slug: string;
     ? lastOwn.id : undefined;
 
   return <>
-    <Link className="chat-back" to="/chats">Back to Chats</Link>
+    <Link className="chat-back" to={eventPath("/chats", slug)}>Back to Chats</Link>
     <section className="workspace-card chat-thread">
       <header className="chat-thread-heading">
-        {peer ? <Link className="chat-identity" to={"/people/" + encodeURIComponent(peer.handle)}>
+        {peer ? <Link className="chat-identity" to={personPath(peer.handle, slug)}>
           <PersonAvatar name={title} photoUrl={peer.photoUrl} />
           <h1 tabIndex={-1}>{title}</h1>
         </Link> : <h1 tabIndex={-1}>{title}</h1>}

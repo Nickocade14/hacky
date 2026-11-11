@@ -40,6 +40,7 @@ const answer = (id: string, cards: unknown[] = [owen], kind = "hacker"): ChatMes
 let history: ChatMessage[] = [];
 let reply: (body: { message: ChatMessage }) => Response = (body) => json({ message: answer(body.message.id) });
 let requestReply: () => Response = () => json({ request: { status: "pending" } }, 201);
+let savedRequests: unknown[] = [];
 
 function renderHacky() {
   saveSession(session());
@@ -54,13 +55,16 @@ beforeEach(() => {
   history = [];
   reply = (body) => json({ message: answer(body.message.id) });
   requestReply = () => json({ request: { status: "pending" } }, 201);
+  savedRequests = [];
   fetchMock.mockReset();
   fetchMock.mockImplementation(async (url, init) => {
     const path = String(url);
     if (path === "/api/me") return json(me);
     if (path === "/api/events/knighthacks-ix/chat" && init?.method === "GET") return json({ messages: history });
     if (path === "/api/events/knighthacks-ix/chat?format=json") return reply(JSON.parse(String(init?.body)));
-    if (path === "/api/events/knighthacks-ix/requests") return requestReply();
+    if (path === "/api/events/knighthacks-ix/requests") {
+      return init?.method === "POST" ? requestReply() : json({ requests: savedRequests });
+    }
     throw new Error(`Unexpected API call in this test: ${path}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -148,15 +152,25 @@ describe("Hacky chat page", () => {
     await user.type(intro, "see www.example.com");
     await user.click(within(card).getByRole("button", { name: "Send request" }));
     expect(within(card).getByRole("alert").textContent).toBe("Intros can’t contain links.");
-    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/requests"))).toBe(false);
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/requests") && init?.method === "POST")).toBe(false);
 
     await user.clear(intro);
     await user.type(intro, "Hi Owen, want to build something?");
     await user.click(within(card).getByRole("button", { name: "Send request" }));
-    expect((await within(card).findByRole("status")).textContent).toBe("Request sent. You’ll see it in Requests.");
-    const call = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/requests"))!;
+    expect((await within(card).findByRole("link", { name: "View requests" })).getAttribute("href")).toBe("/requests?event=knighthacks-ix");
+    const call = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/requests") && init?.method === "POST")!;
     expect(JSON.parse(String(call[1]?.body))).toEqual({ toUserId: owen.person.userId, intro: "Hi Owen, want to build something?", source: "agent" });
     expect(within(card).queryByRole("button", { name: "Connect" })).toBeNull();
+  });
+
+  it("links a recommendation to the person's profile and an existing chat", async () => {
+    history = [answer("web-1")];
+    savedRequests = [{ direction: "outgoing", status: "accepted", person: owen.person, team: null, conversationId: "1234" }];
+    renderHacky();
+
+    const card = await screen.findByRole("article", { name: "Owen Castellano" });
+    expect(within(card).getByRole("link", { name: "Owen Castellano" }).getAttribute("href")).toBe("/people/owen_react?event=knighthacks-ix");
+    expect((await within(card).findByRole("link", { name: "Open chat" })).getAttribute("href")).toBe("/chats/1234?event=knighthacks-ix");
   });
 
   it("asks me to join an event when I'm not in one", async () => {

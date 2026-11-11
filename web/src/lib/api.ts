@@ -14,12 +14,14 @@ export class ApiClientError extends Error {
 }
 
 type ClientOptions = { baseUrl?: string; fetch?: typeof fetch; getToken?: () => string | null | undefined };
+type RequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
+type RequestOptions = { method?: RequestMethod; body?: unknown; signal?: AbortSignal };
 const unavailable = "This part of Hacky isn’t available yet. Please try again later.";
 const isAbort = (error: unknown) => error instanceof Error && error.name === "AbortError";
 
 export function createApiClient(options: ClientOptions = {}) {
   const base = ((options.baseUrl ?? import.meta.env.VITE_API_URL)?.trim() || "/api").replace(/\/+$/, "");
-  async function requestWithStatus<T>(path: string, method: "GET" | "POST", body?: unknown, signal?: AbortSignal, protectedRoute = false) {
+  async function requestWithStatus<T>(path: string, method: RequestMethod, body?: unknown, signal?: AbortSignal, protectedRoute = false) {
     const headers = new Headers({ Accept: "application/json" });
     if (body !== undefined) headers.set("Content-Type", "application/json");
     if (protectedRoute) {
@@ -58,6 +60,9 @@ export function createApiClient(options: ClientOptions = {}) {
     return (await requestWithStatus<T>(...args)).data;
   }
   return {
+    authenticated<T>(path: string, { method = "GET", body, signal }: RequestOptions = {}) {
+      return request<T>(path, method, body, signal, true);
+    },
     async register(body: RegisterBody, signal?: AbortSignal) {
       const { status } = await requestWithStatus<Ok>("/auth/register", "POST", body, signal);
       // The link API creates an account (201); the code API starts a pending signup (200).

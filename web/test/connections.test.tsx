@@ -83,7 +83,7 @@ function renderAt(path: string) {
 beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
-  saveSession({ token: "test-token", expiresAt: new Date(Date.now() + 60_000).toISOString(), me: context.me });
+  saveSession({ token: "test-token", expiresAt: new Date(Date.now() + 60_000).toISOString() });
 });
 
 afterEach(() => {

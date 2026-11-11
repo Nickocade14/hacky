@@ -1,12 +1,16 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { createContext, useCallback, useContext, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import { AuthShell, Notice, PageHeading } from "./components";
 import { ForgotPasswordPage, LoginPage, RegisterPage, VerifyPage } from "./AuthPages";
 import { ResetLinkPage } from "./AuthLinkPages";
 import { SearchPage } from "./SearchPage";
 import { HackyPage } from "./HackyPage";
 import { HomePage } from "./HomePage";
-import { ProfileOverview, SignedInShell, type SignedInContext } from "./SignedInShell";
+import { MyProfilePage } from "./MyProfilePage";
+import { PersonProfilePage } from "./PersonProfilePage";
+import { RequestsPage } from "./RequestsPage";
+import { ChatThreadPage, ConversationsPage } from "./ChatsPage";
+import { SignedInShell, type SignedInContext } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
 import { clearSession, readSession, saveSession } from "./lib/session";
 import type { LoginResult, Me } from "./lib/contracts";
@@ -14,7 +18,7 @@ import type { LoginResult, Me } from "./lib/contracts";
 type AuthState = {
   session: ReturnType<typeof readSession>;
   me: Me | null;
-  setMe: (me: Me) => void;
+  setMe: Dispatch<SetStateAction<Me | null>>;
   signIn: (result: LoginResult) => void;
   signOut: () => void;
 };
@@ -54,8 +58,10 @@ function RouteFocus() {
     const titles: Record<string, string> = {
       "/register": "Create account", "/verify": "Verify email", "/forgot-password": "Reset password", "/reset": "Reset password",
       "/app": "Home", "/search": "Find people", "/hacky": "Hacky", "/profile": "My profile",
+      "/requests": "Requests", "/chats": "Chats",
     };
-    document.title = `Hacky · ${titles[pathname] ?? "Log in"}`;
+    const title = titles[pathname] ?? (pathname.startsWith("/people/") ? "Person profile" : pathname.startsWith("/chats/") ? "Chat" : "Log in");
+    document.title = `Hacky · ${title}`;
     document.querySelector<HTMLElement>("h1")?.focus();
   }, [pathname]);
   return null;
@@ -65,7 +71,12 @@ function SignedInLayout() {
   const { session, me, setMe, signOut } = useAuth();
   const [problem, setProblem] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
-  const [selectedEvent, selectEvent] = useState<string>();
+  const [selectedEvent, setSelectedEvent] = useState<string>();
+  const [params, setParams] = useSearchParams();
+  const requestedEvent = me?.events.find(item => item.slug === params.get("event"));
+  useEffect(() => {
+    if (requestedEvent) setSelectedEvent(requestedEvent.slug);
+  }, [requestedEvent]);
   useEffect(() => {
     if (!session || me) return;
     const controller = new AbortController();
@@ -80,12 +91,25 @@ function SignedInLayout() {
     return () => controller.abort();
   }, [session, me, retry, setMe, signOut]);
   if (!session) return <Navigate to="/login" replace />;
-  const event = me?.events.find(item => item.slug === selectedEvent) ?? me?.events[0];
+  const event = requestedEvent ?? me?.events.find(item => item.slug === selectedEvent) ?? me?.events[0];
+  function selectEvent(slug: string) {
+    setSelectedEvent(slug);
+    if (params.has("event")) {
+      const next = new URLSearchParams(params);
+      next.set("event", slug);
+      setParams(next, { replace: true });
+    }
+  }
   const context: SignedInContext | null = me && {
     me, event, selectEvent, onExpired: signOut,
     onJoined(joined) {
-      setMe({ ...me, events: [...me.events.filter(item => item.slug !== joined.slug), joined] });
+      setMe(current => current?.profile.userId === me.profile.userId
+        ? { ...current, events: [...current.events.filter(item => item.slug !== joined.slug), joined] }
+        : current);
       selectEvent(joined.slug);
+    },
+    onProfileChanged(profile) {
+      setMe(current => current?.profile.userId === profile.userId ? { ...current, profile } : current);
     },
   };
   return <SignedInShell profile={me?.profile} event={event} signOut={signOut}>
@@ -111,8 +135,12 @@ function Pages() {
     <Route element={<SignedInLayout />}>
       <Route path="/app" element={<HomePage />} />
       <Route path="/search" element={<SearchPage />} />
+      <Route path="/people/:handle" element={<PersonProfilePage />} />
       <Route path="/hacky" element={<HackyPage />} />
-      <Route path="/profile" element={<ProfileOverview />} />
+      <Route path="/requests" element={<RequestsPage />} />
+      <Route path="/chats" element={<ConversationsPage />} />
+      <Route path="/chats/:conversationId" element={<ChatThreadPage />} />
+      <Route path="/profile" element={<MyProfilePage />} />
     </Route>
   </Routes></>;
 }

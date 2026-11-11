@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Notice } from "./components";
 import { PersonAvatar, useSignedIn } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
+import { chatPath, eventPath, listConnectionRequests, personPath } from "./lib/connections";
 import type { ChatMessage, Me } from "./lib/contracts";
 import {
   firstName, introProblem, newMessageId, openingIntro, partsOf, shownSkills, textOf, whyLine,
@@ -30,7 +31,7 @@ function RichText({ text }: { text: string }) {
       : piece)}</>;
 }
 
-type Sent = { status: "pending" | "accepted" };
+type Sent = { status: "pending" | "accepted"; conversationId: string | null };
 
 export function HackyPage() {
   const { me, event, onExpired } = useSignedIn();
@@ -63,12 +64,24 @@ function HackyChat({ slug, me, onExpired }: { slug: string; me: Me; onExpired: (
     const controller = new AbortController();
     setLoad({ loading: true });
     api.getChatHistory(slug, controller.signal)
-      .then((result) => { setMessages(result.messages); setLoad({ loading: false }); })
+      .then((result) => { if (!controller.signal.aborted) { setMessages(result.messages); setLoad({ loading: false }); } })
       .catch((failure: unknown) => {
         if (controller.signal.aborted) return;
         if (failure instanceof ApiClientError && failure.status === 401) onExpired();
         else setLoad({ loading: false, error: failure instanceof Error ? failure.message : "Couldn’t load your chat." });
       });
+    listConnectionRequests(slug, controller.signal).then(requests => {
+      if (controller.signal.aborted) return;
+      const saved: Record<string, Sent> = {};
+      for (const request of requests) {
+        if (!request.team && (request.status === "accepted" || request.direction === "outgoing")) {
+          saved[request.person.userId] = { status: request.status === "accepted" ? "accepted" : "pending", conversationId: request.conversationId };
+        }
+      }
+      setSent(current => ({ ...saved, ...current }));
+    }).catch((failure: unknown) => {
+      if (!controller.signal.aborted && failure instanceof ApiClientError && failure.status === 401) onExpired();
+    });
     return () => controller.abort();
   }, [slug, retryLoad, onExpired]);
 
@@ -140,7 +153,7 @@ function HackyChat({ slug, me, onExpired }: { slug: string; me: Me; onExpired: (
           ? <UserTurn key={message.id} text={textOf(message)} failure={failures[message.id]} onRetry={thinking ? undefined : () => retry(message)} />
           : message.role === "assistant"
             ? <AssistantTurn key={message.id} parts={partsOf(message)} me={me} slug={slug} sent={sent} onExpired={onExpired}
-                onSent={(userId, status) => setSent((all) => ({ ...all, [userId]: { status } }))} />
+                onSent={(userId, request) => setSent((all) => ({ ...all, [userId]: request }))} />
             : null)}
         {thinking && <HackyTurn><p className="hacky-thinking" role="status"><span aria-hidden="true">• • •</span> Hacky is thinking…</p></HackyTurn>}
       </>}
@@ -180,7 +193,7 @@ function UserTurn({ text, failure, onRetry }: { text: string; failure?: string; 
   </div>;
 }
 
-type CardProps = { me: Me; slug: string; sent: Record<string, Sent>; onSent: (userId: string, status: Sent["status"]) => void; onExpired: () => void };
+type CardProps = { me: Me; slug: string; sent: Record<string, Sent>; onSent: (userId: string, request: Sent) => void; onExpired: () => void };
 
 function AssistantTurn({ parts, ...cardProps }: { parts: HackyPart[] } & CardProps) {
   if (!parts.length) return null;
@@ -200,7 +213,7 @@ function PersonCard({ card, me, slug, sent, onSent, onExpired }: { card: HackyCa
   const [problem, setProblem] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const matched = new Set(card.matchedSkills.map((skill) => skill.toLowerCase()));
-  const status = sent[person.userId]?.status;
+  const connection = sent[person.userId];
   const why = whyLine(card);
   const facts = [`@${person.handle}`, card.mentor ? "Mentor" : "Hacker", ...(card.mentor && card.verified ? ["Verified"] : [])];
 
@@ -212,7 +225,7 @@ function PersonCard({ card, me, slug, sent, onSent, onExpired }: { card: HackyCa
     setSending(true); setProblem(null);
     try {
       const { request } = await api.sendRequest(slug, { toUserId: person.userId, intro: text.trim(), source: "agent" });
-      onSent(person.userId, request.status === "accepted" ? "accepted" : "pending");
+      onSent(person.userId, { status: request.status === "accepted" ? "accepted" : "pending", conversationId: request.conversationId });
       setIntro(null);
     } catch (failure) {
       if (failure instanceof ApiClientError && failure.status === 401) { onExpired(); return; }
@@ -226,7 +239,7 @@ function PersonCard({ card, me, slug, sent, onSent, onExpired }: { card: HackyCa
     <div className="hacky-card-head">
       <PersonAvatar name={person.name} photoUrl={person.photoUrl} />
       <div>
-        <h3>{person.name}</h3>
+        <h3><Link to={personPath(person.handle, slug)} state={{ from: "/hacky" }}>{person.name}</Link></h3>
         <p>{facts.join(" · ")}</p>
       </div>
       {card.mentor && card.availability && <span className="workspace-chip">{card.availability}</span>}
@@ -235,10 +248,12 @@ function PersonCard({ card, me, slug, sent, onSent, onExpired }: { card: HackyCa
     {card.skills.length > 0 && <ul className="workspace-chips hacky-skills" aria-label="Skills">
       {shownSkills(card).map((skill) => <li key={skill} className={matched.has(skill.toLowerCase()) ? "matched" : undefined}>{skill}</li>)}
     </ul>}
-    {status === "accepted" && <p className="hacky-status" role="status">You’re connected. Say hi in Chats.</p>}
-    {status === "pending" && <p className="hacky-status" role="status">Request sent. You’ll see it in Requests.</p>}
-    {!status && intro === null && <button type="button" className="button primary" onClick={() => { setIntro(openingIntro(me.profile.name, person.name)); setProblem(null); }}>Connect</button>}
-    {!status && intro !== null && <form className="hacky-intro" onSubmit={sendRequest} aria-label={`Request to ${person.name}`}>
+    {connection?.status === "accepted" && <p className="hacky-status" role="status">You’re connected. {connection.conversationId
+      ? <Link to={chatPath(connection.conversationId, slug)}>Open chat</Link>
+      : <Link to={eventPath("/chats", slug)}>View chats</Link>}</p>}
+    {connection?.status === "pending" && <p className="hacky-status" role="status">Request sent. <Link to={eventPath("/requests", slug)}>View requests</Link></p>}
+    {!connection && intro === null && <button type="button" className="button primary" onClick={() => { setIntro(openingIntro(me.profile.name, person.name)); setProblem(null); }}>Connect</button>}
+    {!connection && intro !== null && <form className="hacky-intro" onSubmit={sendRequest} aria-label={`Request to ${person.name}`}>
       <label htmlFor={`intro-${person.userId}`}>Intro for {firstName(person.name)}</label>
       <textarea id={`intro-${person.userId}`} value={intro} onChange={(change) => setIntro(change.target.value)} maxLength={500} rows={3} />
       {problem && <Notice error>{problem}</Notice>}
