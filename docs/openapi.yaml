@@ -164,7 +164,7 @@ paths:
     post:
       operationId: login
       tags: [Auth]
-      summary: Log in and get a JWT
+      summary: Log in with email or username and get a JWT
       security: []
       requestBody:
         required: true
@@ -182,7 +182,7 @@ paths:
                 $ref: "#/components/schemas/LoginResult"
         "400": { $ref: "#/components/responses/BadRequest" }
         "401":
-          description: Wrong email or password (`code` is `invalid_credentials`)
+          description: Wrong email, username or password (`code` is `invalid_credentials`)
           content:
             application/json:
               schema:
@@ -1176,12 +1176,24 @@ components:
           $ref: "#/components/schemas/Password"
     LoginBody:
       type: object
-      required: [email, password]
+      description: |
+        Send `login` with the email or the username. `email` is the old field, still accepted
+        until every client sends `login`. One of the two is required (400 otherwise).
+      required: [password]
       properties:
+        login:
+          type: string
+          description: |
+            Email or username, case-insensitive. A username may start with `@`. A value with an `@`
+            after the first character is read as an email.
+          minLength: 1
+          maxLength: 254
+          example: nico_c
         email:
           type: string
           format: email
-          example: nico@example.com
+          deprecated: true
+          description: Old field. Use `login`.
         password:
           type: string
           format: password
