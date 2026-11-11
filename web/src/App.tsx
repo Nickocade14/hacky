@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { Link, Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useOutletContext, useSearchParams } from "react-router-dom";
 import { AuthShell, Notice, PageHeading } from "./components";
 import { ForgotPasswordPage, LoginPage, RegisterPage, VerifyPage } from "./AuthPages";
 import { ResetLinkPage } from "./AuthLinkPages";
@@ -9,8 +9,7 @@ import { HomePage } from "./HomePage";
 import { MyProfilePage } from "./MyProfilePage";
 import { PersonProfilePage } from "./PersonProfilePage";
 import { RequestsPage } from "./RequestsPage";
-import { ChatThreadPage, ConversationsPage } from "./ChatsPage";
-import { SignedInShell, type SignedInContext } from "./SignedInShell";
+import { PageScroll, SignedInShell, type SignedInContext } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
 import { clearSession, readSession, saveSession } from "./lib/session";
 import type { LoginResult, Me } from "./lib/contracts";
@@ -112,35 +111,45 @@ function SignedInLayout() {
       setMe(current => current?.profile.userId === profile.userId ? { ...current, profile } : current);
     },
   };
-  return <SignedInShell profile={me?.profile} event={event} signOut={signOut}>
-    {context ? <Outlet context={context} /> : problem ? <>
+  return <SignedInShell me={me} event={event} signOut={signOut} onExpired={signOut}>
+    {context ? <Outlet context={context} /> : <PageScroll>{problem ? <>
       <Notice error>{problem}</Notice>
       <button className="button secondary" type="button" onClick={() => setRetry(value => value + 1)}>Try again</button>
-    </> : <p role="status">Loading your account…</p>}
+    </> : <p role="status">Loading your account…</p>}</PageScroll>}
   </SignedInShell>;
+}
+
+/** Passes the signed-in context on to the page inside the scrolling pane. */
+function ScrolledPages() {
+  return <PageScroll><Outlet context={useOutletContext()} /></PageScroll>;
 }
 
 function Pages() {
   const auth = useAuth();
   return <><RouteFocus /><Routes>
-    <Route path="/" element={<Navigate to={auth.session ? "/app" : "/login"} replace />} />
+    <Route path="/" element={<Navigate to={auth.session ? "/hacky" : "/login"} replace />} />
     <Route element={<AuthShell><Outlet /></AuthShell>}>
-      <Route path="/login" element={auth.session ? <Navigate to="/app" replace /> : <LoginPage />} />
-      <Route path="/register" element={auth.session ? <Navigate to="/app" replace /> : <RegisterPage />} />
+      <Route path="/login" element={auth.session ? <Navigate to="/hacky" replace /> : <LoginPage />} />
+      <Route path="/register" element={auth.session ? <Navigate to="/hacky" replace /> : <RegisterPage />} />
       <Route path="/verify" element={<VerifyPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset" element={<ResetLinkPage />} />
       <Route path="*" element={<><PageHeading eyebrow="LET’S GET YOU BACK" title="This page wandered off.">Head back to Hacky to find your people.</PageHeading><Link className="button primary" to="/">Back to Hacky</Link></>} />
     </Route>
     <Route element={<SignedInLayout />}>
-      <Route path="/app" element={<HomePage />} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/people/:handle" element={<PersonProfilePage />} />
-      <Route path="/hacky" element={<HackyPage />} />
-      <Route path="/requests" element={<RequestsPage />} />
-      <Route path="/chats" element={<ConversationsPage />} />
-      <Route path="/chats/:conversationId" element={<ChatThreadPage />} />
-      <Route path="/profile" element={<MyProfilePage />} />
+      {/* Hacky stays on screen while Chats (the side panel) lists or opens a conversation. */}
+      <Route element={<HackyPage />}>
+        <Route path="/hacky" element={null} />
+        <Route path="/chats" element={null} />
+        <Route path="/chats/:conversationId" element={null} />
+      </Route>
+      <Route element={<ScrolledPages />}>
+        <Route path="/app" element={<HomePage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/people/:handle" element={<PersonProfilePage />} />
+        <Route path="/requests" element={<RequestsPage />} />
+        <Route path="/profile" element={<MyProfilePage />} />
+      </Route>
     </Route>
   </Routes></>;
 }

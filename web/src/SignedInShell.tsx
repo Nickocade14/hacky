@@ -1,6 +1,12 @@
-import { useState, type ReactNode } from "react";
-import { Link, useLocation, useOutletContext } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, matchPath, useLocation, useOutletContext } from "react-router-dom";
 import type { Me, MyEvent } from "./lib/contracts";
+import { eventPath } from "./lib/connections";
+import { useMedia, useTheme } from "./lib/theme";
+import { KnitAvatar } from "./workspace/KnitAvatar";
+import { Sidebar, useInbox, waitingCount } from "./workspace/Sidebar";
+import { Icon } from "./workspace/icons";
+import "./workspace/workspace-shell.css";
 
 export type SignedInContext = {
   me: Me;
@@ -25,39 +31,69 @@ export function PersonAvatar({ name, photoUrl }: { name: string; photoUrl?: stri
   </span>;
 }
 
-const navigation = [
-  { path: "/app", label: "Home", icon: "M3 10 12 3l9 7v10h-6v-6H9v6H3z" },
-  { path: "/search", label: "People", icon: "M15 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2M3 12a3 3 0 0 0 2-5m16 5a3 3 0 0 1-2-5" },
-  { path: "/hacky", label: "Hacky", icon: "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" },
-  { path: "/chats", label: "Chats", icon: "M21 11.5a8.5 8.5 0 0 1-8.5 8.5h-3L4 22l1.5-5A8.5 8.5 0 1 1 21 11.5Z" },
-  { path: "/profile", label: "Me", icon: "M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 20v-1a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v1" },
-];
+/** Pages outside the Hacky chat scroll inside the main pane, at reading width. */
+export function PageScroll({ children }: { children: ReactNode }) {
+  return <div className="hk-page workspace"><div className="workspace-content">{children}</div></div>;
+}
 
-export function SignedInShell({ profile, event, signOut, children }: {
-  profile?: Me["profile"];
-  event?: MyEvent;
+// The mlhacky.com shell (seeko-codes/Hacky react/src/Conversation.jsx): Chats on the
+// left, Hacky on the right. On a phone Chats slides over the page.
+export function SignedInShell({ me, event, signOut, onExpired, children }: {
+  me: Me | null;
+  event: MyEvent | undefined;
   signOut: () => void;
+  onExpired: () => void;
   children: ReactNode;
 }) {
   const { pathname } = useLocation();
-  const activeTab = pathname.startsWith("/people/") ? "/search" : pathname.split("/").slice(0, 2).join("/");
-  return <div className="workspace">
-    <header className="workspace-header">
-      <div className="workspace-header-inner">
-        <Link to="/app" className="workspace-brand" aria-label="Hacky home">hacky<span>.</span></Link>
-        {event && <span className="workspace-header-event" title={event.name}>{event.name}</span>}
-        <div className="workspace-account">
-          {profile && <Link to="/profile" className="workspace-avatar-link" aria-label="My profile"><PersonAvatar name={profile.name} photoUrl={profile.photoUrl} /></Link>}
-          <button type="button" className="workspace-sign-out" onClick={signOut}>Sign out</button>
+  const phone = useMedia("(max-width: 700px)");
+  const { theme, toggle } = useTheme();
+  const chatsRoute = pathname === "/chats" || pathname.startsWith("/chats/");
+  const threadId = matchPath("/chats/:conversationId", pathname)?.params.conversationId;
+  const [open, setOpen] = useState(() => !phone || chatsRoute);
+  const { inbox, failed, reload } = useInbox(me ? event?.slug : undefined, onExpired);
+  const waiting = waitingCount(inbox);
+
+  // A chat link always shows the panel; on a phone any other page hides it.
+  useEffect(() => {
+    if (chatsRoute) setOpen(true);
+    else if (phone) setOpen(false);
+  }, [chatsRoute, phone, pathname]);
+
+  const tab = pathname.startsWith("/people/") ? "/search" : pathname;
+  const current = (path: string) => tab === path ? "page" as const : undefined;
+  const slug = event?.slug;
+
+  return <div className={`hk-app${open ? " open" : ""}${threadId ? " in-thread" : ""}`}>
+    <aside id="hk-sidebar" className="hk-sidebar" aria-label="Chats" inert={!open}>
+      {me && <Sidebar me={me} event={event} threadId={threadId} inbox={inbox} failed={failed} reload={reload}
+        onClose={() => setOpen(false)} onExpired={onExpired} signOut={signOut} />}
+    </aside>
+    <button type="button" className="hk-backdrop" tabIndex={-1} aria-label="Back to the page" onClick={() => setOpen(false)} />
+    <div className="hk-main">
+      <header className="hk-header">
+        <div className="hk-header-side">
+          <button type="button" className={`hk-icon hk-chats-toggle${waiting ? " attention" : ""}`} aria-expanded={open} aria-controls="hk-sidebar"
+            aria-label={waiting ? `Chats, ${waiting} waiting` : "Chats"} title="Chats" onClick={() => setOpen(value => !value)}>
+            <Icon name="chat" />
+          </button>
+          <button type="button" className="hk-icon" aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`} onClick={toggle}>
+            <Icon name={theme === "dark" ? "sun" : "moon"} />
+          </button>
         </div>
-      </div>
-    </header>
-    <nav className="workspace-nav" aria-label="Main navigation">
-      {navigation.map(({ path, label, icon }) => <Link key={path} to={path} aria-current={activeTab === path ? "page" : undefined}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={icon} /></svg>
-        {label}
-      </Link>)}
-    </nav>
-    <main className="workspace-content">{children}</main>
+        <Link className="hk-title" to={eventPath("/hacky", slug)} aria-current={current("/hacky")}>
+          <span className="hk-title-name">Hacky</span>
+          <span className="hk-title-event">{event?.name ?? "Find your people"}</span>
+        </Link>
+        <nav className="hk-header-side end" aria-label="Main navigation">
+          <Link className="hk-icon" to={eventPath("/search", slug)} aria-label="People" title="People" aria-current={current("/search")}><Icon name="people" /></Link>
+          <Link className="hk-icon" to="/app" aria-label="Home" title="Events and team" aria-current={current("/app")}><Icon name="events" /></Link>
+          <Link className="hk-icon hk-me" to="/profile" aria-label="My profile" title="My profile" aria-current={current("/profile")}>
+            {me ? <KnitAvatar person={me.profile} size={36} /> : <span className="hk-avatar" />}
+          </Link>
+        </nav>
+      </header>
+      {children}
+    </div>
   </div>;
 }
