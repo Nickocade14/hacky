@@ -131,8 +131,7 @@ export function HomePage() {
       </div>}
       <EventCard key={event.slug} event={event} onExpired={onExpired} />
       <div className="workspace-actions">
-        <Link className="button primary" to="/hacky">Ask Hacky</Link>
-        <Link className="button secondary" to="/search">Find people</Link>
+        <Link className="button primary" to="/search">Find people</Link>
         <button type="button" className="button secondary" aria-expanded={showJoin} onClick={() => setShowJoin(value => !value)}>
           {showJoin ? "Hide other events" : "Join another event"}
         </button>
