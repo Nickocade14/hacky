@@ -50,8 +50,8 @@ function loginResult(): LoginResult {
   };
 }
 
-async function fillLogin(user: ReturnType<typeof userEvent.setup>, email = "ethan@example.com") {
-  await user.type(screen.getByLabelText("Email address"), email);
+async function fillLogin(user: ReturnType<typeof userEvent.setup>, login = "ethan@example.com") {
+  await user.type(screen.getByLabelText("Email or username"), login);
   await user.type(screen.getByLabelText("Password", { exact: true }), "correct-password");
 }
 
@@ -145,6 +145,23 @@ describe("authentication pages", () => {
     await user.click(screen.getByRole("link", { name: "Forgot password?" }));
     expect(screen.getByRole("button", { name: "Send email" })).not.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["ETHAN@Example.com ", "ethan@example.com"],
+    ["ethan_z", "ethan_z"],
+    [" @Ethan_Z", "ethan_z"],
+  ])("logs in with the email or the username (%j sends %j)", async (typed, login) => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(jsonResponse(loginResult()));
+    renderApp("/login");
+    await fillLogin(user, typed);
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Ethan Zeng" })).not.toBeNull();
+    const [url, options] = authRequests()[0]!;
+    expect(String(url)).toBe("/api/auth/login");
+    expect(JSON.parse(String(options?.body))).toEqual({ login, password: "correct-password" });
   });
 
   it("uses the login response to show the account and clears the session on sign-out", async () => {

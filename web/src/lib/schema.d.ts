@@ -95,7 +95,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Log in and get a JWT */
+        /** Log in with email or username and get a JWT */
         post: operations["login"];
         delete?: never;
         options?: never;
@@ -786,12 +786,23 @@ export interface components {
             email: string;
             password: components["schemas"]["Password"];
         };
+        /**
+         * @description Send `login` with the email or the username. `email` is the old field, still accepted
+         *     until every client sends `login`. One of the two is required (400 otherwise).
+         */
         LoginBody: {
             /**
-             * Format: email
-             * @example nico@example.com
+             * @description Email or username, case-insensitive. A username may start with `@`. A value with an `@`
+             *     after the first character is read as an email.
+             * @example nico_c
              */
-            email: string;
+            login?: string;
+            /**
+             * Format: email
+             * @deprecated
+             * @description Old field. Use `login`.
+             */
+            email?: string;
             /**
              * Format: password
              * @example correct-horse-battery
@@ -1377,7 +1388,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
-            /** @description Wrong email or password (`code` is `invalid_credentials`) */
+            /** @description Wrong email, username or password (`code` is `invalid_credentials`) */
             401: {
                 headers: {
                     [name: string]: unknown;
