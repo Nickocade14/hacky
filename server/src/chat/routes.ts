@@ -8,7 +8,7 @@ import { blockedWith, requireMembership } from "../events/access.js";
 import { viewerId } from "../me.js";
 import { AgentMessageModel } from "../models/AgentMessage.js";
 import { ProfileModel } from "../models/Profile.js";
-import { type CandidateRow, intentOf, loadCandidates, matchedSkills, summaryLine } from "./candidates.js";
+import { type CandidateRow, alreadyInTouch, intentOf, loadCandidates, matchedSkills, summaryLine } from "./candidates.js";
 import { type RankOutput, type Ranker, defaultRanker } from "./gemini.js";
 
 export const chatQuerySchema = z.object({
@@ -183,7 +183,9 @@ export function createChatRouter({ rank = defaultRanker }: { rank?: Ranker } = {
       return;
     }
 
-    const excluded = [viewer, ...await blockedWith(viewer)];
+    // Never suggest the viewer, anyone blocked either way, or anyone they're
+    // already in touch with here (requests, chats, teammates).
+    const excluded = [viewer, ...await blockedWith(viewer), ...await alreadyInTouch(event._id, viewer)];
     const intent = intentOf(body.text);
     const rows = await loadCandidates(event._id, excluded, intent, body.text);
 
