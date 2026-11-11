@@ -293,7 +293,8 @@ test("never suggests people the viewer already requested, chats with or teams wi
   for (const hidden of ["sent_to_dev", "asked_me_dev", "not_now_dev", "friend_dev", "mentor_chat", "teammate_dev", "team_owner"]) {
     assert.equal(seen.includes(`(@${hidden})`), false, hidden);
   }
-  for (const shown of ["fresh_dev", "other_event_dev", "react_dev"]) {
+  // (react_dev was blocked by an earlier test.)
+  for (const shown of ["fresh_dev", "other_event_dev"]) {
     assert.equal(seen.includes(`(@${shown})`), true, shown);
   }
 });
