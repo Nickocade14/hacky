@@ -60,6 +60,9 @@
 .hk-ask-fab:hover img { transform: rotate(-8deg) scale(1.06); }
 .hk-ask-fab:active { transform: translateY(0) scale(.97); }
 .hk-ask-fab:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* Only on phones: there Chats covers Hacky; wider screens show Hacky beside the chat. */
+.hk-ask-fab.compact { position: fixed; right: 24px; bottom: max(104px, calc(88px + env(safe-area-inset-bottom))); z-index: 4; padding: 6px; }
+.hk-ask-fab.compact img { width: 50px; height: 50px; }
 @keyframes hk-fab-in { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
 
 /* Pages other than Hacky scroll here, with room under the last item for Ask Hacky. */
@@ -142,6 +145,7 @@
   .hk-app { display: grid; grid-template-rows: minmax(0, 1fr); grid-template-columns: 0 minmax(0, 1fr); transition: grid-template-columns 220ms var(--ease); }
   .hk-app.open { grid-template-columns: 320px minmax(0, 1fr); }
   .hk-app.open.in-thread { grid-template-columns: min(380px, 45vw) minmax(0, 1fr); }
+  .hk-ask-fab.compact { display: none; }
   .hk-sidebar { position: static; transform: none; min-width: 0; border-right: 1px solid var(--line); background: var(--sidebar); transition: visibility 220ms; }
   .hk-side-inner { min-width: 319px; }
   .hk-header { padding-inline: 20px; min-height: 68px; }
@@ -161,6 +165,7 @@
   .hk-header-side { gap: 0; }
   .hk-nav-link { padding: 0 9px; }
   .hk-ask-fab { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); padding-right: 16px; font-size: 15px; }
+  .hk-ask-fab.compact { right: 16px; bottom: max(96px, calc(80px + env(safe-area-inset-bottom))); padding: 5px; }
   .hk-page .workspace-content { padding-bottom: 104px; }
 }
 @media (prefers-reduced-motion: reduce) {

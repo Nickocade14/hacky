@@ -95,10 +95,14 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
         </nav>
       </header>
       {children}
-      {/* Everywhere but Hacky itself, a way back to the chat with Hacky. */}
+      {/* On other pages, a way back to the chat with Hacky. */}
       {me && !onHacky && <Link className="hk-ask-fab" to={eventPath("/hacky", slug)}>
         <img src="/assets/mascots/hacky-knit.webp" alt="" /><span>Ask Hacky</span>
       </Link>}
     </div>
+    {/* In Chats, just Hacky's face, above the message box. */}
+    {me && chatsRoute && <Link className="hk-ask-fab compact" to={eventPath("/hacky", slug)} aria-label="Ask Hacky" title="Ask Hacky">
+      <img src="/assets/mascots/hacky-knit.webp" alt="" />
+    </Link>}
   </div>;
 }
