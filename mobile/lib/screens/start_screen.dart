@@ -39,9 +39,9 @@ class _StartScreenState extends State<StartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.white,
-      body: Center(child: CircularProgressIndicator()),
+      body: const Center(child: CircularProgressIndicator()),
     );
   }
 }

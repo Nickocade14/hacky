@@ -7,12 +7,15 @@ import 'package:mobile/auth/error_text.dart';
 import 'package:mobile/routes.dart';
 import 'package:mobile/screens/conversations_screen.dart';
 import 'package:mobile/shell/app_tab.dart';
-import 'package:mobile/shell/app_tab_bar.dart';
+import 'package:mobile/shell/ask_hacky_button.dart';
+import 'package:mobile/shell/shell_header.dart';
 import 'package:mobile/shell/signed_in_shell.dart';
+import 'package:mobile/widgets/hacky_chat_widgets.dart';
 
 import '../support/screen_harness.dart';
 
-Finder tabOf(AppTab tab) => find.byKey(AppTabBar.keyOf(tab));
+/// A page's button in the header; for Hacky, the Ask Hacky button.
+Finder tabOf(AppTab tab) => find.byKey(ShellHeader.keyOf(tab));
 
 /// A signed-in fake whose `GET /api/me` fails with [error] while it's set.
 class FailingMeApi extends FakeApiClient {
@@ -43,34 +46,38 @@ class NoEventApi extends FakeApiClient {
 }
 
 void main() {
-  testWidgets('shows the five tabs in order and opens Home', (tester) async {
+  testWidgets('opens on Hacky, with the header and no Ask Hacky button', (
+    tester,
+  ) async {
     final (:api, store: _) = signedInFakeApi();
     await pumpScreen(tester, SignedInShell(api: api, me: demoMe));
     await tester.pumpAndSettle();
 
-    final labels = tester
-        .widgetList<NavigationDestination>(find.byType(NavigationDestination))
-        .map((d) => d.label);
-    expect(labels, ['Home', 'People', 'Hacky', 'Chats', 'Me']);
-    for (final tab in AppTab.values) {
+    expect(find.text(HackyBrief.title), findsOneWidget);
+    // The header: the event under "Hacky", then Chats, People, Home and Me.
+    expect(find.text('Knight Hacks IX'), findsOneWidget);
+    for (final tab in [AppTab.chats, AppTab.people, AppTab.home, AppTab.me]) {
       expect(tabOf(tab), findsOneWidget);
     }
-    expect(find.text('YOUR EVENT'), findsOneWidget);
+    expect(find.byType(AskHackyButton), findsNothing);
   });
 
-  testWidgets('switches tabs and keeps Home loaded', (tester) async {
+  testWidgets('the header switches pages and keeps them loaded', (
+    tester,
+  ) async {
     final (:api, store: _) = signedInFakeApi();
     await pumpScreen(tester, SignedInShell(api: api, me: demoMe));
     await tester.pumpAndSettle();
 
     await tapOn(tester, tabOf(AppTab.people));
     expect(find.text('Find your people'), findsOneWidget);
-
-    await tapOn(tester, tabOf(AppTab.hacky));
-    expect(find.text('Hi Demo!'), findsOneWidget);
+    expect(find.text(AskHackyButton.label), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.chats));
     expect(find.byType(ConversationsScreen), findsOneWidget);
+    // On Chats the button is just Hacky's face.
+    expect(find.byType(AskHackyButton), findsOneWidget);
+    expect(find.text(AskHackyButton.label), findsNothing);
 
     await tapOn(tester, tabOf(AppTab.me));
     expect(find.text('Change Hacky style'), findsOneWidget);
@@ -78,10 +85,18 @@ void main() {
 
     await tapOn(tester, tabOf(AppTab.home));
     expect(find.text('YOUR EVENT'), findsOneWidget);
+
+    await tapOn(tester, tabOf(AppTab.hacky));
+    expect(find.text(HackyBrief.title), findsOneWidget);
+    expect(find.text('Loading your chat…'), findsNothing);
+    expect(find.byType(AskHackyButton), findsNothing);
+
+    await tapOn(tester, tabOf(AppTab.home));
+    expect(find.text('YOUR EVENT'), findsOneWidget);
     expect(find.text('Loading your event…'), findsNothing);
   });
 
-  testWidgets('can open on another tab', (tester) async {
+  testWidgets('can open on another page', (tester) async {
     final (:api, store: _) = signedInFakeApi();
     await pumpScreen(
       tester,
@@ -90,16 +105,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ConversationsScreen), findsOneWidget);
-    expect(find.text('YOUR EVENT'), findsNothing);
+    expect(find.text(HackyBrief.title), findsNothing);
   });
 
-  testWidgets('Home buttons switch to the Me and Hacky tabs', (tester) async {
+  testWidgets('the Chats button says when something is waiting', (
+    tester,
+  ) async {
     final (:api, store: _) = signedInFakeApi();
     await pumpScreen(tester, SignedInShell(api: api, me: demoMe));
     await tester.pumpAndSettle();
 
-    await tapOn(tester, find.text('Ask Hacky'));
-    expect(find.text('Hi Demo!'), findsOneWidget);
+    // The demo user has a request to answer and an unread message.
+    final chats = tester.widget<IconButton>(tabOf(AppTab.chats));
+    expect(chats.tooltip, startsWith('Chats, '));
+    expect(chats.tooltip, endsWith(' waiting'));
   });
 
   testWidgets('Chats opens 09 Requests for the current event', (tester) async {
@@ -108,7 +127,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tapOn(tester, tabOf(AppTab.chats));
-    await tapOn(tester, find.widgetWithText(TextButton, 'Requests'));
+    await tapOn(tester, find.byKey(ConversationsScreen.seeAllKey));
 
     expect(visits.single.route, Routes.requests);
     expect((visits.single.arguments as RequestsArgs).eventSlug, 'knighthacks-ix');
@@ -123,6 +142,7 @@ void main() {
     expect(find.text('Loading your account…'), findsOneWidget);
     await tester.pumpAndSettle();
     expect(find.text('Knight Hacks IX'), findsOneWidget);
+    expect(find.text(HackyBrief.title), findsOneWidget);
   });
 
   testWidgets('a rejected token goes back to log in', (tester) async {
@@ -163,7 +183,7 @@ void main() {
     expect(visits.single.route, Routes.login);
   });
 
-  testWidgets('without an event, Home lists events and joining opens it', (
+  testWidgets('without an event, it opens on Home and joining opens the event', (
     tester,
   ) async {
     final api = NoEventApi();
@@ -171,6 +191,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Pick your hackathon'), findsOneWidget);
+    expect(find.text('No hackathon yet'), findsOneWidget);
+    // There's no Hacky to ask before joining an event.
+    expect(find.byType(AskHackyButton), findsNothing);
 
     await tapOn(tester, tabOf(AppTab.people));
     expect(find.text('Join an event first'), findsOneWidget);
@@ -180,6 +203,7 @@ void main() {
 
     expect(find.text('YOUR EVENT'), findsOneWidget);
     expect(find.text('Knight Hacks IX'), findsOneWidget);
+    expect(find.byType(AskHackyButton), findsOneWidget);
 
     await tapOn(tester, tabOf(AppTab.people));
     expect(find.text('Join an event first'), findsNothing);

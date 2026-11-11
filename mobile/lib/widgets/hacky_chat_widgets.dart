@@ -1,80 +1,50 @@
-// The pieces of 12 Hacky chat (mobile/design/hacky-chat-wireframes.svg), in
-// the original Hacky look (react/src/hacky/hacky-chat.css): Hacky's turns
-// start with the knit Hacky, mine are blue bubbles on the right, and the
-// composer sits under the thread. Colors and fonts come from lib/theme.dart.
+// The pieces of 12 Hacky chat, laid out like the web's Hacky pane
+// (web/src/HackyPage.tsx, hacky.css): the brief with Hacky's clip and four
+// starting points, grey bubbles for Hacky and blue ones for me, the thinking
+// clip, and the composer with its note. Colors and fonts come from
+// lib/theme.dart.
 
 import 'package:flutter/material.dart';
 
 import '../hacky/hacky_text.dart';
 import '../theme.dart';
-import 'app_widgets.dart';
+import 'chat_bubble.dart';
+import 'message_box.dart';
 
 const _bold = FontWeight.w700;
-const _bubbleRadius = Radius.circular(16);
 
-/// The top of the chat: the knit Hacky, its name, and what it's doing.
-class HackyChatHeader extends StatelessWidget {
-  const HackyChatHeader({super.key, required this.thinking});
+/// One of Hacky's clips, or its still frame when the system asks for less
+/// motion. Decorative.
+class HackyFilm extends StatelessWidget {
+  /// Hacky rides a little green dragon and points the way.
+  const HackyFilm.brief({super.key, this.height = 200}) : _name = 'hacky-chat';
 
-  final bool thinking;
+  /// Hacky thinks it over.
+  const HackyFilm.thinking({super.key, this.height = 72})
+    : _name = 'hacky-thinking';
+
+  final String _name;
+  final double height;
+
+  /// Tests set this: a clip that plays never lets `pumpAndSettle` finish.
+  @visibleForTesting
+  static bool debugStill = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.line)),
-      ),
-      child: Row(
-        spacing: 12,
-        children: [
-          const HackyAvatar(size: 44),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 2,
-            children: [
-              const Text(
-                'Hacky',
-                style: TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 16,
-                  fontWeight: _bold,
-                ),
-              ),
-              Text(
-                thinking ? 'Thinking…' : 'Your hackathon helper',
-                style: const TextStyle(color: AppColors.muted, fontSize: 13),
-              ),
-            ],
-          ),
-        ],
+    final still = debugStill || MediaQuery.disableAnimationsOf(context);
+    return ExcludeSemantics(
+      child: Image.asset(
+        'assets/mascots/video/$_name.${still ? 'png' : 'webp'}',
+        height: height,
+        fit: BoxFit.contain,
+        gaplessPlayback: true,
       ),
     );
   }
 }
 
-/// The knit Hacky in a round frame, beside each of Hacky's turns.
-class HackyAvatar extends StatelessWidget {
-  const HackyAvatar({super.key, this.size = 32});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      padding: EdgeInsets.all(size * 0.08),
-      decoration: const BoxDecoration(
-        color: AppColors.stage,
-        shape: BoxShape.circle,
-      ),
-      child: KnitHacky(height: size),
-    );
-  }
-}
-
-/// One of Hacky's turns: the knit avatar, then its bubbles and cards.
+/// One of Hacky's turns: its bubbles and cards, on the left.
 class HackyTurn extends StatelessWidget {
   const HackyTurn({super.key, required this.children});
 
@@ -84,47 +54,23 @@ class HackyTurn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Hacky',
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 10,
-        children: [
-          const HackyAvatar(),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 10,
-              children: children,
-            ),
-          ),
-        ],
+        children: children,
       ),
     );
   }
 }
 
-/// A white bubble with Hacky's words.
+/// A grey bubble with Hacky's words.
 class HackyBubble extends StatelessWidget {
   const HackyBubble({super.key, required this.child});
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        border: Border.all(color: AppColors.line),
-        borderRadius: const BorderRadius.only(
-          topRight: _bubbleRadius,
-          bottomLeft: _bubbleRadius,
-          bottomRight: _bubbleRadius,
-          topLeft: Radius.circular(4),
-        ),
-      ),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) => ChatBubble(child: child);
 }
 
 /// Hacky's text with **bold** runs and tappable @handle mentions (→ 07).
@@ -134,11 +80,7 @@ class HackyRichText extends StatelessWidget {
   final String text;
   final void Function(String handle) onOpenHandle;
 
-  static const style = TextStyle(
-    color: AppColors.ink,
-    fontSize: 15,
-    height: 1.45,
-  );
+  static TextStyle get style => ChatBubble.textStyle();
 
   @override
   Widget build(BuildContext context) {
@@ -208,30 +150,16 @@ class UserBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-        ),
-        child: Opacity(
-          opacity: failed ? 0.6 : 1,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: const BoxDecoration(
-              color: AppColors.action,
-              borderRadius: BorderRadius.only(
-                topLeft: _bubbleRadius,
-                bottomLeft: _bubbleRadius,
-                bottomRight: _bubbleRadius,
-                topRight: Radius.circular(4),
-              ),
-            ),
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: AppColors.onAction,
-                fontSize: 15,
-                height: 1.45,
-              ),
+      child: FractionallySizedBox(
+        widthFactor: 0.85,
+        alignment: Alignment.centerRight,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Opacity(
+            opacity: failed ? 0.6 : 1,
+            child: ChatBubble(
+              mine: true,
+              child: Text(text, style: ChatBubble.textStyle(mine: true)),
             ),
           ),
         ),
@@ -261,12 +189,12 @@ class SendFailedNote extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         spacing: 4,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.danger, size: 16),
+          Icon(Icons.error_outline, color: AppColors.danger, size: 16),
           Flexible(
             child: Text(
               'Not sent. $message',
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.danger,
                 fontSize: 13,
                 height: 1.4,
@@ -290,8 +218,9 @@ class SendFailedNote extends StatelessWidget {
   }
 }
 
-/// While Hacky works on its answer: three dots and "Hacky is thinking…".
-/// The dots stay still when the system asks for less motion.
+/// While Hacky works on its answer: the thinking clip and three dots.
+/// Screen readers hear "Hacky is thinking…". The dots stay still when the
+/// system asks for less motion.
 class ThinkingRow extends StatelessWidget {
   const ThinkingRow({super.key});
 
@@ -303,19 +232,15 @@ class ThinkingRow extends StatelessWidget {
       liveRegion: true,
       label: label,
       child: const ExcludeSemantics(
-        child: HackyTurn(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          spacing: 6,
           children: [
+            HackyFilm.thinking(),
             HackyBubble(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 10,
-                children: [
-                  _ThinkingDots(),
-                  Text(
-                    label,
-                    style: TextStyle(color: AppColors.muted, fontSize: 14),
-                  ),
-                ],
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 6),
+                child: _ThinkingDots(),
               ),
             ),
           ],
@@ -428,7 +353,7 @@ class HackyChip extends StatelessWidget {
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.action,
         disabledForegroundColor: AppColors.muted,
-        side: const BorderSide(color: AppColors.line),
+        side: BorderSide(color: AppColors.line),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         minimumSize: const Size(0, 40),
@@ -443,50 +368,302 @@ class HackyChip extends StatelessWidget {
   }
 }
 
-/// The first-time view: the knit Hacky says hi by name and offers
-/// starting points.
-class HackyWelcome extends StatelessWidget {
-  const HackyWelcome({
-    super.key,
-    required this.firstName,
-    required this.prompts,
-    required this.onPick,
+/// A starting point under the brief: what its card says and what it asks.
+class HackyStarter {
+  const HackyStarter({
+    required this.label,
+    required this.prompt,
+    required this.art,
+    this.face = false,
+    this.crown = false,
   });
 
-  final String firstName;
-  final List<String> prompts;
+  final String label;
+
+  /// Sent to Hacky as my message.
+  final String prompt;
+
+  /// The picture on the card.
+  final String art;
+
+  /// The picture is a person's face: it's shown round.
+  final bool face;
+
+  /// The little crown on the last letter ("Find mentor").
+  final bool crown;
+
+  /// The same four as the web (web/src/HackyPage.tsx `starters`). Each asks
+  /// for something the chat can answer: people, mentors and tracks.
+  static const all = [
+    HackyStarter(
+      label: 'Find hackers',
+      prompt: 'Help me find a teammate',
+      art: 'assets/people/mika.webp',
+      face: true,
+    ),
+    HackyStarter(
+      label: 'Pick a track',
+      prompt: 'Help me pick a track',
+      art: 'assets/shortcuts/event.png',
+    ),
+    HackyStarter(
+      label: 'Find mentor',
+      prompt: 'Find a mentor',
+      art: 'assets/people/aya.webp',
+      face: true,
+      crown: true,
+    ),
+    HackyStarter(
+      label: 'Who’s looking?',
+      prompt: 'Who’s looking for a team?',
+      art: 'assets/shortcuts/sponsor.png',
+    ),
+  ];
+}
+
+/// The top of the Hacky chat: Hacky's clip, "What can I help you with?" and
+/// the four starting points. It opens the chat and stays above the history.
+class HackyBrief extends StatelessWidget {
+  const HackyBrief({super.key, required this.onPick});
+
+  static const title = 'What can I help you with?';
+
+  /// Sends a starting point's prompt. Null while Hacky is busy.
   final ValueChanged<String>? onPick;
 
   @override
   Widget build(BuildContext context) {
-    return PageColumn(
-      children: [
-        const SizedBox(height: 8),
-        const Center(child: KnitHacky(height: 120)),
-        Text(
-          'Hi $firstName!',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.ink,
-            fontSize: 22,
-            fontWeight: _bold,
-            letterSpacing: -0.4,
-          ),
+    const starters = HackyStarter.all;
+    final filmHeight = (MediaQuery.sizeOf(context).height * 0.26).clamp(
+      120.0,
+      220.0,
+    );
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: HackyFilm.brief(height: filmHeight.toDouble())),
+            const SizedBox(height: 10),
+            Semantics(
+              header: true,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 30,
+                  fontWeight: _bold,
+                  letterSpacing: -0.75,
+                  height: 1.15,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Pick a starting point, or tell me what you’re trying to do.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: 16,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 22),
+            for (var row = 0; row < starters.length; row += 2) ...[
+              if (row > 0) const SizedBox(height: 10),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 10,
+                  children: [
+                    for (final starter in starters.skip(row).take(2))
+                      Expanded(
+                        child: StarterCard(
+                          starter: starter,
+                          onPressed: onPick == null
+                              ? null
+                              : () => onPick!(starter.prompt),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
-        const Text(
-          'What are you building, and who do you need? I can find you '
-          'teammates, mentors and open teams.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.muted, fontSize: 15, height: 1.55),
-        ),
-        const SectionLabel('Try asking'),
-        SuggestionChips(prompts: prompts, onPick: onPick),
-      ],
+      ),
     );
   }
 }
 
-/// Where I type to Hacky. Send waits while Hacky is answering.
+/// One starting point: its picture and its label in blue, on a white card.
+class StarterCard extends StatelessWidget {
+  const StarterCard({super.key, required this.starter, required this.onPressed});
+
+  final HackyStarter starter;
+  final VoidCallback? onPressed;
+
+  static TextStyle get _label => TextStyle(
+    color: AppColors.link,
+    fontFamily: AppTheme.fontFamily,
+    fontSize: 15.5,
+    fontWeight: _bold,
+    height: 1.3,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final art = Image.asset(
+      starter.art,
+      width: 30,
+      height: 30,
+      fit: BoxFit.cover,
+    );
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: starter.label,
+      onTap: onPressed,
+      excludeSemantics: true,
+      child: Material(
+        color: AppColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: AppColors.line),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 64),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                spacing: 8,
+                children: [
+                  starter.face ? ClipOval(child: art) : art,
+                  Expanded(
+                    child: starter.crown
+                        ? _CrownedLabel(starter.label, style: _label)
+                        : Text(starter.label, style: _label),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A label with a small crown tilted over its last letter.
+class _CrownedLabel extends StatelessWidget {
+  const _CrownedLabel(this.text, {required this.style});
+
+  final String text;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Text(text, maxLines: 1, style: style),
+          Positioned(
+            right: -5,
+            top: -6,
+            child: Transform.rotate(
+              angle: 0.24,
+              child: const CustomPaint(
+                size: Size(14, 10.5),
+                painter: _CrownPainter(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The crown from the web's SVG (viewBox 16×12):
+/// `M2 9 1 3l4 3 3-5 3 5 4-3-1 6Z` and its base `M3 11h10`.
+class _CrownPainter extends CustomPainter {
+  const _CrownPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.scale(size.width / 16, size.height / 12);
+    final crown = Path()
+      ..moveTo(2, 9)
+      ..lineTo(1, 3)
+      ..lineTo(5, 6)
+      ..lineTo(8, 1)
+      ..lineTo(11, 6)
+      ..lineTo(15, 3)
+      ..lineTo(14, 9)
+      ..close();
+    final line = Paint()
+      ..color = AppColors.crownLine
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    canvas
+      ..drawPath(crown, Paint()..color = AppColors.crown)
+      ..drawPath(crown, line)
+      ..drawLine(const Offset(3, 11), const Offset(13, 11), line);
+  }
+
+  @override
+  bool shouldRepaint(_CrownPainter oldDelegate) => false;
+}
+
+/// "New chat", at the top right of the Hacky chat: clears the messages on
+/// screen after asking. Hacky keeps the history.
+class NewChatButton extends StatelessWidget {
+  const NewChatButton({super.key, required this.onPressed});
+
+  static const label = 'New chat';
+  static const buttonKey = Key('hacky-new-chat');
+
+  /// Null when there's nothing to clear, or while Hacky is answering.
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: TextButton.icon(
+          key: buttonKey,
+          onPressed: onPressed,
+          icon: const Icon(Icons.restart_alt, size: 18),
+          label: const Text(label),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.muted,
+            disabledForegroundColor: AppColors.muted.withValues(alpha: 0.45),
+            minimumSize: const Size(0, 40),
+            textStyle: const TextStyle(
+              fontFamily: AppTheme.fontFamily,
+              fontSize: 14.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Where I type to Hacky, like the web's composer: one rounded box with the
+/// send button inside and "Hacky drafts. You decide what gets sent." under
+/// it. Send waits while Hacky is answering.
 class ChatComposer extends StatelessWidget {
   const ChatComposer({
     super.key,
@@ -497,6 +674,7 @@ class ChatComposer extends StatelessWidget {
 
   static const fieldKey = Key('hacky-composer');
   static const sendKey = Key('hacky-send');
+  static const note = 'Hacky drafts. You decide what gets sent.';
 
   final TextEditingController controller;
   final bool busy;
@@ -508,57 +686,52 @@ class ChatComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        border: Border(top: BorderSide(color: AppColors.line)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        spacing: 8,
-        children: [
-          Expanded(
-            child: TextField(
-              key: fieldKey,
-              controller: controller,
-              minLines: 1,
-              maxLines: 4,
-              maxLength: 2000,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _send(),
-              decoration: const InputDecoration(
-                hintText: 'Message Hacky…',
-                counterText: '',
-                isDense: true,
-                fillColor: AppColors.paper,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 6,
+            children: [
+              MessageBox(
+                field: TextField(
+                  key: fieldKey,
+                  controller: controller,
+                  minLines: 1,
+                  maxLines: 4,
+                  maxLength: 2000,
+                  textInputAction: TextInputAction.send,
+                  textCapitalization: TextCapitalization.sentences,
+                  onSubmitted: (_) => _send(),
+                  style: MessageBox.textStyle,
+                  decoration: MessageBox.decoration('Ask Hacky…'),
+                ),
+                send: ListenableBuilder(
+                  listenable: controller,
+                  builder: (context, _) {
+                    final ready = !busy && controller.text.trim().isNotEmpty;
+                    return SendButton(
+                      buttonKey: sendKey,
+                      tooltip: busy ? 'Hacky is thinking…' : 'Send',
+                      onPressed: ready ? _send : null,
+                    );
+                  },
                 ),
               ),
-            ),
-          ),
-          ListenableBuilder(
-            listenable: controller,
-            builder: (context, _) {
-              final ready = !busy && controller.text.trim().isNotEmpty;
-              return IconButton.filled(
-                key: sendKey,
-                tooltip: busy ? 'Hacky is thinking…' : 'Send',
-                onPressed: ready ? _send : null,
-                icon: const Icon(Icons.arrow_upward),
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.action,
-                  foregroundColor: AppColors.onAction,
-                  disabledBackgroundColor: AppColors.disabled,
-                  disabledForegroundColor: AppColors.disabledInk,
-                  minimumSize: const Size(46, 46),
+              Text(
+                note,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 12.5,
+                  height: 1.4,
                 ),
-              );
-            },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

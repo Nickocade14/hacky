@@ -98,7 +98,13 @@ flutter:
         - asset: assets/fonts/Lato-Bold.ttf
           weight: 700
 
-  # Knit Hacky mascot from the original app (seeko-codes/Hacky,
-  # react/public/assets/mascots/png/hacky-knit.png), resized to 600px tall.
+  # Art from the original app (seeko-codes/Hacky, react/public/assets), the
+  # same files the web uses: the knit Hacky (resized to 600px tall), the knit
+  # avatars by color, Hacky's chat and thinking clips with their still frames,
+  # and the art of the starting points in the Hacky chat.
   assets:
     - assets/mascots/hacky-knit.png
+    - assets/mascots/avatars/
+    - assets/mascots/video/
+    - assets/people/
+    - assets/shortcuts/

@@ -26,6 +26,7 @@ class ApiClient {
     http.Client? httpClient,
     String baseUrl = ApiConfig.baseUrl,
     this.timeout = const Duration(seconds: 15),
+    this._chatTimeout = const Duration(seconds: 60),
   }) : _http = httpClient ?? http.Client(),
        _baseUrl = baseUrl.endsWith('/')
            ? baseUrl.substring(0, baseUrl.length - 1)
@@ -34,7 +35,13 @@ class ApiClient {
   final TokenStore _tokenStore;
   final http.Client _http;
   final String _baseUrl;
+
+  /// How long a request may take before it fails with `timeout`.
   final Duration timeout;
+
+  /// The same for a message to Hacky, which waits for an AI answer: the
+  /// server gives the model up to 45 s, so the app waits 60.
+  final Duration _chatTimeout;
 
   // ---------------------------------------------------------------- auth
 
@@ -323,13 +330,15 @@ class ApiClient {
   // ---------------------------------------------------------------- chat
 
   /// Sends my newest message to Hacky and waits for the whole answer
-  /// (`?format=json`; the streaming format is for the web).
+  /// (`?format=json`; the streaming format is for the web). Hacky asks an AI
+  /// model, so this call gets the longer chat timeout.
   Future<ChatMessage> sendChat(String slug, ChatBody body) async => _parse(
     await _send(
       'POST',
       '/api/events/${_seg(slug)}/chat',
       body: body.toJson(),
       query: const {'format': 'json'},
+      timeout: _chatTimeout,
     ),
     (json) => ChatMessage.fromJson(readObject(json, 'message')),
   );
@@ -354,7 +363,9 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String>? query,
     bool auth = true,
+    Duration? timeout,
   }) async {
+    final limit = timeout ?? this.timeout;
     var url = Uri.parse('$_baseUrl$path');
     if (query != null && query.isNotEmpty) {
       url = url.replace(queryParameters: query);
@@ -373,8 +384,8 @@ class ApiClient {
     final http.Response response;
     try {
       response = await http.Response.fromStream(
-        await _http.send(request).timeout(timeout),
-      ).timeout(timeout);
+        await _http.send(request).timeout(limit),
+      ).timeout(limit);
     } on TimeoutException {
       throw const ApiException(
         statusCode: null,

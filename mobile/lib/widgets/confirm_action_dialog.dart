@@ -75,7 +75,7 @@ class _ConfirmActionDialogState extends State<ConfirmActionDialog>
           children: [
             Text(
               widget.message,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 15,
                 height: 1.5,

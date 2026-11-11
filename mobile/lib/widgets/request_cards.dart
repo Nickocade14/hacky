@@ -45,11 +45,11 @@ class RequestsTabBar extends StatelessWidget {
               indicator: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: AppTheme.borderRadius,
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
                     color: AppColors.shadow,
                     blurRadius: 5,
-                    offset: Offset(0, 1),
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
@@ -126,7 +126,7 @@ class RequestCard extends StatelessWidget {
           if (team != null)
             Text(
               team,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontSize: 14,
                 fontWeight: _bold,
@@ -137,7 +137,7 @@ class RequestCard extends StatelessWidget {
               '“$intro”',
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontSize: 14,
                 height: 1.5,
@@ -182,7 +182,7 @@ class RequestSender extends StatelessWidget {
         child: Row(
           spacing: 12,
           children: [
-            PersonAvatar(name: person.name, size: 44),
+            PersonAvatar.of(person, size: 44),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,7 +190,7 @@ class RequestSender extends StatelessWidget {
                 children: [
                   Text(
                     person.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.ink,
                       fontSize: 15,
                       fontWeight: _bold,
@@ -198,7 +198,7 @@ class RequestSender extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 13,
                     ),
@@ -206,7 +206,7 @@ class RequestSender extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
+            Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
           ],
         ),
       ),
@@ -278,7 +278,7 @@ class RequestActions extends StatelessWidget {
     final outlined = OutlinedButton.styleFrom(
       backgroundColor: AppColors.white,
       foregroundColor: AppColors.ink,
-      side: const BorderSide(color: AppColors.line),
+      side: BorderSide(color: AppColors.line),
       shape: RoundedRectangleBorder(borderRadius: AppTheme.borderRadius),
     ).merge(filled);
     return Row(
@@ -368,7 +368,7 @@ class RequestsNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(color: AppColors.muted, fontSize: 14, height: 1.5),
+      style: TextStyle(color: AppColors.muted, fontSize: 14, height: 1.5),
     );
   }
 }

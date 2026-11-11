@@ -56,7 +56,7 @@ class ProfileHeaderCard extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: profile.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.ink,
                           fontSize: 19,
                           fontWeight: _bold,
@@ -64,7 +64,7 @@ class ProfileHeaderCard extends StatelessWidget {
                       ),
                       TextSpan(
                         text: '\n@${profile.handle}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 13,
                         ),
@@ -83,7 +83,7 @@ class ProfileHeaderCard extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(44),
               foregroundColor: AppColors.ink,
-              side: const BorderSide(color: AppColors.line),
+              side: BorderSide(color: AppColors.line),
               shape: RoundedRectangleBorder(borderRadius: AppTheme.borderRadius),
               textStyle: const TextStyle(
                 fontFamily: AppTheme.fontFamily,
@@ -384,7 +384,7 @@ class EventIntakeFields extends StatelessWidget {
           child: MergeSemantics(
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Looking for a team',
                     style: TextStyle(

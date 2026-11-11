@@ -110,10 +110,10 @@ class _ConnectSheetState extends State<ConnectSheet>
                   maxLengthEnforcement: MaxLengthEnforcement.enforced,
                   textCapitalization: TextCapitalization.sentences,
                   validator: IntroRules.validate,
-                  style: const TextStyle(color: AppColors.ink, fontSize: 16),
+                  style: TextStyle(color: AppColors.ink, fontSize: 16),
                   decoration: InputDecoration(
                     hintText: 'Hi $_first! I’m building…',
-                    hintStyle: const TextStyle(color: AppColors.muted),
+                    hintStyle: TextStyle(color: AppColors.muted),
                     contentPadding: const EdgeInsets.all(14),
                   ),
                 ),
