@@ -1,0 +1,153 @@
+.connection-search-row + .connection-search-row {
+    border-top: 1px solid var(--line);
+}
+
+.connection-search-result,
+.connection-request-person {
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.connection-search-result:hover h2,
+.connection-request-person:hover h3 {
+    color: var(--action);
+    text-decoration: underline;
+}
+
+.connection-search-result mark {
+    border-radius: 3px;
+    background: var(--hover);
+    color: var(--action);
+    font-weight: 700;
+}
+
+.connection-back {
+    width: fit-content;
+    font-weight: 700;
+}
+
+.connection-role {
+    text-transform: capitalize;
+}
+
+.connection-identity .workspace-chips {
+    justify-content: center;
+}
+
+.connection-profile-actions {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.connection-profile-actions .workspace-actions {
+    justify-content: center;
+}
+
+.connection-intro {
+    display: grid;
+    gap: 8px;
+    width: min(100%, 460px);
+    text-align: left;
+}
+
+.connection-intro label {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.connection-intro textarea {
+    width: 100%;
+    padding: 12px;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--white);
+    color: var(--ink);
+    font: inherit;
+}
+
+.connection-count {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.connection-danger.secondary {
+    color: var(--danger);
+}
+
+.connection-danger.primary {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.connection-profile-details,
+.connection-request-group,
+.connection-request-list {
+    display: grid;
+    gap: 12px;
+}
+
+.connection-profile-details > div {
+    display: grid;
+    gap: 6px;
+}
+
+.connection-profile-details > div + div {
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+
+.connection-profile-details h2,
+.connection-request-group h2 {
+    font-size: 17px;
+}
+
+.connection-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.connection-tabs .button[aria-pressed="true"] {
+    border-color: var(--action);
+    background: var(--hover);
+    color: var(--action);
+}
+
+.connection-request-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    overflow-wrap: anywhere;
+}
+
+.connection-request h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.connection-request-person p,
+.connection-request-meta {
+    font-size: 13px;
+}
+
+.connection-request-intro {
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    background: var(--hover);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.connection-hidden summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.connection-hidden .connection-request-list {
+    margin-top: 12px;
+}
