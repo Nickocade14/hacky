@@ -43,7 +43,7 @@ class ChatThreadScreen extends StatefulWidget {
     required this.api,
     required this.eventSlug,
     required this.conversationId,
-    this.pollInterval = const Duration(seconds: 10),
+    this.pollInterval = const Duration(seconds: 3),
   });
 
   final ApiClient api;
