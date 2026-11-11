@@ -51,10 +51,17 @@ after(async () => {
 
 beforeEach(() => { outbox.length = 0; });
 
+// Each request comes from its own client address (the app trusts the local
+// proxy's X-Forwarded-For), so these flow tests never hit the auth rate
+// limits. Those limits have their own tests in http-auth.test.ts.
+let clients = 0;
+
 async function call(method: string, path: string, body?: unknown, token?: string) {
+  clients += 1;
   const response = await fetch(`${base}${path}`, {
     method,
     headers: {
+      "X-Forwarded-For": `10.${(clients >> 16) & 255}.${(clients >> 8) & 255}.${clients & 255}`,
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
