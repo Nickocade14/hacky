@@ -14,7 +14,7 @@ Screen numbers are shared across all files. "→ 07" on a screen means "this goe
 | [messages-wireframes.svg](messages-wireframes.svg) | 10 Conversations · 11 Chat thread |
 | [hacky-chat-wireframes.svg](hacky-chat-wireframes.svg) | 12 Hacky chat |
 
-Signed-in screens share a bottom tab bar: Home 05 · People 06 · Hacky 12 · Chats 10 · Me 08. Verify-email and reset-password links open the web, so they have no mobile screen.
+The wireframes show a bottom tab bar (Home 05 · People 06 · Hacky 12 · Chats 10 · Me 08). The app now follows the web's layout instead: it opens on Hacky 12, a header shared by every signed-in screen opens Chats 10, People 06, Home 05 and Me 08, and a floating Ask Hacky button comes back to 12. Verify-email and reset-password links open the web, so they have no mobile screen.
 
 ## Import into Figma
 
