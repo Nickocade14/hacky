@@ -312,3 +312,31 @@ test("accounts made before sign-up codes still need verification to log in", asy
   assert.equal(response.status, 403);
   assert.equal(response.body.error.code, "email_not_verified");
 });
+
+test("login takes the email or the username", async () => {
+  const gus = { name: "Gus", handle: "gus_dev", email: "gus@example.com", password: "password-1" };
+  await signUp(gus);
+  // Demo people have a username but no account.
+  await ProfileModel.create({ _id: new mongoose.Types.ObjectId(), handle: "demo_gus", name: "Demo", isDemo: true });
+
+  for (const login of ["gus_dev", "@gus_dev", " GUS_DEV ", "@Gus_Dev", "gus@example.com", "GUS@Example.com"]) {
+    const response = await call("POST", "/api/auth/login", { login, password: gus.password });
+    assert.equal(response.status, 200, login);
+    assertSchema("LoginResult", response.body);
+    assert.equal(response.body.me.profile.handle, "gus_dev");
+  }
+  // The old field still works until every client sends login.
+  assert.equal((await call("POST", "/api/auth/login", { email: "gus@example.com", password: gus.password })).status, 200);
+
+  for (const login of ["gus_dev", "nobody_here", "demo_gus", "@", "a b", "gus@nowhere.com"]) {
+    const response = await call("POST", "/api/auth/login", { login, password: login === "demo_gus" ? gus.password : "wrong-password" });
+    assert.equal(response.status, 401, login);
+    assert.equal(response.body.error.code, "invalid_credentials");
+    assert.equal(response.body.error.message, "Wrong email, username or password.");
+  }
+  for (const body of [{ password: gus.password }, { login: "", password: gus.password }, { login: "gus_dev" }]) {
+    const response = await call("POST", "/api/auth/login", body);
+    assert.equal(response.status, 400);
+    assert.equal(response.body.error.code, "invalid_input");
+  }
+});

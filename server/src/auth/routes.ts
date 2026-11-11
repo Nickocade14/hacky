@@ -17,10 +17,31 @@ import { authRateLimit } from "./rateLimit.js";
 
 const emailBodySchema = z.object({ email: z.email().max(254).transform((value) => value.toLowerCase()) });
 
+// `login` is the email or the username; `email` is the old field name.
 const loginBodySchema = z.object({
-  email: z.email().max(254).transform((value) => value.toLowerCase()),
+  login: z.string().trim().min(1).max(254).optional(),
+  email: z.string().trim().min(1).max(254).optional(),
   password: z.string().min(1).max(200),
+}).transform(({ login, email, password }, ctx) => {
+  const value = login ?? email;
+  if (!value) {
+    ctx.addIssue({ code: "custom", path: ["login"], message: "Enter your email or username" });
+    return z.NEVER;
+  }
+  return { login: value.toLowerCase(), password };
 });
+
+// Usernames can't contain "@", so an "@" after the first character means an
+// email. A leading "@" is just how usernames are shown.
+async function findLoginUser(login: string) {
+  const fields = "+passwordHash emailVerified";
+  if (login.indexOf("@") > 0) return UserModel.findOne({ email: login }).select(fields).lean();
+  const handle = login.replace(/^@/, "");
+  if (!/^[a-z0-9_]{3,30}$/.test(handle)) return null;
+  // Demo people have a Profile but no User, so they can't log in.
+  const profile = await ProfileModel.findOne({ handle }).select("_id").lean();
+  return profile ? UserModel.findById(profile._id).select(fields).lean() : null;
+}
 
 // bcrypt hash of a random string nobody knows (cost 12, like real hashes).
 const DUMMY_HASH = "$2b$12$gBuKWijY0GDua/9hgQY.LueT42I0MOv4MNHhaO2838pT4ARoWqj/6";
@@ -119,11 +140,11 @@ export function createAuthRouter({ mailer = createSmtpMailer() }: { mailer?: Mai
   });
 
   router.post("/login", limitLogin, async (req, res) => {
-    const { email, password } = loginBodySchema.parse(req.body);
-    const user = await UserModel.findOne({ email }).select("+passwordHash emailVerified").lean();
-    // Compare against a dummy hash when the email is unknown, so both cases take as long.
+    const { login, password } = loginBodySchema.parse(req.body);
+    const user = await findLoginUser(login);
+    // Compare against a dummy hash when the account is unknown, so both cases take as long.
     const matches = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
-    if (!user || !matches) throw new HttpError(401, "invalid_credentials", "Wrong email or password.");
+    if (!user || !matches) throw new HttpError(401, "invalid_credentials", "Wrong email, username or password.");
     // Only accounts made before sign-up codes can be unverified.
     if (!user.emailVerified) {
       throw new HttpError(403, "email_not_verified", "Verify your email before logging in.");
