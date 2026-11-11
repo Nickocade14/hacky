@@ -11,19 +11,22 @@ import '../hacky/hacky_parts.dart';
 import '../routes.dart';
 import '../shell/screen_load.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/confirm_action_dialog.dart';
 import '../widgets/hacky_cards.dart';
 import '../widgets/hacky_chat_widgets.dart';
 
-/// 12 Hacky chat (Hacky tab, also from 05;
-/// mobile/design/hacky-chat-wireframes.svg).
+/// 12 Hacky chat, where the signed-in app opens. Laid out like the web's
+/// Hacky pane (web/src/HackyPage.tsx).
 ///
 /// Loads my history with Hacky (`GET /api/events/{slug}/chat`,
 /// `ApiClient.getChatHistory`) and sends each message with `sendChat`
-/// (`?format=json`: the whole answer at once, no streaming). While Hacky
-/// answers, "Hacky is thinking…" shows and Send waits. A message that fails
-/// stays with Retry. Hacky's cards open 07 (`Navigate.toPerson`) and send
-/// connection requests (`sendRequest`). With no history yet, Hacky greets me
-/// by name with suggestion chips that send a prompt.
+/// (`?format=json`: the whole answer at once, no streaming). The brief (the
+/// clip, "What can I help you with?" and four starting points) opens the
+/// chat and stays above the history. While Hacky answers, the thinking clip
+/// shows and Send waits. A message that fails stays with Retry. Hacky's
+/// cards open 07 (`Navigate.toPerson`) and send connection requests
+/// (`sendRequest`). "New chat" clears what's on screen; Hacky keeps the
+/// history.
 class HackyChatScreen extends StatefulWidget {
   const HackyChatScreen({
     super.key,
@@ -34,17 +37,9 @@ class HackyChatScreen extends StatefulWidget {
 
   final ApiClient api;
 
-  /// The signed-in user, for the greeting ("Hi Ethan!").
+  /// The signed-in user: their name goes in the intros Hacky's cards send.
   final Me me;
   final String eventSlug;
-
-  /// The starting points on the first-time view.
-  static const suggestions = [
-    'Find a teammate who knows React',
-    'Find a mentor',
-    'Who’s looking for a team?',
-    'Help me pick a track',
-  ];
 
   @override
   State<HackyChatScreen> createState() => _HackyChatScreenState();
@@ -62,12 +57,29 @@ class _HackyChatScreenState extends State<HackyChatScreen>
   bool _thinking = false;
   int _nextId = 0;
 
-  String get _firstName => IntroRules.firstName(widget.me.profile.name);
+  /// How many of the oldest messages "New chat" took off the screen.
+  int _cleared = 0;
+
+  /// The messages on screen, oldest first.
+  Iterable<ChatMessage> get _shown => _messages.skip(_cleared);
 
   @override
   void initState() {
     super.initState();
     runLoad(_loadHistory);
+    _restoreSent();
+  }
+
+  /// Marks the people I already asked or connected with, so their cards
+  /// show where the request stands. If it fails the cards just offer
+  /// Connect, and the server refuses a repeated request (409).
+  Future<void> _restoreSent() async {
+    try {
+      final requests = await widget.api.listRequests(widget.eventSlug);
+      if (mounted) setState(() => _sent.restore(requests));
+    } catch (_) {
+      // Nothing to show: the history itself reports a failed load.
+    }
   }
 
   @override
@@ -80,11 +92,31 @@ class _HackyChatScreenState extends State<HackyChatScreen>
   Future<void> _loadHistory() async {
     final history = await widget.api.getChatHistory(widget.eventSlug);
     if (!mounted) return;
-    setState(
-      () => _messages
+    setState(() {
+      _cleared = 0;
+      _messages
         ..clear()
-        ..addAll(history),
+        ..addAll(history);
+    });
+  }
+
+  /// "New chat": asks first, then clears the screen and keeps the history.
+  Future<void> _startNew() async {
+    final confirmed = await ConfirmActionDialog.show(
+      context,
+      title: 'Start a new chat?',
+      message:
+          'This clears the messages on this screen. Hacky keeps your '
+          'history, profile and requests.',
+      confirmLabel: 'Start new',
+      busyLabel: 'Starting…',
+      action: () async {},
     );
+    if (!confirmed || !mounted) return;
+    setState(() {
+      _cleared = _messages.length;
+      _failures.clear();
+    });
   }
 
   /// Sends [text] as my next message.
@@ -179,17 +211,15 @@ class _HackyChatScreenState extends State<HackyChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    final busy = _thinking || loading || problem != null;
     return SignedInPage(
       title: 'Hacky',
+      headingInShell: false,
       body: Column(
         children: [
-          HackyChatHeader(thinking: _thinking),
+          NewChatButton(onPressed: busy || _shown.isEmpty ? null : _startNew),
           Expanded(child: _thread()),
-          ChatComposer(
-            controller: _composer,
-            busy: _thinking || loading || problem != null,
-            onSend: _ask,
-          ),
+          ChatComposer(controller: _composer, busy: busy, onSend: _ask),
         ],
       ),
     );
@@ -203,46 +233,47 @@ class _HackyChatScreenState extends State<HackyChatScreen>
         onRetry: () => runLoad(_loadHistory),
       );
     }
-    if (_messages.isEmpty) {
-      return HackyWelcome(
-        firstName: _firstName,
-        prompts: HackyChatScreen.suggestions,
-        onPick: _ask,
+    final brief = HackyBrief(
+      key: const ValueKey('brief'),
+      onPick: _thinking ? null : _ask,
+    );
+    if (_shown.isEmpty) {
+      // Nothing said yet: the brief sits in the middle of the page.
+      return LayoutBuilder(
+        builder: (context, box) => SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (box.maxHeight - 16).clamp(0.0, double.infinity).toDouble(),
+            ),
+            child: Center(child: brief),
+          ),
+        ),
       );
     }
-    final rows = _rows();
+    final rows = _rows(brief);
     return Semantics(
       label: 'Conversation with Hacky',
       child: ListView.separated(
         controller: _scroll,
         reverse: true,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         itemCount: rows.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 14),
+        separatorBuilder: (_, _) => const SizedBox(height: 16),
         // Reversed: index 0 is the newest row.
         itemBuilder: (_, index) => rows[rows.length - 1 - index],
       ),
     );
   }
 
-  /// The thread, oldest first: Hacky's greeting, each message, and the
+  /// The thread, oldest first: the brief, each message on screen, and the
   /// thinking row while Hacky answers.
-  List<Widget> _rows() {
+  List<Widget> _rows(Widget brief) {
     final actions = _actions;
     final last = _messages.last;
     return [
-      HackyTurn(
-        key: const ValueKey('greeting'),
-        children: [
-          HackyBubble(
-            child: Text(
-              'Hi $_firstName! What are you building, and who do you need?',
-              style: HackyRichText.style,
-            ),
-          ),
-        ],
-      ),
-      for (final message in _messages) ?_row(message, actions, message == last),
+      Padding(padding: const EdgeInsets.only(bottom: 8), child: brief),
+      for (final message in _shown) ?_row(message, actions, message == last),
       if (_thinking) const ThinkingRow(key: ValueKey('thinking')),
     ];
   }

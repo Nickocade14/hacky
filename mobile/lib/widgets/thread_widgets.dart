@@ -1,8 +1,8 @@
 // The parts of 11 Chat thread (mobile/design/messages-wireframes.svg), in the
 // original Hacky look (react/src/social/Thread.jsx, social.css,
-// public/app/hacky.css): my bubbles on the right in the action blue, theirs on
-// the left in white, system notes centered on a grey wash. Colors and fonts
-// come from lib/theme.dart.
+// public/app/hacky.css) and the same as the web: my bubbles on the right in
+// the action blue, theirs on the left in grey, both with a small tail, and
+// system notes centered. Colors and fonts come from lib/theme.dart.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,7 +11,9 @@ import '../api/models/conversations.dart';
 import '../chats/conversation_text.dart';
 import '../chats/thread_messages.dart';
 import '../theme.dart';
+import 'chat_bubble.dart';
 import 'conversation_widgets.dart';
+import 'message_box.dart';
 
 const _bold = FontWeight.w700;
 
@@ -125,7 +127,7 @@ class MessageBubble extends StatelessWidget {
 
   final String text;
 
-  /// Mine go on the right in blue; theirs on the left in white.
+  /// Mine go on the right in blue; theirs on the left in grey.
   final bool mine;
 
   /// Not saved yet (sending or failed).
@@ -135,31 +137,11 @@ class MessageBubble extends StatelessWidget {
   /// Long-press on my saved message: Unsend.
   final VoidCallback? onLongPress;
 
-  static const _radius = Radius.circular(20);
-  static const _tail = Radius.circular(6);
-
   @override
   Widget build(BuildContext context) {
-    final bubble = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: mine ? AppColors.action : AppColors.white,
-        border: mine ? null : Border.all(color: AppColors.line),
-        borderRadius: BorderRadius.only(
-          topLeft: _radius,
-          topRight: _radius,
-          bottomLeft: mine ? _radius : _tail,
-          bottomRight: mine ? _tail : _radius,
-        ),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: mine ? AppColors.onAction : AppColors.ink,
-          fontSize: 15,
-          height: 1.45,
-        ),
-      ),
+    final bubble = ChatBubble(
+      mine: mine,
+      child: Text(text, style: ChatBubble.textStyle(mine: mine)),
     );
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
@@ -360,7 +342,8 @@ class OlderMessagesBar extends StatelessWidget {
   }
 }
 
-/// "Message…" and the send button, which shows a spinner while [busy].
+/// "Write a message…" and the send button, which shows a spinner while
+/// [busy]. The same box as the Hacky chat's composer.
 class ChatComposer extends StatelessWidget {
   const ChatComposer({
     super.key,
@@ -381,57 +364,31 @@ class ChatComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        border: Border(top: BorderSide(color: AppColors.line)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        spacing: 8,
-        children: [
-          Expanded(
-            child: TextField(
-              key: fieldKey,
-              controller: controller,
-              minLines: 1,
-              maxLines: 5,
-              textCapitalization: TextCapitalization.sentences,
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(maxLength),
-              ],
-              decoration: const InputDecoration(
-                hintText: 'Message…',
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: controller,
-            builder: (context, value, _) {
-              final canSend = !busy && value.text.trim().isNotEmpty;
-              return IconButton.filled(
-                key: sendKey,
-                tooltip: busy ? 'Sending' : 'Send',
-                onPressed: canSend ? onSend : null,
-                icon: busy
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.disabledInk,
-                        ),
-                      )
-                    : const Icon(Icons.arrow_upward),
-              );
-            },
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      child: MessageBox(
+        field: TextField(
+          key: fieldKey,
+          controller: controller,
+          minLines: 1,
+          maxLines: 5,
+          textCapitalization: TextCapitalization.sentences,
+          inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
+          style: MessageBox.textStyle,
+          decoration: MessageBox.decoration('Write a message…'),
+        ),
+        send: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) {
+            final canSend = !busy && value.text.trim().isNotEmpty;
+            return SendButton(
+              buttonKey: sendKey,
+              tooltip: busy ? 'Sending' : 'Send',
+              busy: busy,
+              onPressed: canSend ? onSend : null,
+            );
+          },
+        ),
       ),
     );
   }

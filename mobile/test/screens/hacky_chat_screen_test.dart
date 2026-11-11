@@ -10,6 +10,7 @@ import 'package:mobile/api/models/requests.dart';
 import 'package:mobile/auth/error_text.dart';
 import 'package:mobile/routes.dart';
 import 'package:mobile/screens/hacky_chat_screen.dart';
+import 'package:mobile/widgets/confirm_action_dialog.dart';
 import 'package:mobile/widgets/hacky_chat_widgets.dart';
 import 'package:mobile/widgets/hacky_intro.dart';
 
@@ -93,8 +94,11 @@ Future<void> typeAndSend(WidgetTester tester, String text) async {
 IconButton sendButton(WidgetTester tester) =>
     tester.widget<IconButton>(find.byKey(ChatComposer.sendKey));
 
+TextButton newChatButton(WidgetTester tester) =>
+    tester.widget<TextButton>(find.byKey(NewChatButton.buttonKey));
+
 void main() {
-  testWidgets('first time: greets me by name with suggestion chips', (
+  testWidgets('first time: the brief with its starting points', (
     tester,
   ) async {
     final api = ScriptedChatApi();
@@ -103,18 +107,45 @@ void main() {
     expect(find.text('Loading your chat…'), findsOneWidget);
     await tester.pumpAndSettle();
 
-    expect(find.text('Hi Demo!'), findsOneWidget);
-    for (final prompt in HackyChatScreen.suggestions) {
-      expect(find.text(prompt), findsOneWidget);
+    expect(find.text(HackyBrief.title), findsOneWidget);
+    for (final starter in HackyStarter.all) {
+      expect(find.text(starter.label), findsOneWidget);
     }
+    expect(find.text(ChatComposer.note), findsOneWidget);
     expect(sendButton(tester).onPressed, isNull);
+    expect(newChatButton(tester).onPressed, isNull);
 
-    await tapOn(tester, find.text('Find a mentor'));
+    await tapOn(tester, find.text('Find mentor'));
 
     expect(api.sent, ['Find a mentor']);
-    expect(find.text('Hi Demo!'), findsNothing);
     expect(find.text('Find a mentor'), findsOneWidget);
     expect(find.textContaining('I didn\'t find anyone'), findsOneWidget);
+    // The brief stays above the history.
+    expect(find.byType(HackyBrief, skipOffstage: false), findsOneWidget);
+    expect(newChatButton(tester).onPressed, isNotNull);
+  });
+
+  testWidgets('New chat clears the screen after asking', (tester) async {
+    final api = ScriptedChatApi()
+      ..history = [
+        user('Find me a backend teammate'),
+        hacky([textPart('Priya does Go and Postgres.')]),
+      ];
+    await pumpScreen(tester, chat(api));
+    await tester.pumpAndSettle();
+
+    await tapOn(tester, find.byKey(NewChatButton.buttonKey));
+    expect(find.text('Start a new chat?'), findsOneWidget);
+    await tapOn(tester, find.byKey(ConfirmActionDialog.cancelKey));
+    expect(find.text('Find me a backend teammate'), findsOneWidget);
+
+    await tapOn(tester, find.byKey(NewChatButton.buttonKey));
+    await tapOn(tester, find.byKey(ConfirmActionDialog.confirmKey));
+
+    expect(find.text('Find me a backend teammate'), findsNothing);
+    expect(find.textContaining('Priya does Go'), findsNothing);
+    expect(find.text(HackyBrief.title), findsOneWidget);
+    expect(newChatButton(tester).onPressed, isNull);
   });
 
   testWidgets('loads my history on open', (tester) async {
@@ -126,14 +157,9 @@ void main() {
     await pumpScreen(tester, chat(api));
     await tester.pumpAndSettle();
 
-    expect(find.text('Hi Demo!'), findsNothing);
-    expect(
-      find.textContaining('Hi Demo! What are you building'),
-      findsOneWidget,
-    );
     expect(find.text('Find me a backend teammate'), findsOneWidget);
     expect(find.textContaining('Priya does Go and Postgres'), findsOneWidget);
-    expect(find.byType(HackyAvatar), findsWidgets);
+    expect(find.byType(HackyBrief, skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('a failed history load can be retried', (tester) async {
@@ -148,7 +174,7 @@ void main() {
     await tapOn(tester, find.text('Try again'));
 
     expect(find.text(ErrorText.unreachable), findsNothing);
-    expect(find.text('Hi Demo!'), findsOneWidget);
+    expect(find.text(HackyBrief.title), findsOneWidget);
   });
 
   testWidgets('sends what I type and shows the answer', (tester) async {
@@ -188,8 +214,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Find a Flutter mentor'), findsOneWidget);
-    expect(find.text(ThinkingRow.label), findsOneWidget);
-    expect(find.text('Thinking…'), findsOneWidget);
+    expect(find.byType(ThinkingRow), findsOneWidget);
+    expect(find.bySemanticsLabel(ThinkingRow.label), findsOneWidget);
     await tester.enterText(find.byKey(ChatComposer.fieldKey), 'And a designer');
     await tester.pump();
     expect(sendButton(tester).onPressed, isNull);
@@ -197,8 +223,7 @@ void main() {
     api.gate!.complete();
     await tester.pumpAndSettle();
 
-    expect(find.text(ThinkingRow.label), findsNothing);
-    expect(find.text('Your hackathon helper'), findsOneWidget);
+    expect(find.byType(ThinkingRow), findsNothing);
     expect(find.text('Sam Rivera mentors Flutter.'), findsOneWidget);
     expect(sendButton(tester).onPressed, isNotNull);
   });
@@ -314,6 +339,26 @@ void main() {
       'leo_builds',
       'sam_mentor',
     ]);
+  });
+
+  testWidgets('a card in my history knows who I\'m already connected with', (
+    tester,
+  ) async {
+    final api = ScriptedChatApi();
+    // Priya and the demo user are connected before the chat opens.
+    final priya = await fakePerson(tester, api, 'priya_codes');
+    api.history = [
+      user('Who knows Go?'),
+      hacky([searchPart(person: priya)]),
+    ];
+    final visits = await pumpScreen(tester, chat(api));
+    await tester.pumpAndSettle();
+
+    expect(find.text('You’re connected with Priya'), findsOneWidget);
+    expect(find.text('Connect'), findsNothing);
+
+    await tapOn(tester, find.text('Open chat'));
+    expect(visits.single.route, Routes.chatThread);
   });
 
   testWidgets('Connect sends a request; a mutual one opens the chat', (
