@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Notice, useFormAction } from "./components";
+import { HomeActivity } from "./HomeActivity";
 import { PersonAvatar, useSignedIn } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
 import type { EventInfo, EventMe, MyEvent } from "./lib/contracts";
+import type { components } from "./lib/schema";
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+const availabilityOptions: EventMe["availability"][] = ["available", "busy", "offline"];
 
 function eventDates({ startsAt, endsAt }: EventInfo) {
   if (startsAt && endsAt) return dateFormat.formatRange(new Date(startsAt), new Date(endsAt));
@@ -17,6 +20,7 @@ function EventCard({ event, onExpired }: { event: MyEvent; onExpired: () => void
   const [details, setDetails] = useState<{ info: EventInfo; membership: EventMe } | null>(null);
   const [error, setError] = useState<string>();
   const [retry, setRetry] = useState(0);
+  const saveAction = useFormAction();
   const { slug } = event;
 
   useEffect(() => {
@@ -32,7 +36,20 @@ function EventCard({ event, onExpired }: { event: MyEvent; onExpired: () => void
     return () => controller.abort();
   }, [slug, retry, onExpired]);
 
-  return <section className="workspace-card" aria-labelledby="home-event">
+  function saveMembership(body: components["schemas"]["UpdateEventMeBody"]) {
+    void saveAction.run(async signal => {
+      try {
+        const membership = await api.authenticated<EventMe>(`/events/${encodeURIComponent(slug)}/me`, { method: "PATCH", body, signal });
+        if (!signal.aborted) setDetails(current => current && { ...current, membership });
+      } catch (failure) {
+        if (signal.aborted) return;
+        if (failure instanceof ApiClientError && failure.status === 401) onExpired();
+        else throw failure;
+      }
+    });
+  }
+
+  return <><section className="workspace-card" aria-labelledby="home-event">
     <div className="workspace-row">
       <span className="eyebrow">Your event</span><span className="workspace-chip">{event.role}</span>
     </div>
@@ -47,12 +64,24 @@ function EventCard({ event, onExpired }: { event: MyEvent; onExpired: () => void
       {details.info.tracks.length > 0 && <ul className="workspace-chips" aria-label="Event tracks">
         {details.info.tracks.map(track => <li key={track}>{track}</li>)}
       </ul>}
-      <dl className="workspace-event-status">
-        <div className="workspace-row"><dt>Looking for a team</dt><dd>{details.membership.looking ? "Yes" : "No"}</dd></div>
-        <div className="workspace-row"><dt>Availability</dt><dd className="workspace-chip">{details.membership.availability}</dd></div>
-      </dl>
+      <div className="workspace-event-status" aria-busy={saveAction.busy}>
+        <label className="workspace-row">
+          Looking for a team
+          <input type="checkbox" role="switch" checked={details.membership.looking} disabled={saveAction.busy}
+            onChange={change => saveMembership({ looking: change.target.checked })} />
+        </label>
+        <div className="workspace-segments" role="group" aria-label="Availability">
+          {availabilityOptions.map(option => <button key={option} type="button" aria-pressed={option === details.membership.availability}
+            disabled={saveAction.busy} onClick={() => { if (option !== details.membership.availability) saveMembership({ availability: option }); }}>
+            {option}
+          </button>)}
+        </div>
+        {saveAction.error && <Notice error>{saveAction.error}</Notice>}
+      </div>
     </>}
-  </section>;
+  </section>
+  {details && <HomeActivity slug={slug} wantedSkills={details.membership.intake.skillsWanted ?? []} />}
+  </>;
 }
 
 function JoinEvents({ onJoined }: { onJoined: (event: MyEvent) => void }) {

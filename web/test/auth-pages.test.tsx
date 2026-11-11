@@ -70,6 +70,8 @@ beforeEach(() => {
   fetchMock.mockImplementation(async (path) => {
     if (path === "/api/events/knighthacks-ix") return jsonResponse(event);
     if (path === "/api/events/knighthacks-ix/me") return jsonResponse(eventMe);
+    if (path === "/api/events/knighthacks-ix/me/team") return jsonResponse({ team: null });
+    if (path === "/api/events/knighthacks-ix/requests") return jsonResponse({ requests: [] });
     throw new Error(`Unexpected API call in this test: ${String(path)}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -231,6 +233,8 @@ describe("authentication pages", () => {
             : jsonResponse(eventMe);
         case "/api/events/knighthacks-ix": return jsonResponse(event);
         case "/api/events/knighthacks-ix/me": return jsonResponse(eventMe);
+        case "/api/events/knighthacks-ix/me/team": return jsonResponse({ team: null });
+        case "/api/events/knighthacks-ix/requests": return jsonResponse({ requests: [] });
         case "/api/search?event=knighthacks-ix&q=React": return jsonResponse({ results: [] });
         default: throw new Error(`Unexpected API call in this test: ${String(path)}`);
       }
@@ -255,6 +259,45 @@ describe("authentication pages", () => {
     await user.type(screen.getByRole("searchbox", { name: "Name, handle, or skill" }), "React");
     expect(await screen.findByText("No matches found.")).not.toBeNull();
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/me")).toHaveLength(1);
+  });
+
+  it("saves Home availability and can create a team after a failed attempt", async () => {
+    const user = userEvent.setup();
+    const session = loginResult();
+    saveSession(session);
+    const eventPath = "/api/events/knighthacks-ix";
+    let creates = 0;
+    fetchMock.mockImplementation(async (path, init) => {
+      if (path === "/api/me") return jsonResponse(session.me);
+      if (path === eventPath) return jsonResponse(event);
+      if (path === `${eventPath}/me`) {
+        return jsonResponse(init?.method === "PATCH" ? { ...eventMe, availability: "busy" } : eventMe);
+      }
+      if (path === `${eventPath}/me/team`) return jsonResponse({ team: null });
+      if (path === `${eventPath}/requests`) return jsonResponse({ requests: [{ direction: "incoming", status: "pending" }] });
+      if (path === `${eventPath}/teams`) {
+        creates += 1;
+        return creates === 1
+          ? jsonResponse({ error: { code: "internal", message: "Couldn’t create the team." } }, 500)
+          : jsonResponse({ id: "6717a3f2c9e1b04d2a5e8f12", name: "Byte Me", size: 1, maxSize: 4 }, 201);
+      }
+      throw new Error(`Unexpected API call: ${String(path)}`);
+    });
+    renderApp("/app");
+    const busy = await screen.findByRole("button", { name: "busy" });
+    await user.click(busy);
+    await waitFor(() => expect(busy.getAttribute("aria-pressed")).toBe("true"));
+    const patch = fetchMock.mock.calls.find(([, init]) => init?.method === "PATCH");
+    expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ availability: "busy" });
+    expect((await screen.findByRole("link", { name: "Requests 1 new" })).getAttribute("href")).toBe("/requests?event=knighthacks-ix");
+
+    await user.click(screen.getByRole("button", { name: "Create team" }));
+    await user.type(screen.getByLabelText("Team name"), "Byte Me");
+    await user.click(screen.getByRole("button", { name: "Create team" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Couldn’t create the team.");
+    await user.click(screen.getByRole("button", { name: "Create team" }));
+    expect(await screen.findByRole("heading", { name: "Byte Me" })).not.toBeNull();
+    expect(creates).toBe(2);
   });
 
   it("searches the current event with the saved token and drops stale results", async () => {

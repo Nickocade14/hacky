@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Field, Notice } from "./components";
 import { PersonAvatar, useSignedIn } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
+import { personPath } from "./lib/connections";
 import type { SearchQuery, SearchResults } from "./lib/contracts";
+import "./connections.css";
 
 type Role = NonNullable<SearchQuery["role"]>;
 const roles: Record<Role, string> = {
@@ -15,10 +17,20 @@ const roles: Record<Role, string> = {
 
 type Outcome = { key: string; results: SearchResults["results"] } | { key: string; error: string };
 
+function Highlight({ text, query }: { text: string; query: string }) {
+  const literal = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp("(" + literal + ")", "giu"));
+  return <>{parts.map((part, index) => index % 2 === 1 ? <mark key={index}>{part}</mark> : part)}</>;
+}
+
 export function SearchPage() {
   const { me: { events }, event: selectedEvent, selectEvent, onExpired } = useSignedIn();
-  const [query, setQuery] = useState("");
-  const [role, setRole] = useState<Role | "">("");
+  const { state } = useLocation();
+  const search = (state as { search?: { query?: unknown; role?: unknown } } | null)?.search;
+  const [query, setQuery] = useState(typeof search?.query === "string" ? search.query : "");
+  const [role, setRole] = useState<Role | "">(
+    typeof search?.role === "string" && Object.hasOwn(roles, search.role) ? search.role as Role : "",
+  );
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [retry, setRetry] = useState(0);
   const event = selectedEvent?.slug ?? "";
@@ -78,14 +90,25 @@ export function SearchPage() {
       {current && "results" in current && <>
         <p role="status">{current.results.length ? `${current.results.length} ${current.results.length === 1 ? "match" : "matches"}` : "No matches found."}</p>
         {current.results.length > 0 && <ul className="workspace-list workspace-card workspace-matches" aria-label="Search results">
-          {current.results.map((person) => <li className="workspace-match" key={person.userId}>
-            <PersonAvatar name={person.name} photoUrl={person.photoUrl} />
-            <div>
-              <h2>{person.name}</h2>
-              <p>@{person.handle}{person.skills.length > 0 && <> · {person.skills.join(", ")}</>}</p>
-            </div>
-            <span className="workspace-chip">{roles[person.role]}</span>
-          </li>)}
+          {current.results.map(person => {
+            const matchedSkills = new Set(person.matchedSkills.map(skill => skill.toLowerCase()));
+            return <li className="connection-search-row" key={person.userId}>
+              <Link className="workspace-match connection-search-result" to={personPath(person.handle, event)}
+                state={{ search: { query, role } }} aria-label={person.name + " (@" + person.handle + ")"}>
+                <PersonAvatar name={person.name} photoUrl={person.photoUrl} />
+                <div>
+                  <h2 aria-label={person.name}><Highlight text={person.name} query={q} /></h2>
+                  <p>@<Highlight text={person.handle} query={q} /></p>
+                  {person.skills.length > 0 && <p>
+                    {person.skills.map((skill, index) => <span key={index}>
+                      {index > 0 && ", "}{matchedSkills.has(skill.toLowerCase()) ? <mark>{skill}</mark> : skill}
+                    </span>)}
+                  </p>}
+                </div>
+                <span className="workspace-chip">{roles[person.role]}</span>
+              </Link>
+            </li>;
+          })}
         </ul>}
       </>}
     </>}
