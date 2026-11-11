@@ -6,6 +6,7 @@ import 'app.dart';
 import 'api/fake/fake_api_client.dart';
 import 'hacky/chat_start.dart';
 import 'screens/hacky_chat_screen.dart';
+import 'theme_choice.dart';
 
 /// `flutter run --dart-define=FAKE_API=true` uses the in-memory fake client
 /// (see lib/api/fake/fake_api_client.dart for its test accounts). The default is
@@ -14,6 +15,7 @@ const useFakeApi = bool.fromEnvironment('FAKE_API');
 
 void main() {
   HackyChatScreen.defaultStartStore = DeviceChatStartStore();
+  ThemeChoice.instance = ThemeChoice(DeviceThemeChoiceStore());
   final tokenStore = SecureTokenStore();
   final api = useFakeApi
       ? FakeApiClient(tokenStore: tokenStore)

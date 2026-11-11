@@ -13,11 +13,12 @@ import 'screens/start_screen.dart';
 import 'screens/verify_email_screen.dart';
 import 'shell/signed_in_shell.dart';
 import 'theme.dart';
+import 'theme_choice.dart';
 import 'widgets/auth_widgets.dart';
 
-/// The app. Light or dark follows the phone's setting, like the web follows
-/// the system's (web/src/lib/theme.ts); switching it repaints every screen
-/// without losing where the user is.
+/// The app. Light or dark is the user's [ThemeChoice], else the phone's
+/// setting, like the web (web/src/lib/theme.ts); switching repaints every
+/// screen without losing where the user is.
 class HackyApp extends StatefulWidget {
   const HackyApp({super.key, required this.api});
 
@@ -34,22 +35,32 @@ class _HackyAppState extends State<HackyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _choice.addListener(_repaint);
+    _choice.load();
   }
+
+  final _choice = ThemeChoice.instance;
 
   @override
   void dispose() {
+    _choice.removeListener(_repaint);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  static AppPalette _system() =>
-      WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-          Brightness.dark
-      ? AppPalette.dark
-      : AppPalette.light;
+  AppPalette _palette() {
+    final dark =
+        _choice.dark ??
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
+    return dark ? AppPalette.dark : AppPalette.light;
+  }
 
   @override
-  void didChangePlatformBrightness() {
+  void didChangePlatformBrightness() => _repaint();
+
+  void _repaint() {
+    if (!mounted) return;
     setState(() {});
     // Widgets read AppColors while they build, and many are const, so a
     // rebuild from here wouldn't reach them: mark every one dirty too.
@@ -67,7 +78,7 @@ class _HackyAppState extends State<HackyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final palette = _system();
+    final palette = _palette();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: AppTheme.overlayStyle(palette),
       child: MaterialApp(

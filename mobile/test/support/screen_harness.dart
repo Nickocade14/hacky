@@ -7,6 +7,7 @@ import 'package:mobile/api/fake/fake_world.dart';
 import 'package:mobile/hacky/chat_start.dart';
 import 'package:mobile/screens/hacky_chat_screen.dart';
 import 'package:mobile/theme.dart';
+import 'package:mobile/theme_choice.dart';
 import 'package:mobile/widgets/hacky_chat_widgets.dart';
 
 /// A token store that only lives in memory.
@@ -77,6 +78,7 @@ Future<List<Visit>> pumpScreen(WidgetTester tester, Widget screen) async {
   HackyFilm.debugStill = true;
   // Each test starts without a "New chat" from another test.
   HackyChatScreen.defaultStartStore = MemoryChatStartStore();
+  ThemeChoice.instance = ThemeChoice();
   tester.view.physicalSize = const Size(1200, 2700);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);

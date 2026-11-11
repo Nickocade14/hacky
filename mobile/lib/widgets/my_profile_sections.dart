@@ -10,6 +10,7 @@ import '../profile/profile_draft.dart';
 import '../profile/profile_editors.dart';
 import '../profile/profile_rules.dart';
 import '../theme.dart';
+import '../theme_choice.dart';
 import 'app_widgets.dart';
 import 'hacky_style_sheet.dart';
 import 'profile_fields.dart';
@@ -404,6 +405,42 @@ class EventIntakeFields extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "Dark mode": switches the app between light and dark right away and
+/// remembers it on this phone ([ThemeChoice]).
+class DarkModeCard extends StatelessWidget {
+  const DarkModeCard({super.key});
+
+  static const switchKey = Key('profile-dark-mode');
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+      child: MergeSemantics(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Dark mode',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 14,
+                  fontWeight: _bold,
+                ),
+              ),
+            ),
+            Switch(
+              key: switchKey,
+              value: AppColors.isDark,
+              onChanged: (dark) => ThemeChoice.instance.choose(dark: dark),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

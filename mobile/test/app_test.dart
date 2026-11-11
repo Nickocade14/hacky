@@ -5,12 +5,16 @@ import 'package:mobile/api/fake/fake_api_client.dart';
 import 'package:mobile/shell/app_tab.dart';
 import 'package:mobile/shell/shell_header.dart';
 import 'package:mobile/theme.dart';
+import 'package:mobile/theme_choice.dart';
 import 'package:mobile/widgets/hacky_chat_widgets.dart';
+import 'package:mobile/widgets/my_profile_sections.dart';
 
 import 'support/screen_harness.dart';
 
 Future<void> pumpApp(WidgetTester tester, FakeApiClient api) async {
   HackyFilm.debugStill = true;
+  ThemeChoice.instance = ThemeChoice();
+  addTearDown(() => AppColors.use(AppPalette.light));
   tester.view.physicalSize = const Size(1200, 2700);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -63,6 +67,36 @@ void main() {
     expect(titleColor(), AppPalette.light.ink);
     // And the user is still where they were.
     expect(find.text(HackyBrief.title), findsOneWidget);
+  });
+
+  testWidgets('Dark mode on Me switches the app and wins over the phone', (
+    tester,
+  ) async {
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+    final (:api, :store) = fakeApi();
+    store.token = 'fake-jwt:${FakeApiClient.demoEmail}';
+    await pumpApp(tester, api);
+
+    await tapOn(tester, find.byKey(ShellHeader.keyOf(AppTab.me)));
+    await tapOn(tester, find.byKey(DarkModeCard.switchKey));
+
+    expect(ThemeChoice.instance.dark, isTrue);
+    expect(AppColors.isDark, isTrue);
+    expect(
+      tester.widget<Switch>(find.byKey(DarkModeCard.switchKey)).value,
+      isTrue,
+    );
+    // Still on Me.
+    expect(find.byType(DarkModeCard), findsOneWidget);
+
+    // The phone going light doesn't undo my choice.
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+    await tester.pumpAndSettle();
+    expect(AppColors.isDark, isTrue);
+
+    await tapOn(tester, find.byKey(DarkModeCard.switchKey));
+    expect(AppColors.isDark, isFalse);
   });
 
   testWidgets('skips log in when the saved token is still valid', (
