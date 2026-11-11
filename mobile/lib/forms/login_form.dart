@@ -27,12 +27,12 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> with SubmitAction<LoginForm> {
   final _form = GlobalKey<FormState>();
-  final _email = TextEditingController();
+  final _login = TextEditingController();
   final _password = TextEditingController();
 
   @override
   void dispose() {
-    _email.dispose();
+    _login.dispose();
     _password.dispose();
     super.dispose();
   }
@@ -40,7 +40,7 @@ class _LoginFormState extends State<LoginForm> with SubmitAction<LoginForm> {
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
     final body = LoginBody(
-      email: FieldRules.normalizeEmail(_email.text),
+      login: FieldRules.normalizeLogin(_login.text),
       password: _password.text,
     );
     await runAction(() async {
@@ -69,14 +69,17 @@ class _LoginFormState extends State<LoginForm> with SubmitAction<LoginForm> {
               spacing: 19,
               children: [
                 AuthField(
-                  id: 'login-email',
-                  label: 'Email address',
-                  placeholder: 'you@example.com',
-                  controller: _email,
+                  id: 'login-id',
+                  label: 'Email or username',
+                  placeholder: 'you@example.com or your_username',
+                  controller: _login,
                   keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
+                  autofillHints: const [
+                    AutofillHints.username,
+                    AutofillHints.email,
+                  ],
                   maxLength: 254,
-                  validator: FieldRules.email,
+                  validator: FieldRules.login,
                 ),
                 AuthField(
                   id: 'login-password',
@@ -97,17 +100,6 @@ class _LoginFormState extends State<LoginForm> with SubmitAction<LoginForm> {
                   ),
                 ),
                 if (error != null) Notice(error!, error: true),
-                if (errorCode == 'email_not_verified')
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: LinkButton(
-                      label: 'Resend your verification email',
-                      onPressed: () => navigator.pushNamed(
-                        Routes.checkEmail,
-                        arguments: FieldRules.normalizeEmail(_email.text),
-                      ),
-                    ),
-                  ),
                 SubmitButton(label: 'Log in', busy: busy, onPressed: _submit),
               ],
             ),

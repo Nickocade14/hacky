@@ -8,7 +8,8 @@ import '../routes.dart';
 import '../widgets/auth_widgets.dart';
 
 /// The "Create account" tab of [AuthScreen]. Same texts and limits as
-/// `RegisterPage` in web/src/AuthPages.tsx. On success, opens "Check your inbox".
+/// `RegisterPage` in web/src/AuthPages.tsx. On success, opens the screen
+/// where the user types the emailed code.
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key, required this.api, required this.onLogIn});
 
@@ -43,7 +44,7 @@ class _RegisterFormState extends State<RegisterForm>
     final email = FieldRules.normalizeEmail(_email.text);
     final body = RegisterBody(
       name: _name.text.trim(),
-      handle: _handle.text.trim().toLowerCase(),
+      handle: FieldRules.normalizeHandle(_handle.text),
       email: email,
       password: _password.text,
     );
@@ -51,7 +52,7 @@ class _RegisterFormState extends State<RegisterForm>
       await widget.api.register(body);
       if (!mounted) return;
       // Not awaited: the future only completes when that screen closes.
-      Navigator.of(context).pushNamed(Routes.checkEmail, arguments: email);
+      Navigator.of(context).pushNamed(Routes.verifyEmail, arguments: email);
     });
   }
 
@@ -85,8 +86,9 @@ class _RegisterFormState extends State<RegisterForm>
                 ),
                 AuthField(
                   id: 'register-handle',
-                  label: 'Handle',
-                  placeholder: 'your_handle',
+                  label: 'Username',
+                  placeholder: 'your_username',
+                  prefix: '@',
                   hint: FieldRules.handleHint,
                   controller: _handle,
                   autofillHints: const [AutofillHints.newUsername],
@@ -126,7 +128,7 @@ class _RegisterFormState extends State<RegisterForm>
           ),
         ),
         const SmallNote(
-          'We’ll send a verification link to your inbox before you log in.',
+          'We’ll email you a 6-digit code to finish creating your account.',
         ),
         FormSwitch(
           prompt: 'Already part of the crew? ',

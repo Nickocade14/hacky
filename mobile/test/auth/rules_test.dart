@@ -36,11 +36,31 @@ void main() {
         'ethan@example.com',
       );
     });
-    test('handle follows the contract pattern', () {
+    test('handle follows the contract pattern after normalizing', () {
       expect(FieldRules.handle('ethan_z'), isNull);
+      // Sent lowercased and without the @, like the server stores it.
+      expect(FieldRules.handle(' @Ethan_Z '), isNull);
+      expect(FieldRules.normalizeHandle(' @Ethan_Z '), 'ethan_z');
       expect(FieldRules.handle('ab'), FieldRules.handleHint);
-      expect(FieldRules.handle('Ethan'), FieldRules.handleHint);
+      expect(FieldRules.handle('Ethan Z'), FieldRules.handleHint);
       expect(FieldRules.handle('a' * 31), FieldRules.handleHint);
+    });
+    test('login takes an email or a username', () {
+      expect(FieldRules.login('nico@ucf.edu'), isNull);
+      expect(FieldRules.login('nico_c'), isNull);
+      expect(FieldRules.login('@Nico_C'), isNull);
+      expect(FieldRules.login(''), 'Enter your email or username.');
+      expect(FieldRules.login('nico c'), 'Enter a valid email or username.');
+      expect(FieldRules.login('nico@ucf'), 'Enter a valid email address.');
+      expect(FieldRules.normalizeLogin(' Nico@UCF.edu '), 'nico@ucf.edu');
+      expect(FieldRules.normalizeLogin(' @Nico_C '), 'nico_c');
+    });
+    test('code is 6 digits', () {
+      expect(FieldRules.code('482913'), isNull);
+      expect(FieldRules.code(' 482913 '), isNull);
+      for (final code in ['', '12345', '1234567', '12345a']) {
+        expect(FieldRules.code(code), 'Enter the 6-digit code from the email.');
+      }
     });
     test('name must not be blank', () {
       expect(FieldRules.name('   '), contains('Enter your name'));

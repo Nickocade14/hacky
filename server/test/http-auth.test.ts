@@ -4,7 +4,7 @@ import { test } from "node:test";
 import express from "express";
 import { createApp } from "../src/app.js";
 import { errorHandler } from "../src/errors.js";
-import { passwordSchema, registerBodySchema, resetPasswordBodySchema, hashPassword } from "../src/validation/auth.js";
+import { passwordSchema, registerBodySchema, resetCodeBodySchema, hashPassword } from "../src/validation/auth.js";
 
 async function withServer(app: ReturnType<typeof express>, run: (base: string) => Promise<void>) {
   const server = app.listen(0, "127.0.0.1");
@@ -92,7 +92,7 @@ test("password rules count Unicode characters and enforce bcrypt's UTF-8 byte li
   for (const password of ["a".repeat(72), "é".repeat(36), "😀".repeat(18)]) {
     assert.equal(passwordSchema.safeParse(password).success, true);
     assert.equal(registerBodySchema.safeParse({ name: "Test", handle: "tester", email: "test@example.com", password }).success, true);
-    assert.equal(resetPasswordBodySchema.safeParse({ token: "token", password }).success, true);
+    assert.equal(resetCodeBodySchema.safeParse({ email: "test@example.com", code: "012345", password }).success, true);
   }
   for (const password of ["a".repeat(73), "é".repeat(37), "😀".repeat(19), "😀".repeat(7)]) {
     assert.equal(passwordSchema.safeParse(password).success, false);

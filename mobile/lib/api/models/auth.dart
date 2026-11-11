@@ -27,21 +27,25 @@ class RegisterBody {
 
 /// `LoginBody`: `POST /api/auth/login`.
 class LoginBody {
-  const LoginBody({required this.email, required this.password});
+  const LoginBody({required this.login, required this.password});
 
-  final String email;
+  /// The email or the username.
+  final String login;
   final String password;
 
-  Map<String, dynamic> toJson() => {'email': email, 'password': password};
+  Map<String, dynamic> toJson() => {'login': login, 'password': password};
 }
 
-/// `TokenBody`: `POST /api/auth/verify-email`.
-class TokenBody {
-  const TokenBody({required this.token});
+/// `VerifyCodeBody`: `POST /api/auth/verify-email`.
+class VerifyCodeBody {
+  const VerifyCodeBody({required this.email, required this.code});
 
-  final String token;
+  final String email;
 
-  Map<String, dynamic> toJson() => {'token': token};
+  /// The 6-digit code from the email.
+  final String code;
+
+  Map<String, dynamic> toJson() => {'email': email, 'code': code};
 }
 
 /// `EmailBody`: `POST /api/auth/resend-verification` and `/api/auth/forgot-password`.
@@ -53,17 +57,29 @@ class EmailBody {
   Map<String, dynamic> toJson() => {'email': email};
 }
 
-/// `ResetPasswordBody`: `POST /api/auth/reset-password`.
-class ResetPasswordBody {
-  const ResetPasswordBody({required this.token, required this.password});
+/// `ResetCodeBody`: `POST /api/auth/reset-password`.
+class ResetCodeBody {
+  const ResetCodeBody({
+    required this.email,
+    required this.code,
+    required this.password,
+  });
 
-  final String token;
+  final String email;
+
+  /// The 6-digit code from the email.
+  final String code;
   final String password;
 
-  Map<String, dynamic> toJson() => {'token': token, 'password': password};
+  Map<String, dynamic> toJson() => {
+    'email': email,
+    'code': code,
+    'password': password,
+  };
 }
 
-/// `LoginResult`: the 200 response of `POST /api/auth/login`.
+/// `LoginResult`: the 200 response of `POST /api/auth/login`, and of
+/// `verify-email` and `reset-password`, which also log in.
 class LoginResult {
   const LoginResult({
     required this.token,

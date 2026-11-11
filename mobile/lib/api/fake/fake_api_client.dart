@@ -10,27 +10,27 @@ import 'fake_endpoints.dart';
 /// Auth lives here; every other endpoint comes from [FakeEndpoints].
 ///
 /// Test accounts (password for all: `password123`):
-/// - `demo@hacky.dev`: verified, logs in.
-/// - `new@hacky.dev`: not verified yet. Resending the verification email
-///   verifies it, as if the user had clicked the link.
+/// - `demo@hacky.dev`: logs in.
 /// - `offline@hacky.dev`: any request with this email fails as if there were
 ///   no connection.
 ///
-/// Accounts you register live until the app restarts. They start unverified;
-/// resend the verification email to verify them.
+/// Every emailed code is [testCode]. Like the server, registering only saves
+/// a pending sign-up; the account exists once [verifyEmail] gets the code.
+/// Accounts you create live until the app restarts.
 class FakeApiClient with FakeEndpoints implements ApiClient {
   FakeApiClient({
     required this._tokenStore,
     this.delay = const Duration(milliseconds: 700),
   }) {
-    _add('Demo Hacker', 'demo_hacker', demoEmail, verified: true);
-    _add('New Person', 'new_person', unverifiedEmail, verified: false);
+    _add('Demo Hacker', 'demo_hacker', demoEmail);
   }
 
   static const demoEmail = 'demo@hacky.dev';
-  static const unverifiedEmail = 'new@hacky.dev';
   static const offlineEmail = 'offline@hacky.dev';
   static const testPassword = 'password123';
+
+  /// The code "emailed" for every sign-up and password reset.
+  static const testCode = '123456';
 
   static const _tokenPrefix = 'fake-jwt:';
 
@@ -41,6 +41,12 @@ class FakeApiClient with FakeEndpoints implements ApiClient {
 
   final _accounts = <String, _FakeAccount>{};
 
+  /// Sign-ups waiting for their code, by email.
+  final _pending = <String, _FakeAccount>{};
+
+  /// Emails that asked for a reset code.
+  final _resets = <String>{};
+
   @override
   Duration get timeout => delay;
 
@@ -48,40 +54,79 @@ class FakeApiClient with FakeEndpoints implements ApiClient {
   Future<void> register(RegisterBody body) async {
     await _respond(body.email);
     if (_accounts.containsKey(body.email)) {
-      throw _error(409, 'email_taken', 'That email already has an account.');
+      throw _error(
+        409,
+        'email_taken',
+        'That email already has an account. Log in instead.',
+      );
     }
-    if (_accounts.values.any((a) => a.handle == body.handle)) {
-      throw _error(409, 'handle_taken', 'That handle is already taken.');
-    }
-    _add(body.name, body.handle, body.email, password: body.password);
+    if (_handleTaken(body.handle)) throw _handleTakenError();
+    _pending[body.email] = _FakeAccount(
+      name: body.name,
+      handle: body.handle,
+      email: body.email,
+      password: body.password,
+    );
   }
 
   @override
-  Future<void> verifyEmail(TokenBody body) async {
-    await _respond();
-    throw _error(400, 'invalid_token', 'Verification happens on the web.');
-  }
-
-  @override
-  Future<void> resendVerification(EmailBody body) async {
+  Future<LoginResult> verifyEmail(VerifyCodeBody body) async {
     await _respond(body.email);
-    _accounts[body.email]?.verified = true;
+    final pending = _pending[body.email];
+    if (pending == null || body.code != testCode) throw _invalidCode();
+    _pending.remove(body.email);
+    // Someone took the username while this sign-up waited.
+    if (_handleTaken(pending.handle)) throw _handleTakenError();
+    _accounts[body.email] = pending;
+    return _signIn(pending);
   }
+
+  @override
+  Future<void> resendVerification(EmailBody body) => _respond(body.email);
 
   @override
   Future<LoginResult> login(LoginBody body) async {
-    await _respond(body.email);
-    final account = _accounts[body.email];
+    await _respond(body.login);
+    // Like the server: an @ after the first character means an email.
+    final login = body.login.trim().toLowerCase();
+    final handle = login.startsWith('@') ? login.substring(1) : login;
+    final account = login.indexOf('@') > 0
+        ? _accounts[login]
+        : _accounts.values.where((a) => a.handle == handle).firstOrNull;
     if (account == null || account.password != body.password) {
-      throw _error(401, 'invalid_credentials', 'Wrong email or password.');
-    }
-    if (!account.verified) {
       throw _error(
-        403,
-        'email_not_verified',
-        'Verify your email before logging in. Check your inbox.',
+        401,
+        'invalid_credentials',
+        'Wrong email, username or password.',
       );
     }
+    return _signIn(account);
+  }
+
+  @override
+  Future<void> forgotPassword(EmailBody body) async {
+    await _respond(body.email);
+    if (_accounts.containsKey(body.email)) _resets.add(body.email);
+  }
+
+  @override
+  Future<LoginResult> resetPassword(ResetCodeBody body) async {
+    await _respond(body.email);
+    final account = _accounts[body.email];
+    if (account == null ||
+        !_resets.contains(body.email) ||
+        body.code != testCode) {
+      throw _invalidCode();
+    }
+    _resets.remove(body.email);
+    account.password = body.password;
+    return _signIn(account);
+  }
+
+  bool _handleTaken(String handle) =>
+      _accounts.values.any((a) => a.handle == handle);
+
+  Future<LoginResult> _signIn(_FakeAccount account) async {
     final token = '$_tokenPrefix${account.email}';
     await _tokenStore.write(token);
     return LoginResult(
@@ -89,15 +134,6 @@ class FakeApiClient with FakeEndpoints implements ApiClient {
       expiresAt: DateTime.now().add(const Duration(days: 7)),
       me: account.me,
     );
-  }
-
-  @override
-  Future<void> forgotPassword(EmailBody body) => _respond(body.email);
-
-  @override
-  Future<void> resetPassword(ResetPasswordBody body) async {
-    await _respond();
-    throw _error(400, 'invalid_token', 'Password reset happens on the web.');
   }
 
   @override
@@ -114,7 +150,7 @@ class FakeApiClient with FakeEndpoints implements ApiClient {
         ? token.substring(_tokenPrefix.length)
         : null;
     final account = _accounts[email];
-    if (account == null || !account.verified) {
+    if (account == null) {
       // Same as ApiClient: a 401 forgets the token.
       await _tokenStore.clear();
       throw _error(401, 'unauthorized', 'Your session expired. Log in again.');
@@ -136,24 +172,26 @@ class FakeApiClient with FakeEndpoints implements ApiClient {
     }
   }
 
-  void _add(
-    String name,
-    String handle,
-    String email, {
-    String password = testPassword,
-    bool verified = false,
-  }) {
+  void _add(String name, String handle, String email) {
     _accounts[email] = _FakeAccount(
       name: name,
       handle: handle,
       email: email,
-      password: password,
-      verified: verified,
+      password: testPassword,
     );
   }
 
   static ApiException _error(int status, String code, String message) =>
       ApiException(statusCode: status, code: code, message: message);
+
+  static ApiException _invalidCode() => _error(
+    400,
+    'invalid_code',
+    'That code is wrong or expired. Check the email or ask for a new code.',
+  );
+
+  static ApiException _handleTakenError() =>
+      _error(409, 'handle_taken', 'That username is taken. Try another one.');
 }
 
 class _FakeAccount {
@@ -162,14 +200,12 @@ class _FakeAccount {
     required this.handle,
     required this.email,
     required this.password,
-    required this.verified,
   });
 
   final String name;
   final String handle;
   final String email;
-  final String password;
-  bool verified;
+  String password;
 
   Me get me => Me(
     profile: PublicProfile(
