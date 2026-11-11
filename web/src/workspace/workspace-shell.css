@@ -49,8 +49,7 @@
 .hk-nav-link:active { transform: scale(.97); }
 .hk-nav-link[aria-current=page] { color: var(--action); background: var(--hover); }
 @media (hover: hover) { .hk-nav-link:hover { color: var(--action); background: var(--wash); } }
-.hk-nav-hacky img { width: 26px; height: 26px; object-fit: contain; margin: -2px 0; }
-.hk-nav-hacky:not([aria-current=page]) { color: var(--ink); }
+.hk-nav-ask:not([aria-current=page]) { color: var(--action); }
 .hk-chats-toggle.attention::after { content: ''; position: absolute; top: 9px; left: 26px; width: 9px; height: 9px; border-radius: 50%; background: var(--action); box-shadow: 0 0 0 2px var(--paper); }
 .hk-me { border-radius: 50%; }
 .hk-me[aria-current=page] { background: var(--hover); box-shadow: 0 0 0 2px var(--action); }
@@ -138,7 +137,7 @@
   .hk-side-inner { min-width: 319px; }
   .hk-header { padding-inline: 20px; min-height: 68px; }
 }
-/* Narrow main pane: icons only (the Hacky button keeps its mascot), title hidden on phones. */
+/* Narrow main pane: icons only, title hidden on phones. */
 @media (max-width: 1180px) {
   .hk-app.open .hk-nav-link :is(span, .hk-nav-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .hk-app.open .hk-nav-link { padding: 0 10px; }

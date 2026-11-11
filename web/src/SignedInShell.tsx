@@ -86,9 +86,7 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
           <span className="hk-title-event">{event?.name ?? "Find your people"}</span>
         </Link>
         <nav className="hk-header-side end" aria-label="Main navigation">
-          <Link className="hk-nav-link hk-nav-hacky" to={eventPath("/hacky", slug)} aria-current={current("/hacky")}>
-            <img src="/assets/mascots/hacky-knit.webp" alt="" /><span>Hacky</span>
-          </Link>
+          <Link className="hk-nav-link hk-nav-ask" to={eventPath("/hacky", slug)} aria-current={current("/hacky")}><Icon name="ask" /><span>Ask Hacky</span></Link>
           <Link className="hk-nav-link" to={eventPath("/search", slug)} aria-current={current("/search")}><Icon name="people" /><span>People</span></Link>
           <Link className="hk-nav-link" to="/app" aria-current={current("/app")}><Icon name="events" /><span>Home</span></Link>
           <Link className="hk-icon hk-me" to="/profile" aria-label="My profile" title="My profile" aria-current={current("/profile")}>
