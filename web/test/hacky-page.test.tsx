@@ -65,6 +65,7 @@ beforeEach(() => {
     if (path === "/api/events/knighthacks-ix/requests") {
       return init?.method === "POST" ? requestReply() : json({ requests: savedRequests });
     }
+    if (path === "/api/events/knighthacks-ix/conversations") return json({ conversations: [] });
     throw new Error(`Unexpected API call in this test: ${path}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -77,13 +78,13 @@ afterEach(() => {
 });
 
 describe("Hacky chat page", () => {
-  it("greets me with suggestions, and a suggestion asks Hacky and shows the cards", async () => {
+  it("opens on the brief, and a starting point asks Hacky and shows the cards", async () => {
     const user = userEvent.setup();
     renderHacky();
 
-    expect(await screen.findByRole("heading", { name: "Hi Ethan!" })).not.toBeNull();
+    expect(await screen.findByRole("heading", { level: 1, name: "What can I help you with?" })).not.toBeNull();
     expect(screen.getByRole("link", { name: /Hacky/, current: "page" })).not.toBeNull();
-    await user.click(screen.getByRole("button", { name: "Find a teammate who knows React" }));
+    await user.click(screen.getByRole("button", { name: "Find hackers" }));
 
     const card = await screen.findByRole("article", { name: "Owen Castellano" });
     expect(within(card).getByText("@owen_react · Hacker")).not.toBeNull();
@@ -92,13 +93,13 @@ describe("Hacky chat page", () => {
     const skills = within(card).getAllByRole("listitem").map((item) => [item.textContent, item.className]);
     expect(skills).toEqual([["React", "matched"], ["TypeScript", ""], ["Tailwind CSS", ""]]);
     expect(screen.getByText("strong").tagName).toBe("STRONG");
-    expect(screen.getByText("Find a teammate who knows React")).not.toBeNull();
+    expect(screen.getByText("Find a teammate for my project")).not.toBeNull();
 
     const [, init] = sends()[0]!;
     const body = JSON.parse(String(init?.body));
     expect(body.message.role).toBe("user");
     expect(body.message.id).toMatch(/^[A-Za-z0-9_-]{1,100}$/);
-    expect(body.message.parts).toEqual([{ type: "text", text: "Find a teammate who knows React" }]);
+    expect(body.message.parts).toEqual([{ type: "text", text: "Find a teammate for my project" }]);
     expect(init?.headers instanceof Headers ? init.headers.get("Authorization") : null).toBe("Bearer test-jwt");
   });
 
@@ -110,8 +111,7 @@ describe("Hacky chat page", () => {
     ];
     renderHacky();
 
-    expect(await screen.findByText("Hi Ethan! What are you building, and who do you need?")).not.toBeNull();
-    expect(screen.getByText("@owen_react · Mentor · Verified")).not.toBeNull();
+    expect(await screen.findByText("@owen_react · Mentor · Verified")).not.toBeNull();
     expect(screen.getByText("1 mentor")).not.toBeNull();
 
     await user.type(screen.getByLabelText("Message Hacky"), "  Who knows Flutter?  {Enter}");
@@ -126,7 +126,7 @@ describe("Hacky chat page", () => {
     reply = () => json({ error: { code: "ai_unavailable", message: "Hacky is offline right now. Please try again later." } }, 503);
     renderHacky();
 
-    await user.click(await screen.findByRole("button", { name: "Find a mentor" }));
+    await user.click(await screen.findByRole("button", { name: "Find mentor" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Not sent. Hacky is offline right now.");
 
     reply = (body) => json({ message: answer(body.message.id) });
@@ -173,17 +173,19 @@ describe("Hacky chat page", () => {
     expect((await within(card).findByRole("link", { name: "Open chat" })).getAttribute("href")).toBe("/chats/1234?event=knighthacks-ix");
   });
 
-  it("asks me to join an event when I'm not in one", async () => {
+  it("sends me to Home to pick a hackathon when I'm not in one", async () => {
     fetchMock.mockImplementation(async (url) => {
       if (String(url) === "/api/me") return json({ ...me, events: [] });
+      if (String(url) === "/api/events") return json({ events: [] });
       throw new Error(`Unexpected API call: ${String(url)}`);
     });
     saveSession(session());
     render(<MemoryRouter initialEntries={["/hacky"]}><App /></MemoryRouter>);
-    expect(await screen.findByRole("heading", { name: "Join an event first" })).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Go to Home" }).getAttribute("href")).toBe("/app");
+    expect(await screen.findByRole("heading", { name: "Pick your hackathon" })).not.toBeNull();
+    expect(screen.queryByRole("heading", { name: "What can I help you with?" })).toBeNull();
   });
 });
+
 
 describe("reading Hacky's parts", () => {
   it("keeps text and valid cards, and skips anything it can't show", () => {
