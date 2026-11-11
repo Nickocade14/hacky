@@ -50,7 +50,7 @@ void main() {
     expect(store.token, isNull);
   });
 
-  testWidgets('register, resend, log in, open Me and sign out end to end', (
+  testWidgets('register, enter the code, open Me and sign out end to end', (
     tester,
   ) async {
     final (:api, :store) = fakeApi();
@@ -72,19 +72,16 @@ void main() {
     );
     await tapOn(tester, find.widgetWithText(FilledButton, 'Create account'));
 
+    // The code logs in, so there's no extra log in step.
     expect(find.text('Check your inbox.'), findsOneWidget);
-    await tapOn(tester, find.text('Resend verification link'));
-    await tapOn(tester, find.text('Back to log in'));
-
     await tester.enterText(
-      find.byKey(const Key('login-email')),
-      'ethan@example.com',
+      find.byKey(const Key('verify-code')),
+      FakeApiClient.testCode,
     );
-    await tester.enterText(
-      find.byKey(const Key('login-password')),
-      'correct-password',
+    await tapOn(
+      tester,
+      find.widgetWithText(FilledButton, 'Verify and continue'),
     );
-    await tapOn(tester, find.widgetWithText(FilledButton, 'Log in'));
 
     expect(find.text('Knight Hacks IX'), findsOneWidget);
     expect(store.token, isNotNull);

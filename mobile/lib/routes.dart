@@ -6,8 +6,10 @@ abstract final class Routes {
   static const login = '/login';
   static const register = '/register';
 
-  /// Argument: the email the link was sent to (`String?`).
-  static const checkEmail = '/check-email';
+  /// Type the emailed sign-up code. Argument: the email it went to (`String`).
+  static const verifyEmail = '/verify-email';
+
+  /// Ask for a reset code, then type it with the new password.
   static const forgotPassword = '/forgot-password';
 
   /// The signed-in shell with the tab bar (05 Home first).

@@ -97,17 +97,6 @@ class _LoginFormState extends State<LoginForm> with SubmitAction<LoginForm> {
                   ),
                 ),
                 if (error != null) Notice(error!, error: true),
-                if (errorCode == 'email_not_verified')
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: LinkButton(
-                      label: 'Resend your verification email',
-                      onPressed: () => navigator.pushNamed(
-                        Routes.checkEmail,
-                        arguments: FieldRules.normalizeEmail(_email.text),
-                      ),
-                    ),
-                  ),
                 SubmitButton(label: 'Log in', busy: busy, onPressed: _submit),
               ],
             ),
