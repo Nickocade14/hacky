@@ -7,6 +7,13 @@ import { api } from "./lib/api";
 
 const value = (data: FormData, key: string) => String(data.get(key) ?? "");
 const emailValue = (data: FormData) => value(data, "email").trim().toLowerCase();
+// Login takes the email or the username. Usernames can't contain "@", so an
+// "@" after the first character means an email (same rule as the server).
+const isEmailLogin = (login: string) => login.indexOf("@") > 0;
+const loginValue = (data: FormData) => {
+  const login = value(data, "login").trim().toLowerCase();
+  return isEmailLogin(login) ? login : login.replace(/^@/, "");
+};
 const isCode = (code: string) => /^[0-9]{6}$/.test(code);
 const codeError = "Enter the 6-digit code from the email.";
 
@@ -26,14 +33,14 @@ export function LoginPage() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const email = emailValue(data);
-    setAttemptedEmail(email);
-    void action.run(async signal => { const result = await api.login({ email, password: value(data, "password") }, signal); auth.signIn(result); navigate("/app", { replace: true }); });
+    const login = loginValue(data);
+    setAttemptedEmail(isEmailLogin(login) ? login : "");
+    void action.run(async signal => { const result = await api.login({ login, password: value(data, "password") }, signal); auth.signIn(result); navigate("/app", { replace: true }); });
   }
   return <><AuthTabs /><PageHeading eyebrow="GOOD TO SEE YOU" title="Welcome back." />
     {notice && <Notice>{notice}</Notice>}
     <form onSubmit={submit} aria-label="Log in" aria-busy={action.busy}>
-      <Field id="login-email" label="Email address" name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} />
+      <Field id="login-id" label="Email or username" name="login" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="you@example.com or your_username" required maxLength={254} />
       <Field id="login-password" label="Password" name="password" type="password" autoComplete="current-password" placeholder="Your password" required />
       <div className="form-meta"><Link to="/forgot-password">Forgot password?</Link></div>
       {action.error && <Notice error>{action.error}</Notice>}
