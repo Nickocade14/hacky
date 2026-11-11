@@ -45,7 +45,7 @@ class EventBadge extends StatelessWidget {
           child: ExcludeSemantics(
             child: Text(
               initials(event.name),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.onAction,
                 fontSize: 13,
                 fontWeight: _bold,
@@ -63,7 +63,7 @@ class EventBadge extends StatelessWidget {
                 event.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.ink,
                   fontSize: 14,
                   height: 1.45,
@@ -71,7 +71,7 @@ class EventBadge extends StatelessWidget {
               ),
               Text(
                 'You’re here as a $role${verified ? ' · Verified' : ''}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 13,
                   height: 1.45,
@@ -138,7 +138,7 @@ class InboxRequestRow extends StatelessWidget {
               children: [
                 Text(
                   person.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.ink,
                     fontSize: 16,
                     fontWeight: _bold,
@@ -154,7 +154,7 @@ class InboxRequestRow extends StatelessWidget {
                     RoleChip(person.role),
                     if (team != null) QuietTag('Team ${team.name}'),
                     if (!incoming)
-                      const QuietTag(
+                      QuietTag(
                         'Pending',
                         ink: AppColors.link,
                         wash: AppColors.hover,
@@ -167,7 +167,7 @@ class InboxRequestRow extends StatelessWidget {
                     intro,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.ink,
                       fontSize: 14.5,
                       height: 1.5,
@@ -300,7 +300,7 @@ class ConversationRow extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.ink,
                         fontSize: 16,
                         fontWeight: _bold,
@@ -335,7 +335,7 @@ class ConversationRow extends StatelessWidget {
                 children: [
                   Text(
                     ChatTime.ago(c.lastMessageAt, now),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 12,
                     ),

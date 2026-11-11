@@ -32,6 +32,39 @@ void main() {
     expect(theme.textTheme.bodyMedium?.fontFamily, AppTheme.fontFamily);
   });
 
+  testWidgets('follows the phone\'s dark mode, and switching repaints', (
+    tester,
+  ) async {
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    addTearDown(() => AppColors.use(AppPalette.light));
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    final (:api, :store) = fakeApi();
+    store.token = 'fake-jwt:${FakeApiClient.demoEmail}';
+    await pumpApp(tester, api);
+
+    Color pageColor() => tester
+        .widget<Scaffold>(find.byType(Scaffold).first)
+        .backgroundColor ??
+        Theme.of(tester.element(find.byType(Scaffold).first))
+            .scaffoldBackgroundColor;
+    Color? titleColor() =>
+        tester.widget<Text>(find.text(HackyBrief.title)).style?.color;
+
+    expect(AppColors.isDark, isTrue);
+    expect(pageColor(), AppPalette.dark.paper);
+    expect(titleColor(), AppPalette.dark.ink);
+
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+    await tester.pumpAndSettle();
+
+    expect(AppColors.isDark, isFalse);
+    expect(pageColor(), AppPalette.light.paper);
+    // A const-free widget deep in the tree picked up the new palette too.
+    expect(titleColor(), AppPalette.light.ink);
+    // And the user is still where they were.
+    expect(find.text(HackyBrief.title), findsOneWidget);
+  });
+
   testWidgets('skips log in when the saved token is still valid', (
     tester,
   ) async {

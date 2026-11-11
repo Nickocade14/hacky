@@ -48,7 +48,7 @@ class EventCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             event.name,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.ink,
               fontSize: 24,
               fontWeight: _bold,
@@ -59,7 +59,7 @@ class EventCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             EventDates.format(event.startsAt, event.endsAt),
-            style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           if (event.tracks.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -75,7 +75,7 @@ class EventCard extends StatelessWidget {
           MergeSemantics(
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Looking for a team',
                     style: TextStyle(
@@ -147,11 +147,11 @@ class AvailabilityPicker extends StatelessWidget {
             color: active ? AppColors.white : null,
             borderRadius: AppTheme.borderRadius,
             boxShadow: active
-                ? const [
+                ? [
                     BoxShadow(
                       color: AppColors.shadow,
                       blurRadius: 5,
-                      offset: Offset(0, 1),
+                      offset: const Offset(0, 1),
                     ),
                   ]
                 : null,
@@ -186,8 +186,8 @@ class RequestsRow extends StatelessWidget {
       child: Row(
         spacing: 10,
         children: [
-          const Icon(Icons.mail_outline, color: AppColors.ink, size: 20),
-          const Expanded(
+          Icon(Icons.mail_outline, color: AppColors.ink, size: 20),
+          Expanded(
             child: Text(
               'Requests',
               style: TextStyle(
@@ -198,7 +198,7 @@ class RequestsRow extends StatelessWidget {
             ),
           ),
           if (newCount > 0) CountBadge('$newCount new'),
-          const Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
+          Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
         ],
       ),
     );
@@ -222,7 +222,7 @@ class MyTeamCard extends StatelessWidget {
         children: [
           const SectionLabel('My team'),
           if (team == null) ...[
-            const Text(
+            Text(
               'No team yet',
               style: TextStyle(color: AppColors.muted, fontSize: 14),
             ),
@@ -230,7 +230,7 @@ class MyTeamCard extends StatelessWidget {
           ] else ...[
             Text(
               team.name,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontSize: 17,
                 fontWeight: _bold,
@@ -239,7 +239,7 @@ class MyTeamCard extends StatelessWidget {
             Text(
               '${team.size} of ${team.maxSize} members'
               '${team.isOwner ? ' · You lead it' : ''}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
             ),
           ],
         ],
@@ -281,7 +281,7 @@ class PeopleSuggestionsSection extends StatelessWidget {
         if (skill == null)
           AppCard(
             onTap: onOpenMe,
-            child: const Text(
+            child: Text(
               'Add skills you want to learn on your profile, and people who '
               'know them show up here.',
               style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.5),
@@ -290,7 +290,7 @@ class PeopleSuggestionsSection extends StatelessWidget {
         else if (people.isEmpty)
           Text(
             'No one here knows $skill yet.',
-            style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
           )
         else
           for (final person in people)

@@ -67,7 +67,7 @@ class Wordmark extends StatelessWidget {
       label: 'Hacky',
       excludeSemantics: true,
       child: Text.rich(
-        const TextSpan(
+        TextSpan(
           text: 'hacky',
           children: [
             TextSpan(
@@ -148,11 +148,11 @@ class AuthTabs extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: AppTheme.borderRadius,
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
                         color: AppColors.shadow,
                         blurRadius: 5,
-                        offset: Offset(0, 1),
+                        offset: const Offset(0, 1),
                       ),
                     ],
                   ),
@@ -216,7 +216,7 @@ class PageHeading extends StatelessWidget {
 
   static TextSpan strong(String text) => TextSpan(
     text: text,
-    style: const TextStyle(color: AppColors.ink, fontWeight: _bold),
+    style: TextStyle(color: AppColors.ink, fontWeight: _bold),
   );
 
   @override
@@ -228,7 +228,7 @@ class PageHeading extends StatelessWidget {
         children: [
           Text(
             eyebrow,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.action,
               fontSize: 10,
               fontWeight: _bold,
@@ -240,7 +240,7 @@ class PageHeading extends StatelessWidget {
             header: true,
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontSize: 33,
                 fontWeight: _bold,
@@ -253,7 +253,7 @@ class PageHeading extends StatelessWidget {
             const SizedBox(height: 12),
             Text.rich(
               body!,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 14,
                 height: 1.7,
@@ -320,7 +320,7 @@ class _AuthFieldState extends State<AuthField> {
         ExcludeSemantics(
           child: Text(
             widget.label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.ink,
               fontSize: 12,
               fontWeight: _bold,
@@ -345,12 +345,12 @@ class _AuthFieldState extends State<AuthField> {
               if (widget.maxLength != null)
                 LengthLimitingTextInputFormatter(widget.maxLength),
             ],
-            style: const TextStyle(color: AppColors.ink, fontSize: 16),
+            style: TextStyle(color: AppColors.ink, fontSize: 16),
             decoration: InputDecoration(
               hintText: widget.placeholder,
-              hintStyle: const TextStyle(color: AppColors.muted),
+              hintStyle: TextStyle(color: AppColors.muted),
               prefixText: widget.prefix,
-              prefixStyle: const TextStyle(
+              prefixStyle: TextStyle(
                 color: AppColors.muted,
                 fontSize: 16,
               ),
@@ -366,7 +366,7 @@ class _AuthFieldState extends State<AuthField> {
           const SizedBox(height: 8),
           Text(
             widget.hint!,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.muted,
               fontSize: 11,
               height: 1.5,
@@ -452,7 +452,7 @@ class SubmitButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: 12,
         children: busy
-            ? const [
+            ? [
                 SizedBox.square(
                   dimension: 14,
                   child: CircularProgressIndicator(
@@ -460,7 +460,7 @@ class SubmitButton extends StatelessWidget {
                     color: AppColors.disabledInk,
                   ),
                 ),
-                Text('Please wait…'),
+                const Text('Please wait…'),
               ]
             : [
                 // Flexible so long labels wrap instead of overflowing.
@@ -491,7 +491,7 @@ class SecondaryButton extends StatelessWidget {
         minimumSize: const Size.fromHeight(49),
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.ink,
-        side: const BorderSide(color: AppColors.line),
+        side: BorderSide(color: AppColors.line),
         shape: RoundedRectangleBorder(borderRadius: AppTheme.borderRadius),
         textStyle: const TextStyle(
           fontFamily: AppTheme.fontFamily,
@@ -553,7 +553,7 @@ class FormSwitch extends StatelessWidget {
         children: [
           Text(
             prompt,
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
           LinkButton(label: action, onPressed: onPressed),
         ],
@@ -575,7 +575,7 @@ class SmallNote extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.muted,
           fontSize: 11,
           height: 1.7,
@@ -637,7 +637,7 @@ class StatusIcon extends StatelessWidget {
           ),
           child: Text(
             glyph,
-            style: const TextStyle(color: AppColors.action, fontSize: 27),
+            style: TextStyle(color: AppColors.action, fontSize: 27),
           ),
         ),
       ),

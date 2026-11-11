@@ -25,7 +25,7 @@ class AskHackyButton extends StatelessWidget {
       width: compact ? 50 : 44,
       height: compact ? 50 : 44,
       padding: const EdgeInsets.all(4),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.white,
         shape: BoxShape.circle,
       ),
@@ -54,7 +54,7 @@ class AskHackyButton extends StatelessWidget {
               children: [
                 face,
                 if (!compact)
-                  const Text(
+                  Text(
                     label,
                     style: TextStyle(
                       color: AppColors.onAction,

@@ -13,7 +13,7 @@ class MessageBox extends StatefulWidget {
   final Widget field;
   final Widget send;
 
-  static const textStyle = TextStyle(
+  static TextStyle get textStyle => TextStyle(
     color: AppColors.ink,
     fontSize: 16,
     height: 1.4,
@@ -22,7 +22,7 @@ class MessageBox extends StatefulWidget {
   /// A field with no box of its own.
   static InputDecoration decoration(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: AppColors.muted),
+    hintStyle: TextStyle(color: AppColors.muted),
     counterText: '',
     isDense: true,
     filled: false,
@@ -96,7 +96,7 @@ class SendButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       icon: busy
-          ? const SizedBox.square(
+          ? SizedBox.square(
               dimension: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,

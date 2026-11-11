@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'api/api_client.dart';
 import 'api/models/auth.dart';
@@ -14,19 +15,68 @@ import 'shell/signed_in_shell.dart';
 import 'theme.dart';
 import 'widgets/auth_widgets.dart';
 
-class HackyApp extends StatelessWidget {
+/// The app. Light or dark follows the phone's setting, like the web follows
+/// the system's (web/src/lib/theme.ts); switching it repaints every screen
+/// without losing where the user is.
+class HackyApp extends StatefulWidget {
   const HackyApp({super.key, required this.api});
 
   final ApiClient api;
 
   @override
+  State<HackyApp> createState() => _HackyAppState();
+}
+
+class _HackyAppState extends State<HackyApp> with WidgetsBindingObserver {
+  late final _router = AppRouter(widget.api);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  static AppPalette _system() =>
+      WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+          Brightness.dark
+      ? AppPalette.dark
+      : AppPalette.light;
+
+  @override
+  void didChangePlatformBrightness() {
+    setState(() {});
+    // Widgets read AppColors while they build, and many are const, so a
+    // rebuild from here wouldn't reach them: mark every one dirty too.
+    _rebuildAll(context);
+  }
+
+  static void _rebuildAll(BuildContext context) {
+    void rebuild(Element element) {
+      element.markNeedsBuild();
+      element.visitChildren(rebuild);
+    }
+
+    (context as Element).visitChildren(rebuild);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Hacky',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      home: StartScreen(api: api),
-      onGenerateRoute: AppRouter(api).route,
+    final palette = _system();
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: AppTheme.overlayStyle(palette),
+      child: MaterialApp(
+        title: 'Hacky',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.of(palette),
+        home: StartScreen(api: widget.api),
+        onGenerateRoute: _router.route,
+      ),
     );
   }
 }

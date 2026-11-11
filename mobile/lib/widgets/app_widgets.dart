@@ -61,7 +61,7 @@ class SignedInPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.ink,
             fontSize: 20,
             fontWeight: _bold,
@@ -100,7 +100,7 @@ class PageTitle extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.ink,
                       fontSize: 24,
                       fontWeight: _bold,
@@ -158,7 +158,7 @@ class SectionLabel extends StatelessWidget {
       header: true,
       child: Text(
         text.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.muted,
           fontSize: 10,
           fontWeight: _bold,
@@ -176,21 +176,23 @@ class AppCard extends StatelessWidget {
     required this.child,
     this.onTap,
     this.padding = const EdgeInsets.all(18),
-    this.color = AppColors.white,
+    this.color,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
-  final Color color;
+
+  /// Null is the card color ([AppColors.white]).
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color,
+      color: color ?? AppColors.white,
       shape: RoundedRectangleBorder(
         borderRadius: AppTheme.borderRadius,
-        side: const BorderSide(color: AppColors.line),
+        side: BorderSide(color: AppColors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -364,14 +366,16 @@ class QuietTag extends StatelessWidget {
   const QuietTag(
     this.label, {
     super.key,
-    this.ink = AppColors.muted,
-    this.wash = AppColors.wash,
+    this.ink,
+    this.wash,
     this.bold = false,
   });
 
   final String label;
-  final Color ink;
-  final Color wash;
+
+  /// Null is [AppColors.muted] on [AppColors.wash].
+  final Color? ink;
+  final Color? wash;
   final bool bold;
 
   @override
@@ -379,7 +383,7 @@ class QuietTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: wash,
+        color: wash ?? AppColors.wash,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -387,7 +391,7 @@ class QuietTag extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: ink,
+          color: ink ?? AppColors.muted,
           fontSize: 12.5,
           height: 1.45,
           fontWeight: bold ? _bold : FontWeight.w400,
@@ -413,7 +417,7 @@ class CountBadge extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.onAction,
           fontSize: 11,
           fontWeight: _bold,
@@ -455,7 +459,7 @@ class PersonRow extends StatelessWidget {
               children: [
                 Text(
                   person.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.ink,
                     fontSize: 15,
                     fontWeight: _bold,
@@ -463,7 +467,7 @@ class PersonRow extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 13,
                     height: 1.45,
@@ -473,7 +477,7 @@ class PersonRow extends StatelessWidget {
             ),
           ),
           if (onTap != null)
-            const Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
+            Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
         ],
       ),
     );
@@ -497,7 +501,7 @@ class LoadingView extends StatelessWidget {
             dimension: 28,
             child: CircularProgressIndicator(strokeWidth: 3),
           ),
-          Text(label, style: const TextStyle(color: AppColors.muted)),
+          Text(label, style: TextStyle(color: AppColors.muted)),
         ],
       ),
     );
@@ -558,7 +562,7 @@ class MascotMessage extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.ink,
               fontSize: 19,
               fontWeight: _bold,
@@ -567,7 +571,7 @@ class MascotMessage extends StatelessWidget {
           Text(
             body,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.muted,
               fontSize: 14,
               height: 1.6,

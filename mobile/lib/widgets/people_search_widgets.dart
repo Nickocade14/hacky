@@ -49,11 +49,11 @@ class PeopleSearchField extends StatelessWidget {
       inputFormatters: [
         LengthLimitingTextInputFormatter(PeopleSearch.maxLength),
       ],
-      style: const TextStyle(color: AppColors.ink, fontSize: 16),
+      style: TextStyle(color: AppColors.ink, fontSize: 16),
       decoration: InputDecoration(
         hintText: 'Search name, handle or skill',
-        hintStyle: const TextStyle(color: AppColors.muted),
-        prefixIcon: const Icon(Icons.search, color: AppColors.muted),
+        hintStyle: TextStyle(color: AppColors.muted),
+        prefixIcon: Icon(Icons.search, color: AppColors.muted),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 14,
@@ -65,7 +65,7 @@ class PeopleSearchField extends StatelessWidget {
               : IconButton(
                   key: clearKey,
                   tooltip: 'Clear search',
-                  icon: const Icon(Icons.close, color: AppColors.muted),
+                  icon: Icon(Icons.close, color: AppColors.muted),
                   onPressed: _clear,
                 ),
         ),
@@ -167,13 +167,13 @@ class SearchHitRow extends StatelessWidget {
                     children: MatchHighlight.spans(
                       hit.name,
                       query,
-                      matchStyle: const TextStyle(
+                      matchStyle: TextStyle(
                         color: AppColors.action,
                         fontWeight: _bold,
                       ),
                     ),
                   ),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.ink,
                     fontSize: 15,
                     fontWeight: _bold,
@@ -189,7 +189,7 @@ class SearchHitRow extends StatelessWidget {
                       ],
                     ],
                   ),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 13,
                     height: 1.45,
@@ -220,7 +220,7 @@ class ResultCountLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       PersonLabels.resultCount(count, eventName),
-      style: const TextStyle(color: AppColors.muted, fontSize: 13),
+      style: TextStyle(color: AppColors.muted, fontSize: 13),
     );
   }
 }

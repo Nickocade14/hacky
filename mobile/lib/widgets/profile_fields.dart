@@ -20,7 +20,7 @@ class FieldLabel extends StatelessWidget {
     return ExcludeSemantics(
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.ink,
           fontSize: 12,
           fontWeight: _bold,
@@ -107,10 +107,10 @@ class ProfileTextField extends StatelessWidget {
             ],
             keyboardType: lines == 1 ? keyboardType : TextInputType.multiline,
             autocorrect: keyboardType != TextInputType.url,
-            style: const TextStyle(color: AppColors.ink, fontSize: 16),
+            style: TextStyle(color: AppColors.ink, fontSize: 16),
             decoration: InputDecoration(
               hintText: placeholder,
-              hintStyle: const TextStyle(color: AppColors.muted),
+              hintStyle: TextStyle(color: AppColors.muted),
               errorText: error,
               errorMaxLines: 3,
               helperText: error == null ? hint : null,
@@ -207,7 +207,7 @@ class _TagListEditorState extends State<TagListEditor> {
                 deleteButtonTooltipMessage: 'Remove $tag',
                 backgroundColor: AppColors.hover,
                 side: BorderSide.none,
-                labelStyle: const TextStyle(
+                labelStyle: TextStyle(
                   color: AppColors.action,
                   fontSize: 13,
                   fontWeight: _bold,
@@ -224,8 +224,8 @@ class _TagListEditorState extends State<TagListEditor> {
                     ? () => setState(() => _adding = true)
                     : null,
                 backgroundColor: AppColors.white,
-                side: const BorderSide(color: AppColors.line),
-                labelStyle: const TextStyle(
+                side: BorderSide(color: AppColors.line),
+                labelStyle: TextStyle(
                   color: AppColors.ink,
                   fontSize: 13,
                   fontWeight: _bold,
@@ -257,11 +257,11 @@ class _TagListEditorState extends State<TagListEditor> {
                 LengthLimitingTextInputFormatter(ProfileRules.tagMax),
               ],
               onSubmitted: (_) => _input.text.trim().isEmpty ? _close() : _add(),
-              style: const TextStyle(color: AppColors.ink, fontSize: 15),
+              style: TextStyle(color: AppColors.ink, fontSize: 15),
               decoration: InputDecoration(
                 isDense: true,
                 hintText: widget.placeholder,
-                hintStyle: const TextStyle(color: AppColors.muted),
+                hintStyle: TextStyle(color: AppColors.muted),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,
@@ -279,7 +279,7 @@ class _TagListEditorState extends State<TagListEditor> {
         IconButton(
           tooltip: 'Done adding',
           onPressed: _close,
-          icon: const Icon(Icons.close, size: 20, color: AppColors.muted),
+          icon: Icon(Icons.close, size: 20, color: AppColors.muted),
         ),
       ],
     );

@@ -210,7 +210,7 @@ class _Muted extends StatelessWidget {
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: AppColors.muted, fontSize: 13),
+      style: TextStyle(color: AppColors.muted, fontSize: 13),
     );
   }
 }

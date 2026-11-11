@@ -80,7 +80,7 @@ class HackyRichText extends StatelessWidget {
   final String text;
   final void Function(String handle) onOpenHandle;
 
-  static final style = ChatBubble.textStyle();
+  static TextStyle get style => ChatBubble.textStyle();
 
   @override
   Widget build(BuildContext context) {
@@ -189,12 +189,12 @@ class SendFailedNote extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         spacing: 4,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.danger, size: 16),
+          Icon(Icons.error_outline, color: AppColors.danger, size: 16),
           Flexible(
             child: Text(
               'Not sent. $message',
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.danger,
                 fontSize: 13,
                 height: 1.4,
@@ -353,7 +353,7 @@ class HackyChip extends StatelessWidget {
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.action,
         disabledForegroundColor: AppColors.muted,
-        side: const BorderSide(color: AppColors.line),
+        side: BorderSide(color: AppColors.line),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         minimumSize: const Size(0, 40),
@@ -448,7 +448,7 @@ class HackyBrief extends StatelessWidget {
             const SizedBox(height: 10),
             Semantics(
               header: true,
-              child: const Text(
+              child: Text(
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -461,7 +461,7 @@ class HackyBrief extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Pick a starting point, or tell me what you’re trying to do.',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -505,7 +505,7 @@ class StarterCard extends StatelessWidget {
   final HackyStarter starter;
   final VoidCallback? onPressed;
 
-  static const _label = TextStyle(
+  static TextStyle get _label => TextStyle(
     color: AppColors.link,
     fontFamily: AppTheme.fontFamily,
     fontSize: 15.5,
@@ -531,7 +531,7 @@ class StarterCard extends StatelessWidget {
         color: AppColors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppColors.line),
+          side: BorderSide(color: AppColors.line),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -720,7 +720,7 @@ class ChatComposer extends StatelessWidget {
                   },
                 ),
               ),
-              const Text(
+              Text(
                 note,
                 textAlign: TextAlign.center,
                 style: TextStyle(

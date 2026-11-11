@@ -145,7 +145,7 @@ class _Title extends StatelessWidget {
                 ? CrossAxisAlignment.center
                 : CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Hacky',
                 maxLines: 1,
                 softWrap: false,
@@ -161,7 +161,7 @@ class _Title extends StatelessWidget {
                 eventName ?? 'No hackathon yet',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 12,
                   height: 1.4,

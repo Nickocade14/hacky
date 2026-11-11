@@ -56,7 +56,7 @@ class ChatThreadHeader extends StatelessWidget {
                       ConversationText.title(c),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.ink,
                         fontSize: 16,
                         fontWeight: _bold,
@@ -67,7 +67,7 @@ class ChatThreadHeader extends StatelessWidget {
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 12,
                         ),
@@ -102,7 +102,7 @@ class SystemNote extends StatelessWidget {
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.muted,
             fontSize: 12,
             height: 1.5,
@@ -188,8 +188,8 @@ class UnsendSheet extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: ListTile(
-          leading: const Icon(Icons.undo, color: AppColors.danger),
-          title: const Text(
+          leading: Icon(Icons.undo, color: AppColors.danger),
+          title: Text(
             label,
             style: TextStyle(color: AppColors.danger, fontWeight: _bold),
           ),
@@ -211,7 +211,7 @@ class BubbleNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+      style: TextStyle(color: AppColors.muted, fontSize: 12),
     );
   }
 }
@@ -271,7 +271,7 @@ class _FailedNote extends StatelessWidget {
           Text(
             'Not sent. $error',
             textAlign: TextAlign.right,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.danger,
               fontSize: 12,
               height: 1.5,
@@ -331,7 +331,7 @@ class OlderMessagesBar extends StatelessWidget {
           Text(
             problem,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.danger, fontSize: 13),
+            style: TextStyle(color: AppColors.danger, fontSize: 13),
           ),
         TextButton(
           onPressed: onLoad,

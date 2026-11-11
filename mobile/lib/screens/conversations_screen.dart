@@ -279,7 +279,7 @@ class _QuietLine extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.muted,
           fontSize: 14,
           height: 1.6,
