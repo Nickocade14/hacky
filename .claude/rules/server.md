@@ -11,7 +11,7 @@ paths:
 - `pre("validate")` hooks only run on `save()`/`create()`. Rules that compare fields go in the update filter. Use the helpers next to the models: `claimHelpRequest`, `resolveHelpRequest`, `addTeamMember`, `openDm`.
 - Requests: for personal requests only, before creating A→B look for a pending B→A and accept it with `openDm` instead. Team requests always need the owner's acceptance; acceptance, adding the member and opening the DM must be one transaction.
 - Search: escape `q` before building a RegExp. `handle` is stored lowercase, so a lowercase `^prefix` regex uses its index.
-- Auth tokens (verify/reset): use `issueAuthToken` and `consumeAuthToken`; never bypass their uniqueness or expiration checks.
+- Sign-up and reset codes: hash them with `hashCode` and check them with `spendCodeTry` (`src/auth/codes.ts`), which counts the try atomically and enforces expiry and the 5-try limit. Nothing becomes an account until `verify-email` accepts the code.
 - Passwords: use the Zod schemas and `hashPassword` in `src/validation/auth.ts`; bcrypt's limit is 72 UTF-8 bytes.
 - Teams: `createTeam` includes the owner; use `addTeamMember` after approval. The unique event/members index enforces one team per person per event. Do not remove an owner without transferring ownership and validating the resulting team.
 - Messages: use `createMessage` for all sends, including system messages. It saves the message and advances conversation activity in one transaction. Use `listMessages` for ObjectId cursors and `listConversations` for activity ordering.
