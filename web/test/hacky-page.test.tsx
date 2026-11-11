@@ -93,13 +93,13 @@ describe("Hacky chat page", () => {
     const skills = within(card).getAllByRole("listitem").map((item) => [item.textContent, item.className]);
     expect(skills).toEqual([["React", "matched"], ["TypeScript", ""], ["Tailwind CSS", ""]]);
     expect(screen.getByText("strong").tagName).toBe("STRONG");
-    expect(screen.getByText("Find a teammate for my project")).not.toBeNull();
+    expect(screen.getByText("Help me find a teammate")).not.toBeNull();
 
     const [, init] = sends()[0]!;
     const body = JSON.parse(String(init?.body));
     expect(body.message.role).toBe("user");
     expect(body.message.id).toMatch(/^[A-Za-z0-9_-]{1,100}$/);
-    expect(body.message.parts).toEqual([{ type: "text", text: "Find a teammate for my project" }]);
+    expect(body.message.parts).toEqual([{ type: "text", text: "Help me find a teammate" }]);
     expect(init?.headers instanceof Headers ? init.headers.get("Authorization") : null).toBe("Bearer test-jwt");
   });
 
