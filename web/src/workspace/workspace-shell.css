@@ -61,7 +61,6 @@
 .hk-side-header h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.025em; }
 .hk-event { display: flex; align-items: center; gap: 12px; margin: 10px 24px 24px; font-size: 14px; line-height: 1.45; }
 .hk-event small { font-size: 13px; color: var(--muted); }
-.hk-event-mark { width: 58px; height: 28px; object-fit: contain; }
 .hk-event-initials { min-width: 40px; height: 28px; display: grid; place-items: center; border-radius: 7px; background: var(--action); color: var(--on-action); font-size: 13px; font-weight: 700; letter-spacing: .04em; }
 .hk-event-divider { width: 1px; height: 26px; background: var(--line); }
 .hk-contacts { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 12px 20px; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }

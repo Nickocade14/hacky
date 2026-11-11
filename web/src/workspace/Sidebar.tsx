@@ -77,10 +77,7 @@ function EventBadge({ event }: { event: MyEvent | undefined }) {
   const role = (roleNames[event.role] ?? event.role).toLowerCase();
   const initials = event.name.split(/\s+/).slice(0, 2).map(word => Array.from(word)[0]).join("").toUpperCase();
   return <div className="hk-event">
-    {/* Knight Hacks is an MLH member event; other events get their initials. */}
-    {event.slug.startsWith("knighthacks")
-      ? <img className="hk-event-mark" src="/assets/brand/mlh-logo-color.svg" alt="Major League Hacking" />
-      : <span className="hk-event-initials" aria-hidden="true">{initials}</span>}
+    <span className="hk-event-initials" aria-hidden="true">{initials}</span>
     <span className="hk-event-divider" />
     <span>{event.name}<br /><small>You’re here as a {role}{event.verified && event.role !== "hacker" ? " · Verified" : ""}</small></span>
   </div>;
