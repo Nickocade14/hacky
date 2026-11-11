@@ -1,4 +1,4 @@
-import type { EmailBody, EventInfo, EventList, EventMe, LoginBody, LoginResult, Me, Ok, RegisterBody, ResetCodeBody, SearchQuery, SearchResults, VerifyCodeBody } from "./contracts";
+import type { ChatBody, ChatMessage, EmailBody, EventInfo, EventList, EventMe, LoginBody, LoginResult, Me, Ok, RegisterBody, RequestResult, ResetCodeBody, SearchQuery, SendRequestBody, SearchResults, VerifyCodeBody } from "./contracts";
 import { readSession } from "./session";
 
 type ErrorKind = "api" | "network" | "server" | "unavailable" | "unauthorized";
@@ -75,6 +75,10 @@ export function createApiClient(options: ClientOptions = {}) {
     getEvent: (slug: string, signal?: AbortSignal) => request<EventInfo>(`/events/${encodeURIComponent(slug)}`, "GET", undefined, signal, true),
     getEventMe: (slug: string, signal?: AbortSignal) => request<EventMe>(`/events/${encodeURIComponent(slug)}/me`, "GET", undefined, signal, true),
     joinEvent: (slug: string, signal?: AbortSignal) => request<EventMe>(`/events/${encodeURIComponent(slug)}/join`, "POST", undefined, signal, true),
+    getChatHistory: (slug: string, signal?: AbortSignal) => request<{ messages: ChatMessage[] }>(`/events/${encodeURIComponent(slug)}/chat`, "GET", undefined, signal, true),
+    // ?format=json: the whole answer at once (the server doesn't stream yet).
+    sendChat: (slug: string, body: ChatBody, signal?: AbortSignal) => request<{ message: ChatMessage }>(`/events/${encodeURIComponent(slug)}/chat?format=json`, "POST", body, signal, true),
+    sendRequest: (slug: string, body: SendRequestBody, signal?: AbortSignal) => request<RequestResult>(`/events/${encodeURIComponent(slug)}/requests`, "POST", body, signal, true),
     searchPeople(query: SearchQuery, signal?: AbortSignal) {
       const params = new URLSearchParams({ event: query.event, q: query.q });
       if (query.role) params.set("role", query.role);
