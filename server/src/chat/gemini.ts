@@ -73,6 +73,10 @@ const PROVIDERS: Record<Provider, { key: string; model: () => LanguageModel; opt
   anthropic: {
     key: "ANTHROPIC_API_KEY",
     model: () => anthropic(process.env.ANTHROPIC_CHAT_MODEL ?? "claude-haiku-5-5"),
+    // Current Claude models think before answering by default, which can use
+    // up the output budget before the JSON is written. Picking 3 people
+    // doesn't need it.
+    options: { anthropic: { thinking: { type: "disabled" }, effort: "low" } },
   },
 };
 
@@ -88,18 +92,25 @@ export function createRanker(model?: LanguageModel): Ranker {
     if (!model && !process.env[provider.key]) {
       throw new HttpError(503, "ai_unavailable", "Hacky is offline right now. Please try again later.");
     }
-    const { output } = await generateText({
+    const result = await generateText({
       model: model ?? provider.model(),
       instructions: buildInstructions(input),
       prompt: buildPrompt(input),
       output: Output.object({ schema: rankOutputSchema }),
       temperature: 0.3,
-      maxOutputTokens: 600,
+      maxOutputTokens: 1000,
       maxRetries: 1,
       timeout: CHAT_TIMEOUT_MS,
       providerOptions: model ? undefined : provider.options,
     });
-    return output;
+    // `output` throws when the model stopped before writing the JSON (for
+    // example it ran out of tokens). Say why in the log; routes.ts answers 502.
+    try {
+      return result.output;
+    } catch (error) {
+      console.warn(`[chat] no output from ${chatProvider()} (finish: ${result.finishReason})`);
+      throw error;
+    }
   };
 }
 
