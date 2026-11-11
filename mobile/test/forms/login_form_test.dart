@@ -56,21 +56,19 @@ void main() {
     expect(store.token, isNotNull);
   });
 
-  testWidgets('logs in with the username, with or without the @', (
-    tester,
-  ) async {
-    for (final login in ['demo_hacker', ' @Demo_Hacker ']) {
+  for (final login in ['demo_hacker', ' @Demo_Hacker ']) {
+    testWidgets('logs in with the username "$login"', (tester) async {
       final (:api, :store) = fakeApi();
       final visits = await pumpScreen(tester, loginPage(api));
 
       await fillLogin(tester, login, FakeApiClient.testPassword);
       await tapOn(tester, logInButton);
 
-      expect(visits.single.route, Routes.home, reason: login);
+      expect(visits.single.route, Routes.home);
       expect((visits.single.arguments as Me).profile.handle, 'demo_hacker');
       expect(store.token, isNotNull);
-    }
-  });
+    });
+  }
 
   testWidgets('checks the email or username locally', (tester) async {
     final (:api, store: _) = fakeApi();
