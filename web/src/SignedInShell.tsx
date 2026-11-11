@@ -60,6 +60,7 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
     else if (phone) setOpen(false);
   }, [chatsRoute, phone, pathname]);
 
+  const onHacky = pathname === "/hacky" || chatsRoute;
   const tab = pathname.startsWith("/people/") ? "/search" : pathname;
   const current = (path: string) => tab === path ? "page" as const : undefined;
   const slug = event?.slug;
@@ -73,27 +74,35 @@ export function SignedInShell({ me, event, signOut, onExpired, children }: {
     <div className="hk-main">
       <header className="hk-header">
         <div className="hk-header-side">
-          <button type="button" className={`hk-icon hk-chats-toggle${waiting ? " attention" : ""}`} aria-expanded={open} aria-controls="hk-sidebar"
-            aria-label={waiting ? `Chats, ${waiting} waiting` : "Chats"} title="Chats" onClick={() => setOpen(value => !value)}>
-            <Icon name="chat" />
+          <button type="button" className={`hk-nav-link hk-chats-toggle${waiting ? " attention" : ""}`} aria-expanded={open} aria-controls="hk-sidebar"
+            aria-label={waiting ? `Chats, ${waiting} waiting` : "Chats"} onClick={() => setOpen(value => !value)}>
+            <Icon name="chat" /><span className="hk-nav-label">Chats</span>
           </button>
           <button type="button" className="hk-icon" aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`} onClick={toggle}>
             <Icon name={theme === "dark" ? "sun" : "moon"} />
           </button>
         </div>
-        <Link className="hk-title" to={eventPath("/hacky", slug)} aria-current={current("/hacky")}>
+        <Link className="hk-title" to={eventPath("/hacky", slug)}>
           <span className="hk-title-name">Hacky</span>
           <span className="hk-title-event">{event?.name ?? "Find your people"}</span>
         </Link>
         <nav className="hk-header-side end" aria-label="Main navigation">
-          <Link className="hk-icon" to={eventPath("/search", slug)} aria-label="People" title="People" aria-current={current("/search")}><Icon name="people" /></Link>
-          <Link className="hk-icon" to="/app" aria-label="Home" title="Events and team" aria-current={current("/app")}><Icon name="events" /></Link>
+          <Link className="hk-nav-link" to={eventPath("/search", slug)} aria-current={current("/search")}><Icon name="people" /><span>People</span></Link>
+          <Link className="hk-nav-link" to="/app" aria-current={current("/app")}><Icon name="events" /><span>Home</span></Link>
           <Link className="hk-icon hk-me" to="/profile" aria-label="My profile" title="My profile" aria-current={current("/profile")}>
             {me ? <KnitAvatar person={me.profile} size={36} /> : <span className="hk-avatar" />}
           </Link>
         </nav>
       </header>
       {children}
+      {/* On other pages, a way back to the chat with Hacky. */}
+      {me && !onHacky && <Link className="hk-ask-fab" to={eventPath("/hacky", slug)}>
+        <img src="/assets/mascots/hacky-knit.webp" alt="" /><span>Ask Hacky</span>
+      </Link>}
     </div>
+    {/* In Chats, just Hacky's face, above the message box. */}
+    {me && chatsRoute && <Link className="hk-ask-fab compact" to={eventPath("/hacky", slug)} aria-label="Ask Hacky" title="Ask Hacky">
+      <img src="/assets/mascots/hacky-knit.webp" alt="" />
+    </Link>}
   </div>;
 }

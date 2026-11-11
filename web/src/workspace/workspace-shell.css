@@ -1,7 +1,7 @@
 /* Signed-in shell, carried over from mlhacky.com (seeko-codes/Hacky react/public/app/hacky.css):
    Chats on the left, the page on the right. The phone is one pane with Chats sliding over it. */
 .hk-app { position: fixed; inset: 0; height: 100dvh; overflow: hidden; background: var(--paper); color: var(--ink); }
-.hk-main { height: 100%; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--paper); }
+.hk-main { position: relative; height: 100%; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--paper); }
 .hk-svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -45,11 +45,28 @@
 .hk-title-name { font-size: 22px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; }
 .hk-title-event { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .hk-title:hover .hk-title-name { color: var(--action); }
-.hk-chats-toggle.attention::after { content: ''; position: absolute; top: 9px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--action); box-shadow: 0 0 0 2px var(--paper); }
+.hk-nav-link { position: relative; min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 15px; font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer; transition: background 160ms, color 160ms, transform 160ms var(--ease); }
+.hk-nav-link:active { transform: scale(.97); }
+.hk-nav-link[aria-current=page] { color: var(--action); background: var(--hover); }
+@media (hover: hover) { .hk-nav-link:hover { color: var(--action); background: var(--wash); } }
+.hk-chats-toggle.attention::after { content: ''; position: absolute; top: 9px; left: 26px; width: 9px; height: 9px; border-radius: 50%; background: var(--action); box-shadow: 0 0 0 2px var(--paper); }
 .hk-me { border-radius: 50%; }
 .hk-me[aria-current=page] { background: var(--hover); box-shadow: 0 0 0 2px var(--action); }
 
-/* Pages other than Hacky scroll here. */
+/* Ask Hacky: floats over every page except Hacky's own. */
+.hk-ask-fab { position: absolute; right: 24px; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 2; display: inline-flex; align-items: center; gap: 10px; padding: 7px 20px 7px 7px; border-radius: 999px; background: var(--action); color: var(--on-action); font-size: 16px; font-weight: 700; text-decoration: none; box-shadow: 0 10px 28px color-mix(in srgb, var(--action) 35%, transparent), 0 2px 6px var(--shadow); animation: hk-fab-in 320ms var(--ease) both; transition: background 160ms, transform 200ms var(--ease), box-shadow 200ms; }
+.hk-ask-fab img { width: 44px; height: 44px; padding: 3px; border-radius: 50%; background: var(--white); object-fit: contain; transition: transform 300ms var(--ease); }
+.hk-ask-fab:hover { background: var(--action-hover); transform: translateY(-2px); box-shadow: 0 14px 32px color-mix(in srgb, var(--action) 42%, transparent), 0 2px 6px var(--shadow); }
+.hk-ask-fab:hover img { transform: rotate(-8deg) scale(1.06); }
+.hk-ask-fab:active { transform: translateY(0) scale(.97); }
+.hk-ask-fab:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* Only on phones: there Chats covers Hacky; wider screens show Hacky beside the chat. */
+.hk-ask-fab.compact { position: fixed; right: 24px; bottom: max(104px, calc(88px + env(safe-area-inset-bottom))); z-index: 4; padding: 6px; }
+.hk-ask-fab.compact img { width: 50px; height: 50px; }
+@keyframes hk-fab-in { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
+
+/* Pages other than Hacky scroll here, with room under the last item for Ask Hacky. */
+.hk-page .workspace-content { padding-bottom: 112px; }
 .hk-page.workspace { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }
 
 /* Chats. */
@@ -128,13 +145,28 @@
   .hk-app { display: grid; grid-template-rows: minmax(0, 1fr); grid-template-columns: 0 minmax(0, 1fr); transition: grid-template-columns 220ms var(--ease); }
   .hk-app.open { grid-template-columns: 320px minmax(0, 1fr); }
   .hk-app.open.in-thread { grid-template-columns: min(380px, 45vw) minmax(0, 1fr); }
+  .hk-ask-fab.compact { display: none; }
   .hk-sidebar { position: static; transform: none; min-width: 0; border-right: 1px solid var(--line); background: var(--sidebar); transition: visibility 220ms; }
   .hk-side-inner { min-width: 319px; }
   .hk-header { padding-inline: 20px; min-height: 68px; }
 }
+/* Narrow main pane: icons only, title hidden on phones. */
+@media (max-width: 1180px) {
+  .hk-app.open .hk-nav-link :is(span, .hk-nav-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .hk-app.open .hk-nav-link { padding: 0 10px; }
+}
+@media (max-width: 900px) {
+  .hk-nav-link :is(span, .hk-nav-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .hk-nav-link { padding: 0 10px; }
+}
 @media (max-width: 700px) {
-  .hk-title-name { font-size: 20px; }
+  .hk-header { grid-template-columns: auto 1fr; }
+  .hk-title { display: none; }
   .hk-header-side { gap: 0; }
+  .hk-nav-link { padding: 0 9px; }
+  .hk-ask-fab { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); padding-right: 16px; font-size: 15px; }
+  .hk-ask-fab.compact { right: 16px; bottom: max(96px, calc(80px + env(safe-area-inset-bottom))); padding: 5px; }
+  .hk-page .workspace-content { padding-bottom: 104px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hk-app, .hk-sidebar, .hk-app * { animation: none !important; transition: none !important; }

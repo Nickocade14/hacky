@@ -178,7 +178,7 @@ describe("authentication pages", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "What can I help you with?" })).not.toBeNull();
     expect(screen.getByText("@ethan_z")).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Hacky Knight Hacks IX", current: "page" })).not.toBeNull();
+    expect(screen.queryByRole("link", { name: "Ask Hacky" })).toBeNull();
     expect(screen.getByRole("navigation", { name: "Main navigation" })).not.toBeNull();
     expect(screen.queryByRole("complementary", { name: "About Hacky" })).toBeNull();
     expect(readSession()).toEqual({ token: result.token, expiresAt: result.expiresAt });
@@ -258,6 +258,7 @@ describe("authentication pages", () => {
 
     await user.click(screen.getByRole("link", { name: "People" }));
     expect(screen.getByRole("link", { name: "People" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "Ask Hacky" }).getAttribute("href")).toBe("/hacky?event=knighthacks-ix");
     expect(screen.queryByRole("complementary", { name: "About Hacky" })).toBeNull();
     await user.type(screen.getByRole("searchbox", { name: "Name, handle, or skill" }), "React");
     expect(await screen.findByText("No matches found.")).not.toBeNull();
