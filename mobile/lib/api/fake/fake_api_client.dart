@@ -86,10 +86,19 @@ class FakeApiClient with FakeEndpoints implements ApiClient {
 
   @override
   Future<LoginResult> login(LoginBody body) async {
-    await _respond(body.email);
-    final account = _accounts[body.email];
+    await _respond(body.login);
+    // Like the server: an @ after the first character means an email.
+    final login = body.login.trim().toLowerCase();
+    final handle = login.startsWith('@') ? login.substring(1) : login;
+    final account = login.indexOf('@') > 0
+        ? _accounts[login]
+        : _accounts.values.where((a) => a.handle == handle).firstOrNull;
     if (account == null || account.password != body.password) {
-      throw _error(401, 'invalid_credentials', 'Wrong email or password.');
+      throw _error(
+        401,
+        'invalid_credentials',
+        'Wrong email, username or password.',
+      );
     }
     return _signIn(account);
   }

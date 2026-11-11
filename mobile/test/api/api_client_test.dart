@@ -94,7 +94,7 @@ void main() {
       );
 
       await client.login(
-        const LoginBody(email: 'nico@example.com', password: 'secret-pass'),
+        const LoginBody(login: 'nico@example.com', password: 'secret-pass'),
       );
 
       final request = requests.single;
@@ -103,7 +103,7 @@ void main() {
       expect(request.headers['Content-Type'], startsWith('application/json'));
       expect(request.headers.containsKey('Authorization'), isFalse);
       expect(jsonDecode(request.body), {
-        'email': 'nico@example.com',
+        'login': 'nico@example.com',
         'password': 'secret-pass',
       });
     });
@@ -118,7 +118,7 @@ void main() {
       );
 
       final result = await client.login(
-        const LoginBody(email: 'nico@example.com', password: 'secret-pass'),
+        const LoginBody(login: 'nico@example.com', password: 'secret-pass'),
       );
 
       expect(result.token, 'new-jwt');
@@ -141,7 +141,7 @@ void main() {
         );
 
         await expectLater(
-          client.login(const LoginBody(email: 'a@b.co', password: 'nope-nope')),
+          client.login(const LoginBody(login: 'a@b.co', password: 'nope-nope')),
           throwsA(
             isA<ApiException>()
                 .having((e) => e.statusCode, 'statusCode', 401)
@@ -159,7 +159,7 @@ void main() {
       );
 
       await expectLater(
-        client.login(const LoginBody(email: 'a@b.co', password: 'password1')),
+        client.login(const LoginBody(login: 'a@b.co', password: 'password1')),
         throwsA(
           isA<ApiException>().having(
             (e) => e.code,

@@ -27,12 +27,13 @@ class RegisterBody {
 
 /// `LoginBody`: `POST /api/auth/login`.
 class LoginBody {
-  const LoginBody({required this.email, required this.password});
+  const LoginBody({required this.login, required this.password});
 
-  final String email;
+  /// The email or the username.
+  final String login;
   final String password;
 
-  Map<String, dynamic> toJson() => {'email': email, 'password': password};
+  Map<String, dynamic> toJson() => {'login': login, 'password': password};
 }
 
 /// `VerifyCodeBody`: `POST /api/auth/verify-email`.

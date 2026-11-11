@@ -16,10 +16,10 @@ Widget loginPage(FakeApiClient api) =>
 
 Future<void> fillLogin(
   WidgetTester tester,
-  String email,
+  String login,
   String password,
 ) async {
-  await tester.enterText(find.byKey(const Key('login-email')), email);
+  await tester.enterText(find.byKey(const Key('login-id')), login);
   await tester.enterText(find.byKey(const Key('login-password')), password);
 }
 
@@ -37,7 +37,8 @@ void main() {
     expect(find.text('New around here? '), findsOneWidget);
 
     await tapOn(tester, logInButton);
-    expect(find.text('Enter your email address.'), findsOneWidget);
+    expect(find.text('Email or username'), findsOneWidget);
+    expect(find.text('Enter your email or username.'), findsOneWidget);
     expect(find.text('Enter your password.'), findsOneWidget);
   });
 
@@ -55,6 +56,36 @@ void main() {
     expect(store.token, isNotNull);
   });
 
+  testWidgets('logs in with the username, with or without the @', (
+    tester,
+  ) async {
+    for (final login in ['demo_hacker', ' @Demo_Hacker ']) {
+      final (:api, :store) = fakeApi();
+      final visits = await pumpScreen(tester, loginPage(api));
+
+      await fillLogin(tester, login, FakeApiClient.testPassword);
+      await tapOn(tester, logInButton);
+
+      expect(visits.single.route, Routes.home, reason: login);
+      expect((visits.single.arguments as Me).profile.handle, 'demo_hacker');
+      expect(store.token, isNotNull);
+    }
+  });
+
+  testWidgets('checks the email or username locally', (tester) async {
+    final (:api, store: _) = fakeApi();
+    final visits = await pumpScreen(tester, loginPage(api));
+
+    await fillLogin(tester, 'no spaces allowed', FakeApiClient.testPassword);
+    await tapOn(tester, logInButton);
+    expect(find.text('Enter a valid email or username.'), findsOneWidget);
+
+    await fillLogin(tester, 'demo@hacky', FakeApiClient.testPassword);
+    await tapOn(tester, logInButton);
+    expect(find.text('Enter a valid email address.'), findsOneWidget);
+    expect(visits, isEmpty);
+  });
+
   testWidgets('shows the server message for a wrong password', (tester) async {
     final (:api, :store) = fakeApi();
     final visits = await pumpScreen(tester, loginPage(api));
@@ -62,7 +93,7 @@ void main() {
     await fillLogin(tester, FakeApiClient.demoEmail, 'wrong-password');
     await tapOn(tester, logInButton);
 
-    expect(find.text('Wrong email or password.'), findsOneWidget);
+    expect(find.text('Wrong email, username or password.'), findsOneWidget);
     expect(visits, isEmpty);
     expect(store.token, isNull);
   });

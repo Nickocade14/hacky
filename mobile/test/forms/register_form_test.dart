@@ -71,7 +71,7 @@ void main() {
       () => expectLater(
         api.login(
           const LoginBody(
-            email: 'ethan@example.com',
+            login: 'ethan@example.com',
             password: 'correct-password',
           ),
         ),

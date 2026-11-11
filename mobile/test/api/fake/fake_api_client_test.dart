@@ -14,7 +14,7 @@ void main() {
     final (:api, store: _) = fakeApi();
     await api.login(
       const LoginBody(
-        email: FakeApiClient.demoEmail,
+        login: FakeApiClient.demoEmail,
         password: FakeApiClient.testPassword,
       ),
     );
@@ -46,7 +46,7 @@ void main() {
     await api.register(register);
 
     // No account yet, so login fails and a wrong code is rejected.
-    const login = LoginBody(email: email, password: 'correct-password');
+    const login = LoginBody(login: email, password: 'correct-password');
     await expectLater(
       api.login(login),
       throwsA(apiError('invalid_credentials')),
@@ -120,18 +120,18 @@ void main() {
     expect(store.token, result.token);
     await expectLater(
       api.login(
-        const LoginBody(email: email, password: FakeApiClient.testPassword),
+        const LoginBody(login: email, password: FakeApiClient.testPassword),
       ),
       throwsA(apiError('invalid_credentials')),
     );
-    await api.login(const LoginBody(email: email, password: 'brand-new-pass'));
+    await api.login(const LoginBody(login: email, password: 'brand-new-pass'));
   });
 
   test('rejects a wrong password and taken email or handle', () async {
     final (:api, store: _) = fakeApi();
     await expectLater(
       api.login(
-        const LoginBody(email: FakeApiClient.demoEmail, password: 'wrong'),
+        const LoginBody(login: FakeApiClient.demoEmail, password: 'wrong'),
       ),
       throwsA(apiError('invalid_credentials')),
     );

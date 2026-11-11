@@ -45,6 +45,16 @@ void main() {
       expect(FieldRules.handle('Ethan Z'), FieldRules.handleHint);
       expect(FieldRules.handle('a' * 31), FieldRules.handleHint);
     });
+    test('login takes an email or a username', () {
+      expect(FieldRules.login('nico@ucf.edu'), isNull);
+      expect(FieldRules.login('nico_c'), isNull);
+      expect(FieldRules.login('@Nico_C'), isNull);
+      expect(FieldRules.login(''), 'Enter your email or username.');
+      expect(FieldRules.login('nico c'), 'Enter a valid email or username.');
+      expect(FieldRules.login('nico@ucf'), 'Enter a valid email address.');
+      expect(FieldRules.normalizeLogin(' Nico@UCF.edu '), 'nico@ucf.edu');
+      expect(FieldRules.normalizeLogin(' @Nico_C '), 'nico_c');
+    });
     test('code is 6 digits', () {
       expect(FieldRules.code('482913'), isNull);
       expect(FieldRules.code(' 482913 '), isNull);

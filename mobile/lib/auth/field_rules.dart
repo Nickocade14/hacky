@@ -13,6 +13,20 @@ abstract final class FieldRules {
   /// Trimmed and lowercased, like the web sends it.
   static String normalizeEmail(String value) => value.trim().toLowerCase();
 
+  /// Login takes an email or a username. Usernames can't contain `@`, so an
+  /// `@` after the first character means an email (same rule as the server).
+  static bool _isEmailLogin(String value) => value.trim().indexOf('@') > 0;
+
+  static String normalizeLogin(String value) =>
+      _isEmailLogin(value) ? normalizeEmail(value) : normalizeHandle(value);
+
+  static String? login(String? value) {
+    final login = (value ?? '').trim();
+    if (login.isEmpty) return 'Enter your email or username.';
+    if (_isEmailLogin(login)) return email(login);
+    return handle(login) == null ? null : 'Enter a valid email or username.';
+  }
+
   static String? email(String? value) {
     final email = (value ?? '').trim();
     if (email.isEmpty) return 'Enter your email address.';
