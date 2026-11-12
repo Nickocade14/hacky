@@ -287,6 +287,7 @@ class _MyProfileScreenState extends State<MyProfileScreen>
             enabled: !busy,
           ),
           _eventPart(errors),
+          const DarkModeCard(),
           SecondaryButton(label: 'Sign out', onPressed: busy ? null : _signOut),
         ],
       ),

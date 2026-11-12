@@ -87,7 +87,7 @@ class _RegisterFormState extends State<RegisterForm>
                 AuthField(
                   id: 'register-handle',
                   label: 'Username',
-                  placeholder: 'your_username',
+                  placeholder: 'yourname',
                   prefix: '@',
                   hint: FieldRules.handleHint,
                   controller: _handle,
