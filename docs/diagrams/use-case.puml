@@ -1,0 +1,62 @@
+@startuml use-case
+' Built from docs/openapi.yaml and the screens in web/src and mobile/lib/screens.
+' Only actions a user can reach from a screen are shown.
+!include hacky-style.iuml
+left to right direction
+skinparam packageStyle rectangle
+title Hacky use cases
+
+actor Visitor as V
+actor Hacker as H
+actor Mentor as M
+actor "Email\n(Brevo SMTP)" as Mail <<system>>
+
+rectangle "Hacky (web + mobile)" {
+  rectangle "Account" {
+    usecase "Register" as UC_Reg
+    usecase "Verify email\nwith 6-digit code" as UC_Verify
+    usecase "Log in\n(email or username)" as UC_Login
+    usecase "Reset password\nwith 6-digit code" as UC_Reset
+  }
+  rectangle "At the event" {
+    usecase "Join an event\nas hacker or mentor" as UC_Join
+    usecase "Edit profile,\nintake and availability" as UC_Profile
+    usecase "Search people\n(partial match)" as UC_Search
+    usecase "Ask Hacky for\nteammates or mentors" as UC_Hacky
+    usecase "View a profile" as UC_Person
+    usecase "Send a\nconnection request" as UC_SendReq
+    usecase "Accept or hide\na request" as UC_Accept
+    usecase "Chat with connections" as UC_Chat
+    usecase "Block a person" as UC_Block
+    usecase "Create a team" as UC_Team
+  }
+}
+
+V --> UC_Reg
+V --> UC_Login
+V --> UC_Reset
+UC_Reg ..> UC_Verify : <<include>>
+UC_Verify --> Mail
+UC_Reset --> Mail
+
+H --> UC_Join
+H --> UC_Profile
+H --> UC_Search
+H --> UC_Hacky
+H --> UC_Accept
+H --> UC_Chat
+H --> UC_Block
+H --> UC_Team
+
+M --> UC_Join
+M --> UC_Profile
+M --> UC_Search
+M --> UC_Hacky
+M --> UC_Accept
+M --> UC_Chat
+M --> UC_Block
+
+UC_Search ..> UC_Person : <<extend>>
+UC_Hacky ..> UC_SendReq : <<extend>>
+UC_Person ..> UC_SendReq : <<extend>>
+@enduml

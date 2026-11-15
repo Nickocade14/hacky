@@ -1,0 +1,53 @@
+@startuml sequence
+' Built from server/src/auth/routes.ts (POST /api/auth/login) and
+' server/src/chat/routes.ts (POST /api/events/{slug}/chat?format=json).
+!include hacky-style.iuml
+autonumber
+title Log in, then one Hacky chat turn
+
+actor Attendee
+participant "React or Flutter\nclient" as Client
+participant "Express API\n(hackymatch.me)" as API
+database "MongoDB Atlas" as DB
+participant "AI model\n(Gemini or Claude)" as AI
+
+== Log in ==
+Attendee -> Client : Email or username + password
+Client -> API : POST /api/auth/login
+API -> DB : Find user (email, or handle via profiles)
+DB --> API : User + passwordHash
+API -> API : bcrypt.compare(password, hash)
+alt Wrong login or password
+  API --> Client : 401 invalid_credentials
+  Client --> Attendee : "Wrong email, username or password."
+else Email not verified
+  API --> Client : 403 email_not_verified
+else Correct
+  API -> API : signToken(userId) → JWT
+  API -> DB : buildMe (profile + events)
+  API --> Client : 200 { token, expiresAt, me }
+  Client -> Client : Save JWT (secure storage / browser)
+  Client --> Attendee : Open Home
+end
+
+== Hacky chat turn ==
+Attendee -> Client : "Find me a React teammate"
+Client -> API : POST /api/events/{slug}/chat?format=json\nAuthorization: Bearer <JWT>
+API -> API : Verify JWT → viewer id
+API -> DB : Check event membership
+API -> DB : Reply with this message id already saved?
+alt Retry of a message already answered
+  DB --> API : Saved reply
+  API --> Client : 200 { message } (no AI call)
+else New message
+  API -> DB : Exclude viewer, blocked people,\nand people already in touch
+  API -> DB : Candidates: $text search on memberships
+  DB --> API : Up to 40 candidates
+  API -> DB : Last 6 chat messages (history)
+  API -> AI : Rank candidates for the request
+  AI --> API : Picks + reason for each
+  API -> DB : Save user message + reply\n(one transaction)
+  API --> Client : 200 { message: parts with match cards }
+  Client --> Attendee : Hacky's answer with people cards
+end
+@enduml

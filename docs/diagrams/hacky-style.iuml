@@ -1,0 +1,67 @@
+' Shared look for every Hacky diagram: the app's colors (web/src/theme.css).
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Lato
+skinparam defaultFontColor #243247
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam ArrowColor #606975
+skinparam ArrowFontColor #606975
+skinparam ArrowFontSize 11
+skinparam TitleFontSize 18
+skinparam TitleFontStyle bold
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #0866D9
+  HeaderBackgroundColor #E6EFFA
+  AttributeFontColor #243247
+  StereotypeFontColor #606975
+}
+skinparam package {
+  BackgroundColor #F5F6F8
+  BorderColor #D8DDE5
+  FontColor #243247
+}
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #0866D9
+}
+skinparam actor {
+  BackgroundColor #E6EFFA
+  BorderColor #0866D9
+}
+skinparam usecase {
+  BackgroundColor #E6EFFA
+  BorderColor #0866D9
+}
+skinparam rectangle {
+  BackgroundColor #F5F6F8
+  BorderColor #D8DDE5
+}
+skinparam participant {
+  BackgroundColor #E6EFFA
+  BorderColor #0866D9
+}
+skinparam database {
+  BackgroundColor #E8F0EB
+  BorderColor #39604F
+}
+skinparam sequence {
+  LifeLineBorderColor #D8DDE5
+  GroupBorderColor #D8DDE5
+  GroupBackgroundColor #F5F6F8
+}
+skinparam activity {
+  BackgroundColor #E6EFFA
+  BorderColor #0866D9
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #0866D9
+  StartColor #0866D9
+  EndColor #0866D9
+}
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #D8DDE5
+  FontColor #606975
+}

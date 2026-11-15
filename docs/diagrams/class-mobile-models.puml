@@ -1,0 +1,156 @@
+@startuml class-mobile-models
+' Built from mobile/lib/api/models/*.dart: the JSON shapes from docs/openapi.yaml
+' as Dart classes. Request bodies (RegisterBody, LoginBody, ...) are left out.
+!include hacky-style.iuml
+hide empty members
+skinparam classAttributeIconSize 0
+title Hacky Flutter app: API models
+
+package "auth" {
+  class LoginResult {
+    +token : String
+    +expiresAt : DateTime
+    +me : Me
+  }
+  class Me {
+    +profile : PublicProfile
+    +events : List<MyEvent>
+  }
+  class PublicProfile {
+    +userId : String
+    +handle : String
+    +name : String
+    +photoUrl : String?
+    +bio : String?
+    +links : ProfileLinks
+  }
+  class MyEvent {
+    +slug : String
+    +name : String
+    +role : MemberRole
+    +verified : bool
+  }
+}
+
+package "events" {
+  class EventInfo {
+    +slug : String
+    +name : String
+    +theme : EventTheme
+    +tracks : List<String>
+  }
+  class Membership {
+    +role : MemberRole
+    +verified : bool
+    +availability : Availability
+    +looking : bool
+  }
+  class EventMe {
+    +intake : Intake
+  }
+  class Intake {
+    +skills : List<String>
+    +skillsWanted : List<String>
+    +experience : Experience?
+    +goal : HackGoal?
+    +track : String?
+    +idea : String?
+    +complete : bool
+  }
+}
+
+package "people" {
+  class PersonSummary {
+    +userId : String
+    +handle : String
+    +name : String
+    +role : MemberRole
+  }
+  class SearchHit {
+    +skills : List<String>
+    +matchedSkills : List<String>
+  }
+  class PersonDetail {
+    +skills : List<String>
+    +experience : Experience?
+    +idea : String?
+    +relation : Relation
+  }
+  class Relation {
+    +state : RelationState
+    +requestId : String?
+    +conversationId : String?
+  }
+  class TeamSummary {
+    +id : String
+    +name : String
+    +size : int
+    +maxSize : int
+    +owner : PersonSummary
+  }
+}
+
+package "social" {
+  class ConnectionRequest {
+    +id : String
+    +direction : RequestDirection
+    +status : ConnectionStatus
+    +intro : String
+    +person : PersonSummary
+    +conversationId : String?
+  }
+  class ConversationSummary {
+    +id : String
+    +kind : ConversationKind
+    +peer : PersonSummary?
+    +lastMessage : Message?
+    +unreadCount : int
+  }
+  class Message {
+    +id : String
+    +senderId : String?
+    +clientId : String?
+    +body : String
+    +kind : MessageKind
+    +createdAt : DateTime
+  }
+  class ChatMessage {
+    +id : String
+    +role : ChatRole
+    +parts : List<Map>
+  }
+}
+
+package "hacky" {
+  abstract class HackyPart <<sealed>>
+  class HackyTextPart
+  class HackyMatchesPart
+  class HackyQuestionPart
+  class HackyIntroDraftPart
+  abstract class HackyMatch <<sealed>>
+  class PersonMatch
+  class TeamMatch
+}
+
+LoginResult *-- Me
+Me *-- PublicProfile
+Me *-- "0..*" MyEvent
+EventMe -up-|> Membership
+EventMe *-- Intake
+PersonDetail -up-|> PublicProfile
+PersonDetail ..|> Membership
+PersonDetail *-- Relation
+SearchHit -up-|> PersonSummary
+TeamSummary --> PersonSummary : owner
+ConnectionRequest --> PersonSummary
+ConversationSummary --> PersonSummary : peer
+ConversationSummary --> Message : last
+ChatMessage ..> HackyPart : parsed into
+HackyTextPart -up-|> HackyPart
+HackyMatchesPart -up-|> HackyPart
+HackyQuestionPart -up-|> HackyPart
+HackyIntroDraftPart -up-|> HackyPart
+HackyMatchesPart *-- "1..*" HackyMatch
+PersonMatch -up-|> HackyMatch
+TeamMatch -up-|> HackyMatch
+@enduml
