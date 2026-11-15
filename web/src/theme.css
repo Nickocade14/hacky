@@ -27,6 +27,10 @@
   --success: #c5dbcc; --success-wash: #30463d; --danger: #ff9aa2; --danger-wash: #46282c;
   --shadow: #0006; --orbit: #3a4a61; --sidebar: #1e242e; --scroll: #6c788b; --overlay: #0b121db3;
   --incoming-bubble: #2d3542; --link: #80b5ff;
+  /* The light theme's saturated blue glares on dark gray and fails WCAG as text (3.2:1).
+     Buttons get a soft blue with dark text (8.2:1); my bubbles a deep blue with light text (8.2:1). */
+  --action: #80b5ff; --action-hover: #a6ccff; --on-action: #0f1b2d;
+  --outgoing-bubble: #1d4a85; --outgoing-text: #f2f6fc;
   --hacker-ink: #bad8ff; --hacker-bg: #283e5b; --mentor-ink: #c5dbcc; --mentor-bg: #30463d;
   --sponsor-ink: #efd097; --sponsor-bg: #493e29;
 }
