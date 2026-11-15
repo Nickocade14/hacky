@@ -67,6 +67,14 @@
 .hk-intro textarea:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
 .hk-intro-actions { display: flex; gap: 8px; }
 
+/* A profile change Hacky proposes. */
+.hk-profile-update { width: 100%; max-width: 560px; border-color: var(--action); }
+.hk-profile-title { margin: 0; font-size: 17px; line-height: 1.3; }
+.hk-changes { display: grid; gap: 8px; margin: 0; }
+.hk-changes div { display: grid; gap: 2px; }
+.hk-changes dt { font-size: 13px; font-weight: 700; color: var(--muted); }
+.hk-changes dd { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
+
 /* Composer. */
 .hk-compose-wrap { flex: none; padding: 8px 16px max(12px, env(safe-area-inset-bottom)); }
 .hk-composer { display: flex; flex-direction: row; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); transition: border-color 160ms; }

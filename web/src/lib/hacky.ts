@@ -1,8 +1,10 @@
 import type { ChatMessage } from "./contracts";
 
-// Reads Hacky's answers. The server sends AI SDK message parts: text, and a
+// Reads Hacky's answers. The server sends AI SDK message parts: text, a
 // "tool-search_people" part whose output holds the person or mentor cards
-// (same shapes mobile reads in mobile/lib/hacky/hacky_parts.dart).
+// (same shapes mobile reads in mobile/lib/hacky/hacky_parts.dart), and a
+// "tool-update_profile" part with a profile change to review and save
+// (ProfileUpdateProposal in docs/openapi.yaml).
 
 export type CardPerson = { userId: string; handle: string; name: string; photoUrl: string | null; role: string };
 
@@ -16,9 +18,19 @@ export type HackyCard = {
   availability: string | null;
 };
 
+export type ProfileChange = { field: string; label: string; added: string[]; removed: string[]; value: string | null };
+
+/** What Hacky proposes. profile and intake are the PATCH bodies to send on Save. */
+export type ProfileProposal = {
+  profile: Record<string, unknown>;
+  intake: Record<string, unknown>;
+  changes: ProfileChange[];
+};
+
 export type HackyPart =
   | { type: "text"; text: string }
-  | { type: "cards"; mentors: boolean; cards: HackyCard[] };
+  | { type: "cards"; mentors: boolean; cards: HackyCard[] }
+  | { type: "profile"; id: string; proposal: ProfileProposal };
 
 type Json = Record<string, unknown>;
 const isObject = (value: unknown): value is Json => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -42,6 +54,24 @@ function cardOf(value: unknown): HackyCard | null {
   };
 }
 
+function proposalOf(value: unknown): ProfileProposal | null {
+  if (!isObject(value) || !isObject(value.profile) || !isObject(value.intake) || !Array.isArray(value.changes)) return null;
+  const changes = value.changes.flatMap((change): ProfileChange[] => {
+    if (!isObject(change) || !asString(change.field) || !asString(change.label)) return [];
+    return [{
+      field: asString(change.field), label: asString(change.label),
+      added: strings(change.added), removed: strings(change.removed), value: asString(change.value) || null,
+    }];
+  });
+  return changes.length ? { profile: value.profile, intake: value.intake, changes } : null;
+}
+
+/** One line per change, as the card shows it: "+ frontend, − Flutter" or the new value. */
+export function changeText(change: ProfileChange) {
+  const list = [...change.added.map((tag) => `+ ${tag}`), ...change.removed.map((tag) => `− ${tag}`)];
+  return list.length ? list.join(", ") : change.value ?? "";
+}
+
 /** The parts of an assistant message this page can show, in order. Unknown parts are skipped. */
 export function partsOf(message: ChatMessage): HackyPart[] {
   const parts: HackyPart[] = [];
@@ -52,6 +82,9 @@ export function partsOf(message: ChatMessage): HackyPart[] {
     } else if (part.type === "tool-search_people" && isObject(part.output)) {
       const cards = (Array.isArray(part.output.cards) ? part.output.cards : []).map(cardOf).filter((card): card is HackyCard => card !== null);
       if (cards.length) parts.push({ type: "cards", mentors: part.output.kind === "mentor", cards });
+    } else if (part.type === "tool-update_profile") {
+      const proposal = proposalOf(part.output);
+      if (proposal) parts.push({ type: "profile", id: asString(part.toolCallId) || message.id, proposal });
     }
   }
   return parts;
