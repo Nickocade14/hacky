@@ -4,6 +4,8 @@ import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../api/models/auth.dart';
 import '../api/models/chat.dart';
+import '../api/models/events.dart';
+import '../api/models/me.dart';
 import '../api/models/requests.dart';
 import '../auth/error_text.dart';
 import '../hacky/chat_start.dart';
@@ -237,7 +239,19 @@ class _HackyChatScreenState extends State<HackyChatScreen>
     ask: _ask,
     sendRequest: _sendRequest,
     sentRequest: _sent.find,
+    saveProfile: _saveProfile,
   );
+
+  /// Saves a change Hacky proposed, with the same endpoints as 08 My profile.
+  Future<void> _saveProfile(
+    UpdateProfileBody profile,
+    UpdateEventMeBody intake,
+  ) async {
+    if (!profile.isEmpty) await widget.api.updateProfile(profile);
+    if (intake.toJson().isNotEmpty) {
+      await widget.api.updateEventMe(widget.eventSlug, intake);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
