@@ -1,0 +1,33 @@
+@startuml activity-search
+' PlantUML version of the search activity diagram in ../interaction-diagrams.md.
+' GET /api/search (docs/openapi.yaml, server/src/search.ts).
+!include hacky-style.iuml
+title Search for event participants (partial match)
+
+start
+:Sign in;
+if (Account belongs to an event?) then (no)
+  :Show "join an event first";
+  stop
+else (yes)
+endif
+repeat
+  :Type part of a name, @username or skill\n(optional filter: Hackers / Mentors);
+  :GET /api/search?event=<slug>&q=<text>\nAuthorization: Bearer <JWT>;
+  if (Token expired?) then (yes)
+    :Back to login;
+    stop
+  elseif (Not a member of the event?) then (yes)
+    :403, show access error;
+    stop
+  else (ok)
+    :Server matches case-insensitively:\nhandle/name starting with q, then containing q, then skills;
+    if (Any matches?) then (yes)
+      :Show people, most relevant first;
+    else (no)
+      :Show "no results";
+    endif
+  endif
+repeat while (Search again?) is (yes) not (no)
+stop
+@enduml
