@@ -1,0 +1,142 @@
+@startuml class-mobile
+' Built from mobile/lib/**/*.dart. Private members, widgets-only helpers and
+' the fake API used in tests are left out. Models are in class-mobile-models.puml.
+!include hacky-style.iuml
+hide empty members
+skinparam classAttributeIconSize 0
+left to right direction
+title Hacky Flutter app: screens, state and API
+
+package "app" {
+  class HackyApp <<StatefulWidget>>
+  class AppRouter {
+    +api : ApiClient
+    +route(settings) : Route
+  }
+  class ThemeChoice <<ChangeNotifier>> {
+    +dark : bool?
+    +load() : Future<void>
+    +choose(dark: bool) : void
+  }
+}
+
+package "screens" {
+  class StartScreen <<StatefulWidget>>
+  class AuthScreen <<StatefulWidget>>
+  class VerifyEmailScreen <<StatefulWidget>> {
+    +email : String
+  }
+  class ForgotPasswordScreen <<StatefulWidget>>
+  class SignedInShell <<StatefulWidget>> {
+    +me : Me?
+  }
+  class HomeScreen <<StatefulWidget>>
+  class SearchPeopleScreen <<StatefulWidget>>
+  class HackyChatScreen <<StatefulWidget>>
+  class PersonProfileScreen <<StatefulWidget>>
+  class RequestsScreen <<StatefulWidget>>
+  class ConversationsScreen <<StatefulWidget>>
+  class ChatThreadScreen <<StatefulWidget>>
+  class MyProfileScreen <<StatefulWidget>>
+  class JoinEventScreen <<StatefulWidget>>
+}
+
+package "state" {
+  class PeopleSearch <<ChangeNotifier>> {
+    +eventSlug : String
+    +state : SearchState
+    +setText(text) : void
+    +setRole(role) : void
+    +submit() : void
+    +retry() : void
+  }
+  class ThreadMessages {
+    +saved : List<Message>
+    +pending : List<PendingMessage>
+    +hasMore : bool
+    +addOlder(page) : void
+    +addNewer(page) : List<Message>
+    +write(clientId, body) : PendingMessage
+    +sent(message) : void
+  }
+  class ProfileEditor <<ChangeNotifier>> {
+    +look : HackyLook
+    +changes : UpdateProfileBody?
+    +dirty : bool
+    +reset(profile) : void
+  }
+  class IntakeEditor <<ChangeNotifier>>
+  class HackyParts {
+    +{static} of(message) : List<HackyPart>
+    +{static} textOf(message) : String
+  }
+  class RequestLists {
+    +incoming : List<ConnectionRequest>
+    +outgoing : List<ConnectionRequest>
+    +hidden : List<ConnectionRequest>
+  }
+}
+
+package "api" {
+  class ApiClient {
+    +timeout : Duration
+    +register(body) : Future<void>
+    +verifyEmail(body) : Future<LoginResult>
+    +login(body) : Future<LoginResult>
+    +forgotPassword(body) : Future<void>
+    +resetPassword(body) : Future<LoginResult>
+    +logout() : Future<void>
+    +getMe() : Future<Me>
+    +search(event, q, role) : Future<SearchResults>
+    +getPerson(slug, handle) : Future<PersonDetail>
+    +sendChat(slug, body) : Future<ChatMessage>
+    +sendRequest(slug, body) : Future<RequestResult>
+    +acceptRequest(id) : Future<RequestResult>
+    +listConversations(slug) : Future<List<ConversationSummary>>
+    +sendMessage(id, body) : Future<Message>
+    +joinEvent(slug, body) : Future<EventMe>
+    +updateProfile(body) : Future<PublicProfile>
+  }
+  interface TokenStore {
+    +read() : Future<String?>
+    +write(token) : Future<void>
+    +clear() : Future<void>
+  }
+  class SecureTokenStore
+  class ApiException {
+    +statusCode : int?
+    +code : String
+    +message : String
+  }
+}
+
+HackyApp --> AppRouter
+HackyApp --> ThemeChoice
+AppRouter ..> AuthScreen : creates
+AppRouter ..> VerifyEmailScreen
+AppRouter ..> ForgotPasswordScreen
+AppRouter ..> SignedInShell
+AppRouter ..> PersonProfileScreen
+AppRouter ..> RequestsScreen
+AppRouter ..> ChatThreadScreen
+SignedInShell *-- HomeScreen
+SignedInShell *-- SearchPeopleScreen
+SignedInShell *-- HackyChatScreen
+SignedInShell *-- ConversationsScreen
+SignedInShell *-- MyProfileScreen
+
+SearchPeopleScreen --> PeopleSearch
+ChatThreadScreen --> ThreadMessages
+MyProfileScreen --> ProfileEditor
+MyProfileScreen --> IntakeEditor
+HackyChatScreen ..> HackyParts
+RequestsScreen --> RequestLists
+
+PeopleSearch --> ApiClient
+StartScreen --> ApiClient
+JoinEventScreen --> ApiClient
+AppRouter --> ApiClient
+ApiClient --> TokenStore
+SecureTokenStore ..|> TokenStore
+ApiClient ..> ApiException : throws
+@enduml
