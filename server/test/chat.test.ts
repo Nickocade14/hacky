@@ -8,7 +8,8 @@ import mongoose, { Types } from "mongoose";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { createApp } from "../src/app.js";
 import { signToken } from "../src/auth/jwt.js";
-import type { RankInput, RankOutput } from "../src/chat/gemini.js";
+import type { ProfileEditInput, RankInput, RankOutput } from "../src/chat/gemini.js";
+import type { ProfileEdit } from "../src/chat/profile.js";
 import { connectDb, disconnectDb } from "../src/db.js";
 import { HttpError } from "../src/errors.js";
 import { AgentMessageModel } from "../src/models/AgentMessage.js";
@@ -31,6 +32,9 @@ const ajv = new Ajv({ strict: false, validateFormats: false });
 // Each test sets what the fake ranker does.
 let calls: RankInput[] = [];
 let nextRank: (input: RankInput) => Promise<RankOutput> = async () => ({ reply: "", matches: [] });
+let editCalls: ProfileEditInput[] = [];
+let nextEdit: (input: ProfileEditInput) => Promise<ProfileEdit> = async () => noEdit;
+const noEdit: ProfileEdit = { reply: "", addSkills: [], removeSkills: [], addSkillsWanted: [], addInterests: [], experience: null, bio: null };
 
 const ids: Record<string, Types.ObjectId> = {};
 let token: string;
@@ -52,7 +56,8 @@ before(async () => {
     await mongoose.model(name).createIndexes();
   }
   const rank = (input: RankInput) => { calls.push(input); return nextRank(input); };
-  server = createApp({ mailer: { send: async () => {} }, rank }).listen(0, "127.0.0.1");
+  const editProfile = (input: ProfileEditInput) => { editCalls.push(input); return nextEdit(input); };
+  server = createApp({ mailer: { send: async () => {} }, rank, editProfile }).listen(0, "127.0.0.1");
   await once(server, "listening");
   const address = server.address();
   assert.ok(address && typeof address !== "string");
@@ -298,3 +303,53 @@ test("never suggests people the viewer already requested, chats with or teams wi
     assert.equal(seen.includes(`(@${shown})`), true, shown);
   }
 });
+
+test("profile edit: a card with ready-to-send PATCH bodies, nothing saved, no matching", async () => {
+  calls = []; editCalls = [];
+  await ProfileModel.updateOne({ _id: ids.viewer }, { $set: { links: { github: "https://github.com/viewer" } } });
+  nextEdit = async () => ({ ...noEdit, reply: "Check it and tap Save.", addSkills: ["frontend", "flutter"] });
+  const response = await post("Add that I have experience in frontend to my profile. linkedin.com/in/viewer");
+  assert.equal(response.status, 200);
+  assert.equal(calls.length, 0);
+  assert.deepEqual(editCalls[0].current.skills, ["Flutter"]);
+  assert.ok(ajv.validate(chatMessageSchema, response.body.message), JSON.stringify(ajv.errors));
+
+  const [text, card] = response.body.message.parts;
+  assert.deepEqual(text, { type: "text", text: "Check it and tap Save." });
+  assert.equal(card.type, "tool-update_profile");
+  assert.match(card.toolCallId, /^call-/);
+  assert.deepEqual(card.output, {
+    status: "proposed",
+    profile: { links: { github: "https://github.com/viewer", linkedin: "https://linkedin.com/in/viewer" } },
+    intake: { skills: ["Flutter", "frontend"] },
+    changes: [
+      { field: "skills", label: "Skills", added: ["frontend"] },
+      { field: "linkedin", label: "LinkedIn", value: "https://linkedin.com/in/viewer" },
+    ],
+  });
+
+  // Only proposed: the profile and membership are unchanged until the client PATCHes.
+  const event = (await EventModel.findOne({ slug: "knighthacks-ix" }).lean())!._id;
+  const membership = await MembershipModel.findOne({ event, user: ids.viewer }).lean();
+  assert.deepEqual(membership?.skills, ["Flutter"]);
+  const profile = await ProfileModel.findById(ids.viewer).lean();
+  assert.deepEqual(profile?.links, { github: "https://github.com/viewer" });
+});
+
+test("a pasted link is proposed even when the model is down; nothing to change is a text answer", async () => {
+  nextEdit = async () => { throw new HttpError(503, "ai_unavailable", "Hacky is offline right now. Please try again later."); };
+  const linked = await post("https://www.github.com/viewer-new");
+  assert.equal(linked.status, 200);
+  assert.equal(linked.body.message.parts[0].text, "I found your link. Check it and tap Save to add it to your profile.");
+  assert.equal(linked.body.message.parts[1].output.profile.links.github, "https://www.github.com/viewer-new");
+
+  const offline = await post("add Rust to my skills", "profile-offline-1");
+  assert.equal(offline.status, 503);
+  assert.equal(await AgentMessageModel.countDocuments({ messageId: { $in: ["profile-offline-1", "reply-profile-offline-1"] } }), 0);
+
+  nextEdit = async () => noEdit;
+  const nothing = await post("update my profile please");
+  assert.equal(nothing.status, 200);
+  assert.deepEqual(nothing.body.message.parts.map((p: any) => p.type), ["text"]);
+});
+

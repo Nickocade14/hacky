@@ -9,7 +9,8 @@ import { viewerId } from "../me.js";
 import { AgentMessageModel } from "../models/AgentMessage.js";
 import { ProfileModel } from "../models/Profile.js";
 import { type CandidateRow, alreadyInTouch, intentOf, loadCandidates, matchedSkills, summaryLine } from "./candidates.js";
-import { type RankOutput, type Ranker, defaultRanker } from "./gemini.js";
+import { type ProfileEditor, type RankOutput, type Ranker, defaultProfileEditor, defaultRanker } from "./gemini.js";
+import { PROFILE_REPLIES, type ProfileEdit, buildProposal, linksFrom, proposalPart, wantsProfileEdit } from "./profile.js";
 
 export const chatQuerySchema = z.object({
   format: z.enum(["stream", "json"]).default("stream"),
@@ -53,9 +54,10 @@ const handlesOf = (parts: Part[]) => parts.flatMap((p) => {
 function historyLine(doc: StoredMessage): string {
   const text = textOf(doc.parts).replace(/\s+/g, " ");
   const handles = handlesOf(doc.parts);
+  const proposed = doc.parts.some((p) => p.type === "tool-update_profile");
   const line = doc.role === "user"
     ? `user: ${text}`
-    : `hacky: ${text}${handles.length ? ` [suggested: ${handles.join(", ")}]` : ""}`;
+    : `hacky: ${text}${handles.length ? ` [suggested: ${handles.join(", ")}]` : ""}${proposed ? " [proposed a profile change]" : ""}`;
   return line.slice(0, 300);
 }
 
@@ -143,7 +145,39 @@ function assistantParts(out: RankOutput | null, refs: Map<string, CandidateRow>,
 }
 
 // Mounted at /api/events after requireAuth.
-export function createChatRouter({ rank = defaultRanker }: { rank?: Ranker } = {}): Router {
+// Text plus a tool-update_profile card, or text only when nothing would change.
+// Links come from the typed text, so pasting one works even when the model is down.
+async function profileParts(
+  viewer: mongoose.Types.ObjectId, membership: { skills?: string[] | null; skillsWanted?: string[] | null; interests?: string[] | null; experience?: string | null },
+  text: string, editProfile: ProfileEditor,
+): Promise<Part[]> {
+  const profile = await ProfileModel.findById(viewer).select("bio links").lean();
+  const links = profile?.links instanceof Map ? Object.fromEntries(profile.links) : { ...(profile?.links ?? {}) };
+  const current = {
+    skills: membership.skills ?? [],
+    skillsWanted: membership.skillsWanted ?? [],
+    interests: membership.interests ?? [],
+    experience: membership.experience ?? null,
+    bio: profile?.bio ?? null,
+    links,
+  };
+  const typedLinks = linksFrom(text);
+  let edit: ProfileEdit | null = null;
+  try {
+    edit = await editProfile({ current, text });
+  } catch (error) {
+    // Without the model, a pasted link can still be proposed.
+    if (!Object.keys(typedLinks).length) throw toHttpError(error);
+    console.warn("[chat] profile edit failed; proposing the typed links only");
+  }
+  const proposal = buildProposal(current, edit, typedLinks);
+  if (!proposal) return [{ type: "text", text: PROFILE_REPLIES.nothing }];
+  const onlyLinks = proposal.changes.every((c) => ["github", "linkedin", "website"].includes(c.field));
+  const reply = edit?.reply.replace(/\s+/g, " ").trim().slice(0, 300) || (onlyLinks ? PROFILE_REPLIES.linksOnly : PROFILE_REPLIES.proposed);
+  return [{ type: "text", text: reply }, proposalPart(proposal, text)];
+}
+
+export function createChatRouter({ rank = defaultRanker, editProfile = defaultProfileEditor }: { rank?: Ranker; editProfile?: ProfileEditor } = {}): Router {
   const router = Router();
 
   router.get("/:slug/chat", async (req, res) => {
@@ -183,35 +217,39 @@ export function createChatRouter({ rank = defaultRanker }: { rank?: Ranker } = {
       return;
     }
 
-    // Never suggest the viewer, anyone blocked either way, or anyone they're
-    // already in touch with here (requests, chats, teammates).
-    const excluded = [viewer, ...await blockedWith(viewer), ...await alreadyInTouch(event._id, viewer)];
-    const intent = intentOf(body.text);
-    const rows = await loadCandidates(event._id, excluded, intent, body.text);
-
     let parts: Part[];
-    if (rows.length === 0) {
-      parts = [{ type: "text", text: NO_ONE[intent] }];
+    if (wantsProfileEdit(body.text)) {
+      parts = await profileParts(viewer, membership, body.text, editProfile);
     } else {
-      const refs = new Map(rows.map((row, i) => [`p${i + 1}`, row]));
-      const viewerProfile = await ProfileModel.findById(viewer).select("handle name hackyStyle photoUrl").lean();
-      const history = (await AgentMessageModel.find({ user: viewer, event: event._id })
-        .sort({ createdAt: -1, _id: -1 }).limit(6).lean<StoredMessage[]>()).reverse().map(historyLine);
-      let out: RankOutput;
-      try {
-        out = await rank({
-          eventName: event.name,
-          tracks: event.tracks ?? [],
-          viewerLine: viewerProfile ? summaryLine({ ...membership, profile: viewerProfile } as CandidateRow) : "(unknown)",
-          history,
-          intent,
-          candidates: [...refs].map(([ref, row]) => ({ ref, line: summaryLine(row, ref) })),
-          text: body.text,
-        });
-      } catch (error) {
-        throw toHttpError(error);
+      // Never suggest the viewer, anyone blocked either way, or anyone they're
+      // already in touch with here (requests, chats, teammates).
+      const excluded = [viewer, ...await blockedWith(viewer), ...await alreadyInTouch(event._id, viewer)];
+      const intent = intentOf(body.text);
+      const rows = await loadCandidates(event._id, excluded, intent, body.text);
+
+      if (rows.length === 0) {
+        parts = [{ type: "text", text: NO_ONE[intent] }];
+      } else {
+        const refs = new Map(rows.map((row, i) => [`p${i + 1}`, row]));
+        const viewerProfile = await ProfileModel.findById(viewer).select("handle name hackyStyle photoUrl").lean();
+        const history = (await AgentMessageModel.find({ user: viewer, event: event._id })
+          .sort({ createdAt: -1, _id: -1 }).limit(6).lean<StoredMessage[]>()).reverse().map(historyLine);
+        let out: RankOutput;
+        try {
+          out = await rank({
+            eventName: event.name,
+            tracks: event.tracks ?? [],
+            viewerLine: viewerProfile ? summaryLine({ ...membership, profile: viewerProfile } as CandidateRow) : "(unknown)",
+            history,
+            intent,
+            candidates: [...refs].map(([ref, row]) => ({ ref, line: summaryLine(row, ref) })),
+            text: body.text,
+          });
+        } catch (error) {
+          throw toHttpError(error);
+        }
+        parts = assistantParts(out, refs, intent, body.text);
       }
-      parts = assistantParts(out, refs, intent, body.text);
     }
 
     // Both messages are saved or neither is, so Retry works after a failure.
