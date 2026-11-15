@@ -66,6 +66,8 @@ beforeEach(() => {
       return init?.method === "POST" ? requestReply() : json({ requests: savedRequests });
     }
     if (path === "/api/events/knighthacks-ix/conversations") return json({ conversations: [] });
+    if (path === "/api/me/profile" && init?.method === "PATCH") return json({ ...me.profile, ...JSON.parse(String(init.body)) });
+    if (path === "/api/events/knighthacks-ix/me" && init?.method === "PATCH") return json({ role: "hacker", ...JSON.parse(String(init.body)) });
     throw new Error(`Unexpected API call in this test: ${path}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -213,5 +215,41 @@ describe("reading Hacky's parts", () => {
     expect(introProblem("   ")).toBe("Write a short intro first.");
     expect(introProblem("x".repeat(501))).toBe("Keep it under 500 characters.");
     expect(introProblem("Hi there")).toBeNull();
+  });
+
+  it("shows a profile change Hacky proposes and saves it only when I tap Save", async () => {
+    const user = userEvent.setup();
+    reply = (body) => json({ message: {
+      id: `reply-${body.message.id}`,
+      role: "assistant",
+      parts: [
+        { type: "text", text: "Check it and tap Save." },
+        { type: "tool-update_profile", toolCallId: "call-p1", state: "output-available", input: { query: "x" }, output: {
+          status: "proposed",
+          profile: { links: { linkedin: "https://linkedin.com/in/ethan" } },
+          intake: { skills: ["React", "frontend"] },
+          changes: [
+            { field: "skills", label: "Skills", added: ["frontend"] },
+            { field: "linkedin", label: "LinkedIn", value: "https://linkedin.com/in/ethan" },
+          ],
+        } },
+      ],
+    } });
+    renderHacky();
+
+    const box = await screen.findByLabelText("Message Hacky");
+    await user.type(box, "add frontend to my skills{Enter}");
+    const card = await screen.findByRole("article", { name: "Update your profile" });
+    expect(within(card).getByText("+ frontend")).not.toBeNull();
+    expect(within(card).getByText("https://linkedin.com/in/ethan")).not.toBeNull();
+    const patches = () => fetchMock.mock.calls.filter(([, init]) => init?.method === "PATCH");
+    expect(patches()).toHaveLength(0);
+
+    await user.click(within(card).getByRole("button", { name: "Save to profile" }));
+    expect(await within(card).findByText(/Saved to your profile/)).not.toBeNull();
+    expect(patches().map(([url, init]) => [String(url), JSON.parse(String(init?.body))])).toEqual([
+      ["/api/me/profile", { links: { linkedin: "https://linkedin.com/in/ethan" } }],
+      ["/api/events/knighthacks-ix/me", { skills: ["React", "frontend"] }],
+    ]);
   });
 });
