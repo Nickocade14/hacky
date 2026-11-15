@@ -1,24 +1,26 @@
 import { useEffect, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { ApiClientError } from "./lib/api";
-import { Globe } from "./Globe";
 
 export function Arrow({ back = false }: { back?: boolean }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" className={back ? "arrow back" : "arrow"}><path d="M4 12h16m-6-6 6 6-6 6" /></svg>;
 }
 
+// Same layout as the mobile app: one centered column. Log in and Create
+// account open with the waving knit Hacky over the wordmark; the other
+// account pages show the wordmark only.
 export function AuthShell({ children }: { children: ReactNode }) {
-  return <div className="auth-layout">
-    <aside className="story-panel" aria-label="About Hacky">
-      <Link className="brand" to="/login" aria-label="Hacky home"><span className="brand-mark" aria-hidden="true">h.</span>hacky<span className="brand-dot">.</span></Link>
-      <div className="story-copy">
-        <h2>Great things start<br />with the right people.</h2>
-        <p>A teammate for your big idea. A mentor for that tricky bug.<br className="desktop-break" /> Your people are here. Let’s find them.</p>
-      </div>
-      <div className="globe-scene" aria-hidden="true"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><span className="spark spark-one">✦</span><span className="spark spark-two">✧</span><Globe /><span className="scene-note note-one"><span>↗</span> A little help goes a long way.</span><span className="scene-note note-two"><span>✦</span> Better together.</span></div>
-    </aside>
-    <main className="form-panel"><div className="mobile-brand"><Link className="brand" to="/login"><span className="brand-mark" aria-hidden="true">h.</span>hacky<span className="brand-dot">.</span></Link><span>Knight Hacks IX</span></div><div className="form-content">{children}</div></main>
-  </div>;
+  const { pathname } = useLocation();
+  const mascot = pathname === "/login" || pathname === "/register";
+  const wordmark = <Link className="brand" to="/login" aria-label="Hacky, log in"><span className="brand-mark" aria-hidden="true">h.</span>hacky<span className="brand-dot">.</span></Link>;
+  return <main className="auth-layout">
+    <div className="form-content">
+      {mascot
+        ? <div className="auth-mascot"><img src="/assets/mascots/hacky-knit-large.webp" alt="" width="186" height="192" />{wordmark}</div>
+        : <div className="auth-wordmark">{wordmark}</div>}
+      {children}
+    </div>
+  </main>;
 }
 
 export function AuthTabs() {
