@@ -1,0 +1,39 @@
+@startuml activity-signup
+' Built from server/src/auth/routes.ts and server/src/auth/codes.ts.
+' Sign-up uses an emailed 6-digit code (10 minutes, 5 tries), not a link.
+!include hacky-style.iuml
+title Sign up, verify email, log in
+
+start
+:Open Hacky (login / register is the first screen);
+:Enter name, username, email, password;
+:POST /api/auth/register;
+if (Email already has an account?) then (yes)
+  :409 email_taken\n"Log in instead";
+  stop
+elseif (Username taken?) then (yes)
+  :409 handle_taken\n"Try another one";
+  stop
+else (no)
+  :Save pending sign-up\n(code hash, expires in 10 min);
+  :Email the 6-digit code;
+endif
+
+repeat
+  :Type the code from the email;
+  :POST /api/auth/verify-email;
+  if (Code expired or 5 tries used?) then (yes)
+    :Ask for a new code\n(POST /api/auth/resend-verification);
+  else (no)
+  endif
+repeat while (Code right?) is (no: 400 invalid_code) not (yes)
+
+:In one transaction: use up the code,\ncreate users + profiles (same _id);
+:Return JWT + account details;
+:Open Home, already logged in;
+note right
+  Next time: POST /api/auth/login
+  with email or username + password
+end note
+stop
+@enduml
