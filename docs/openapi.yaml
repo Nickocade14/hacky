@@ -15,9 +15,8 @@ info:
     - Routes under `/api/events/{slug}/...` also require membership (403 otherwise), except `/join`, which creates it.
     - One team per person per event, including owners. The owner is included in members and counts toward maxSize.
     - Every error is `{ "error": { "code", "message", "details"? } }`.
-    - Live updates use Socket.IO on the same server (JWT in the handshake `auth.token`), not REST.
-      Events: `message-new`, `request-new`, `request-updated`, `help-new`, `help-claimed`.
-      They only notify; the REST API is the source of truth.
+    - There are no live updates: while a chat is open, web and mobile poll for new messages
+      with `GET /api/conversations/{id}/messages?after=` (Socket.IO was cut from this version).
 servers:
   - url: https://{domain}
     description: Production
