@@ -182,10 +182,11 @@ cat <<EOF
 
 Next, point the API at the domain. Edit /var/www/hacky/server/.env and set:
 
-  CORS_ORIGIN=https://$DOMAIN,https://www.$DOMAIN
+  CORS_ORIGIN=https://$DOMAIN,https://www.$DOMAIN,https://app.swaggerhub.com
   APP_URL=https://$DOMAIN
 
-(APP_URL is the base of the links in verification and password-reset emails.)
+(app.swaggerhub.com lets SwaggerHub's "Try it out" call the API for the demo.
+APP_URL is the base of the links in verification and password-reset emails.)
 Then restart the API so it reads the new .env:
 
   pm2 reload hacky-api --update-env && pm2 status

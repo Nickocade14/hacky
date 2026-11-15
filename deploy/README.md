@@ -103,11 +103,11 @@ The demo must run on a real domain with HTTPS, never on the IP. Do these steps i
 8. **Point the API at the domain.** Edit `/var/www/hacky/server/.env` (the script prints these lines with your domain filled in):
 
    ```
-   CORS_ORIGIN=https://<domain>,https://www.<domain>
+   CORS_ORIGIN=https://<domain>,https://www.<domain>,https://app.swaggerhub.com
    APP_URL=https://<domain>
    ```
 
-   `APP_URL` is the start of the links in verification and password-reset emails. Then restart the API so it reads the file again: `pm2 reload hacky-api --update-env`.
+   `https://app.swaggerhub.com` lets SwaggerHub's "Try it out" call the live API from the browser (the API demo). `APP_URL` is the start of the links in verification and password-reset emails. Then restart the API so it reads the file again: `pm2 reload hacky-api --update-env`.
 
 9. **Test.** Open `https://<domain>/api/health` (it should show `{"ok":true}`) and `https://<domain>` (the login screen), on your laptop and on your phone over mobile data. Also open `https://<domain>/verify` directly: it should load the app, not a 404.
 
