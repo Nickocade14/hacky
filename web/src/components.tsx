@@ -16,7 +16,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
   return <main className="auth-layout">
     <div className="form-content">
       {mascot
-        ? <div className="auth-mascot"><img src="/assets/mascots/hacky-knit-large.webp" alt="" width="186" height="192" />{wordmark}</div>
+        ? <div className="auth-mascot"><img src="/assets/mascots/hacky-knit-large.webp" alt="" width="185" height="190" />{wordmark}</div>
         : <div className="auth-wordmark">{wordmark}</div>}
       {children}
     </div>

@@ -498,8 +498,8 @@ form {
 }
 
 .auth-mascot img {
-    width: 186px;
-    height: auto;
+    width: auto;
+    height: 190px;
 }
 
 .auth-mascot .brand {
@@ -507,16 +507,20 @@ form {
     font-size: 34px;
 }
 
-/* The app shows only the "hacky." wordmark under the mascot. */
-.auth-mascot .brand-mark {
+/* Like the app: the account pages show only the "hacky." wordmark. */
+.auth-layout .brand-mark {
     display: none;
 }
 
+.auth-wordmark .brand {
+    font-size: 27px;
+}
+
 .auth-wordmark {
-    margin-bottom: 32px;
+    margin-bottom: 44px;
 }
 
 @media(max-height:820px) {
-    .auth-mascot img { width: 140px; }
+    .auth-mascot img { height: 150px; }
     .auth-mascot { margin-bottom: 20px; }
 }
