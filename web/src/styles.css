@@ -51,23 +51,6 @@ h1:focus {
     outline: none;
 }
 
-.auth-layout {
-    min-height: 100dvh;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(480px, 1fr);
-}
-
-.story-panel {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-    min-height: 100dvh;
-    padding: 44px clamp(32px, 5vw, 88px) 32px;
-    background: var(--stage);
-    border-right: 1px solid var(--line);
-}
-
 .brand {
     display: inline-flex;
     align-items: center;
@@ -97,12 +80,6 @@ h1:focus {
     color: var(--action);
 }
 
-.story-copy {
-    position: relative;
-    z-index: 1;
-    padding-top: clamp(55px, 8vh, 110px);
-}
-
 .eyebrow {
     display: inline-flex;
     align-items: center;
@@ -112,129 +89,6 @@ h1:focus {
     letter-spacing: 1.7px;
     color: var(--muted);
     line-height: 1.6;
-}
-
-.story-copy h2 {
-    margin: 20px 0 18px;
-    font-size: clamp(30px, 3.65vw, 58px);
-    letter-spacing: -2px;
-    line-height: 1.09;
-    font-weight: 700;
-}
-
-.story-copy p {
-    font-size: 15px;
-    line-height: 1.7;
-    color: var(--muted);
-    margin: 0;
-    max-width: 415px;
-}
-
-.globe-scene {
-    width: min(100%, 440px);
-    height: 335px;
-    position: relative;
-    margin: auto;
-    display: grid;
-    place-items: center;
-    isolation: isolate;
-    flex-shrink: 0;
-}
-
-.hero-globe {
-    position: relative;
-    z-index: 1;
-    color: var(--globe);
-    width: 285px;
-    height: 285px;
-}
-
-.orbit {
-    position: absolute;
-    width: 260px;
-    height: 260px;
-    border: 1px solid var(--orbit);
-    border-radius: 50%;
-}
-
-.orbit-two {
-    width: 340px;
-    height: 340px;
-    border-style: dashed;
-    opacity: .7;
-}
-
-.spark {
-    position: absolute;
-    color: var(--action);
-    font-size: 28px;
-}
-
-.spark-one {
-    right: 45px;
-    top: 45px;
-}
-
-.spark-two {
-    left: 42px;
-    bottom: 80px;
-    font-size: 36px;
-}
-
-.scene-note {
-    z-index: 2;
-    position: absolute;
-    display: inline-flex;
-    gap: 8px;
-    align-items: center;
-    background: var(--white);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    box-shadow: 0 7px 24px var(--shadow);
-    padding: 11px 14px;
-    font-size: 12px;
-}
-
-.scene-note span {
-    color: var(--action);
-}
-
-.note-one {
-    top: 78px;
-    left: -8px;
-    transform: rotate(-6deg);
-}
-
-.note-two {
-    bottom: 48px;
-    right: -2px;
-    transform: rotate(5deg);
-}
-
-.story-footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    align-items: flex-end;
-    font-size: 11px;
-    line-height: 1.7;
-    color: var(--muted);
-    margin-top: 18px;
-}
-
-.story-footer strong {
-    color: var(--ink);
-    font-weight: 400;
-}
-
-.form-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    background: var(--white);
-    padding: 54px clamp(24px, 5vw, 88px) 24px;
 }
 
 .form-content {
@@ -580,113 +434,12 @@ form {
     }
 }
 
-.mobile-brand {
-    display: none;
-}
-
 .search-controls {
     display: grid;
     gap: 14px;
 }
 
-@media(min-width:1500px) {
-    .story-panel {
-        padding-left: max(80px, calc((100vw - 1300px)/2));
-    }
-
-    .story-copy h2 {
-        font-size: 55px;
-    }
-
-    .form-panel {
-        padding-right: max(80px, calc((100vw - 1300px)/2));
-    }
-}
-
-@media(max-width:1000px) {
-    .auth-layout {
-        grid-template-columns: minmax(0, 1fr) minmax(410px, 1fr);
-    }
-
-    .story-panel {
-        padding-inline: 30px;
-    }
-
-    .story-copy h2 {
-        font-size: 37px;
-        letter-spacing: -1.3px;
-    }
-
-    .story-copy p {
-        font-size: 13px;
-    }
-
-    .desktop-break {
-        display: none;
-    }
-
-    .scene-note {
-        font-size: 10px;
-        padding: 10px;
-    }
-
-    .note-one {
-        left: -10px;
-    }
-
-    .note-two {
-        right: -10px;
-    }
-
-    .hero-globe {
-        width: 240px;
-        height: 240px;
-    }
-
-    .orbit-two {
-        width: 285px;
-        height: 285px;
-    }
-}
-
 @media(max-width:760px) {
-    .auth-layout {
-        display: block;
-    }
-
-    .story-panel {
-        display: none;
-    }
-
-    .form-panel {
-        min-height: 100dvh;
-        padding: 25px 24px 20px;
-    }
-
-    .mobile-brand {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        width: 100%;
-        max-width: 400px;
-        padding-bottom: 20px;
-    }
-
-    .mobile-brand>span {
-        color: var(--muted);
-        font-size: 10px;
-    }
-
-    .mobile-brand .brand {
-        font-size: 27px;
-    }
-
-    .mobile-brand .brand-mark {
-        width: 32px;
-        height: 32px;
-        font-size: 23px;
-    }
 
     .form-content {
         padding: 24px 0;
@@ -719,4 +472,51 @@ form {
         animation: none !important;
         transition: none !important;
     }
+}
+
+
+/* Log in, create account and the other account pages: one centered
+   column like the mobile app, no side panel. */
+.auth-layout {
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    background: var(--white);
+    padding: 40px 24px 24px;
+}
+
+.auth-layout .form-content {
+    margin: auto 0;
+}
+
+.auth-mascot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 28px;
+}
+
+.auth-mascot img {
+    width: 186px;
+    height: auto;
+}
+
+.auth-mascot .brand {
+    align-self: center;
+    font-size: 34px;
+}
+
+/* The app shows only the "hacky." wordmark under the mascot. */
+.auth-mascot .brand-mark {
+    display: none;
+}
+
+.auth-wordmark {
+    margin-bottom: 32px;
+}
+
+@media(max-height:820px) {
+    .auth-mascot img { width: 140px; }
+    .auth-mascot { margin-bottom: 20px; }
 }
