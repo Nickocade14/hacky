@@ -1672,7 +1672,14 @@ components:
     # ---------------------------------------------------------- chat
     ChatMessage:
       type: object
-      description: An AI SDK UIMessage. `parts` holds text and tool results (cards).
+      description: |
+        An AI SDK UIMessage. `parts` holds text and tool results (cards). Assistant parts:
+        - `text`: `{ type, text }`. `**bold**` and `@handle` are rendered.
+        - `tool-search_people`: match cards for teammates or mentors.
+        - `tool-update_profile`: a profile change Hacky proposes, with `output` shaped like
+          `ProfileUpdateProposal`. The chat never saves it. When the user taps Save, the client
+          sends `output.profile` to `PATCH /api/me/profile` and `output.intake` to
+          `PATCH /api/events/{slug}/me` (each only when it isn't empty).
       required: [id, role, parts]
       properties:
         id:
@@ -1685,6 +1692,57 @@ components:
           items:
             type: object
             additionalProperties: true
+    ProfileUpdateProposal:
+      type: object
+      description: |
+        `output` of a `tool-update_profile` chat part. `profile` and `intake` are ready-to-send
+        PATCH bodies with the full new value of each changed field (lists already merged with
+        what the user had, and `links` with every link kept). Links only come from URLs the
+        user typed. `changes` is what the card lists.
+      required: [status, profile, intake, changes]
+      properties:
+        status:
+          type: string
+          enum: [proposed]
+        profile:
+          type: object
+          description: Body for `PATCH /api/me/profile`. Empty when nothing there changes.
+          properties:
+            bio:
+              type: string
+              maxLength: 500
+            links:
+              $ref: "#/components/schemas/ProfileLinks"
+        intake:
+          description: Body for `PATCH /api/events/{slug}/me`. Empty when nothing there changes.
+          allOf:
+            - $ref: "#/components/schemas/IntakeFields"
+        changes:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ProfileChange"
+    ProfileChange:
+      type: object
+      required: [field, label]
+      properties:
+        field:
+          type: string
+          enum: [skills, skillsWanted, interests, experience, bio, github, linkedin, website]
+        label:
+          type: string
+          example: Skills
+        added:
+          description: For list fields
+          allOf:
+            - $ref: "#/components/schemas/Tags"
+        removed:
+          description: For list fields
+          allOf:
+            - $ref: "#/components/schemas/Tags"
+        value:
+          type: string
+          description: New value for single fields (bio, experience, links)
     ChatBody:
       type: object
       required: [message]
