@@ -2,6 +2,8 @@
 // the API or navigate themselves; they ask these callbacks, like CardActions
 // in the original Hacky (react/src/hacky/cards.jsx).
 
+import '../api/models/events.dart';
+import '../api/models/me.dart';
 import '../api/models/people.dart';
 import '../api/models/requests.dart';
 import '../api/models/teams.dart';
@@ -49,6 +51,7 @@ class HackyCardActions {
     required this.ask,
     required this.sendRequest,
     required this.sentRequest,
+    this.saveProfile,
   });
 
   /// My name, for the intros I write.
@@ -71,6 +74,12 @@ class HackyCardActions {
 
   /// The request I sent from this chat to [userId] (for [teamId]), if any.
   final RequestResult? Function(String userId, String? teamId) sentRequest;
+
+  /// Saves a profile change Hacky proposed: `PATCH /api/me/profile` and
+  /// `PATCH /api/events/{slug}/me`, each only when it has something to send.
+  /// Null hides the Save button.
+  final Future<void> Function(UpdateProfileBody profile, UpdateEventMeBody intake)?
+  saveProfile;
 }
 
 /// The requests sent from this chat, so a card that scrolls away and back

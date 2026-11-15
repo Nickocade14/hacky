@@ -6,12 +6,16 @@
 import 'package:flutter/material.dart';
 
 import '../api/models/auth.dart';
+import '../api/models/events.dart';
+import '../api/models/me.dart';
 import '../api/models/people.dart';
 import '../api/models/teams.dart';
+import '../auth/submit_action.dart';
 import '../hacky/hacky_card_actions.dart';
 import '../hacky/hacky_parts.dart';
 import '../theme.dart';
 import 'app_widgets.dart';
+import 'auth_widgets.dart';
 import 'hacky_chat_widgets.dart';
 import 'hacky_intro.dart';
 
@@ -53,6 +57,10 @@ class HackyPartView extends StatelessWidget {
         intro: draft.intro,
         source: draft.source,
         actions: actions,
+      ),
+      final HackyProfileUpdatePart update => ProfileUpdateCard(
+        part: update,
+        save: actions.saveProfile,
       ),
       final HackyQuestionPart question => QuestionView(
         part: question,
@@ -469,3 +477,84 @@ class ProfileResultCard extends StatelessWidget {
     );
   }
 }
+
+/// A profile change Hacky proposes. Nothing changes until Save; Not now
+/// leaves the profile as it is.
+class ProfileUpdateCard extends StatefulWidget {
+  const ProfileUpdateCard({super.key, required this.part, required this.save});
+
+  final HackyProfileUpdatePart part;
+  final Future<void> Function(UpdateProfileBody profile, UpdateEventMeBody intake)?
+  save;
+
+  @override
+  State<ProfileUpdateCard> createState() => _ProfileUpdateCardState();
+}
+
+class _ProfileUpdateCardState extends State<ProfileUpdateCard>
+    with SubmitAction<ProfileUpdateCard> {
+  bool _saved = false;
+  bool _dismissed = false;
+
+  void _save() => runAction(() async {
+    await widget.save!(widget.part.profile, widget.part.intake);
+    if (mounted) setState(() => _saved = true);
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) {
+      return const QuietLine('Not saved. Nothing on your profile changed.');
+    }
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 10,
+        children: [
+          Text(
+            'Update your profile',
+            style: TextStyle(color: AppColors.ink, fontSize: 17, fontWeight: _bold),
+          ),
+          for (final change in widget.part.changes)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                Text(
+                  change.label,
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 13,
+                    fontWeight: _bold,
+                  ),
+                ),
+                Text(
+                  change.text,
+                  style: TextStyle(color: AppColors.ink, fontSize: 15, height: 1.4),
+                ),
+              ],
+            ),
+          if (error case final message?) Notice(message, error: true),
+          if (_saved)
+            const QuietLine('Saved to your profile.')
+          else if (widget.save != null)
+            Row(
+              spacing: 8,
+              children: [
+                FilledButton(
+                  onPressed: busy ? null : _save,
+                  child: Text(busy ? 'Saving…' : 'Save to profile'),
+                ),
+                TextButton(
+                  onPressed: busy ? null : () => setState(() => _dismissed = true),
+                  child: const Text('Not now'),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
