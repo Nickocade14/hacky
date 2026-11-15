@@ -150,20 +150,21 @@
   .hk-side-inner { min-width: 319px; }
   .hk-header { padding-inline: 20px; min-height: 68px; }
 }
-/* Narrow main pane: icons only, title hidden on phones. */
+/* Narrow main pane: each icon keeps its name, small and under it, so the header
+   never turns into a row of unlabeled icons. The title is hidden on phones. */
 @media (max-width: 1180px) {
-  .hk-app.open .hk-nav-link :is(span, .hk-nav-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .hk-app.open .hk-nav-link { padding: 0 10px; }
+  .hk-app.open .hk-nav-link { flex-direction: column; justify-content: center; gap: 2px; min-height: 48px; padding: 4px 8px; font-size: 11px; line-height: 1.1; }
+  .hk-app.open .hk-chats-toggle.attention::after { top: 4px; left: calc(50% + 6px); }
 }
 @media (max-width: 900px) {
-  .hk-nav-link :is(span, .hk-nav-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .hk-nav-link { padding: 0 10px; }
+  .hk-nav-link { flex-direction: column; justify-content: center; gap: 2px; min-height: 48px; padding: 4px 8px; font-size: 11px; line-height: 1.1; }
+  .hk-chats-toggle.attention::after { top: 4px; left: calc(50% + 6px); }
 }
 @media (max-width: 700px) {
   .hk-header { grid-template-columns: auto 1fr; }
   .hk-title { display: none; }
   .hk-header-side { gap: 0; }
-  .hk-nav-link { padding: 0 9px; }
+  .hk-nav-link { padding: 4px 7px; }
   .hk-ask-fab { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); padding-right: 16px; font-size: 15px; }
   .hk-ask-fab.compact { right: 16px; bottom: max(96px, calc(80px + env(safe-area-inset-bottom))); padding: 5px; }
   .hk-page .workspace-content { padding-bottom: 104px; }
