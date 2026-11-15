@@ -1,0 +1,51 @@
+@startgantt
+' Planned dates: the project plan (weeks of Oct 19 - Nov 18).
+' Actual dates: when the GitHub pull requests for each task were opened and merged.
+' Grey = planned, blue = done, orange = still to do, red = cut from scope.
+skinparam defaultFontName Lato
+skinparam defaultFontColor #243247
+title Hacky: planned vs actual (Oct 19 - Nov 18, 2026)
+printscale daily
+scale 2
+Project starts 2026-10-19
+2026-11-15 is colored in #FFE7B3
+
+-- Setup --
+[API contract · plan] starts 2026-10-19 and ends 2026-10-25 and is colored in #D8DDE5
+[API contract · actual (#1)] starts 2026-10-21 and ends 2026-10-21 and is colored in #0866D9
+[Server, models, Flutter scaffold · plan] starts 2026-10-19 and ends 2026-11-01 and is colored in #D8DDE5
+[Server, models, Flutter scaffold · actual (#2, #3)] starts 2026-10-21 and ends 2026-10-26 and is colored in #0866D9
+[Domain, HTTPS, auto-deploy · plan] starts 2026-10-19 and ends 2026-11-08 and is colored in #D8DDE5
+[Domain, HTTPS, auto-deploy · actual (#4, #20)] starts 2026-11-01 and ends 2026-11-06 and is colored in #0866D9
+[Wireframes, ERD draft, Gantt v1 · plan] starts 2026-10-19 and ends 2026-10-25 and is colored in #D8DDE5
+[Wireframes, ERD draft, Gantt v1 · actual (#5, #13, #19)] starts 2026-11-03 and ends 2026-11-06 and is colored in #0866D9
+
+-- Auth and data --
+[Seed data + search endpoint · plan] starts 2026-10-26 and ends 2026-11-08 and is colored in #D8DDE5
+[Seed data + search endpoint · actual (#9, #15)] starts 2026-11-04 and ends 2026-11-04 and is colored in #0866D9
+[Auth API: register, verify, JWT, reset · plan] starts 2026-10-26 and ends 2026-11-01 and is colored in #D8DDE5
+[Auth API: register, verify, JWT, reset · actual (#29, #37, #39)] starts 2026-11-08 and ends 2026-11-11 and is colored in #0866D9
+[Auth screens web + mobile · plan] starts 2026-10-26 and ends 2026-11-01 and is colored in #D8DDE5
+[Auth screens web + mobile · actual (#6, #12, #38, #42)] starts 2026-11-03 and ends 2026-11-10 and is colored in #0866D9
+
+-- Feature parity --
+[Events, requests, DMs API · plan] starts 2026-10-26 and ends 2026-11-08 and is colored in #D8DDE5
+[Events, requests, DMs API · actual (#30, #31)] starts 2026-11-08 and ends 2026-11-09 and is colored in #0866D9
+[Matching + Hacky chat API · plan] starts 2026-11-02 and ends 2026-11-08 and is colored in #D8DDE5
+[Matching + Hacky chat API · actual (#28, #32, #56, #62)] starts 2026-11-08 and ends 2026-11-14 and is colored in #0866D9
+[Mobile screens + Hacky chat · plan] starts 2026-11-02 and ends 2026-11-15 and is colored in #D8DDE5
+[Mobile screens + Hacky chat · actual (#18-#27, #60)] starts 2026-11-05 and ends 2026-11-12 and is colored in #0866D9
+[Web screens + search · plan] starts 2026-11-02 and ends 2026-11-15 and is colored in #D8DDE5
+[Web screens + search · actual (#35, #43, #52-#59)] starts 2026-11-09 and ends 2026-11-11 and is colored in #0866D9
+[Live updates (Socket.IO) · plan] starts 2026-11-02 and ends 2026-11-08 and is colored in #D8DDE5
+[Live updates (Socket.IO) · cut] starts 2026-11-09 and ends 2026-11-09 and is colored in #C0362C
+
+-- Polish and presentation --
+[UML diagrams · plan] starts 2026-11-09 and ends 2026-11-15 and is colored in #D8DDE5
+[UML diagrams · actual (#35 + PlantUML)] starts 2026-11-09 and ends 2026-11-15 and is colored in #0866D9
+[SwaggerHub, bug bash, slides · plan] starts 2026-11-09 and ends 2026-11-15 and is colored in #D8DDE5
+[SwaggerHub, bug bash, slides · in progress] starts 2026-11-15 and ends 2026-11-16 and is colored in #E8A33D
+[Rehearse + present · plan] starts 2026-11-16 and ends 2026-11-18 and is colored in #D8DDE5
+[Rehearse + present · to do] starts 2026-11-16 and ends 2026-11-18 and is colored in #E8A33D
+
+@endgantt
