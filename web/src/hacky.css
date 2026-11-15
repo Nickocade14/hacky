@@ -88,6 +88,13 @@
   .hk-starter { min-height: 72px; padding-inline: 16px; font-size: 17px; }
   .hk-starter img { width: 34px; height: 34px; }
 }
-@media (max-height: 760px) {
-  .hk-brief-film { width: min(210px, 50vw); }
+/* Laptop screens (about 800 px tall): keep all four starting points above the composer. */
+@media (max-height: 880px) {
+  .hk-brief-film { width: min(190px, 46vw); }
+  .hk-brief h1 { font-size: 32px; }
+  .hk-brief > p { margin-top: 8px; }
+  .hk-starters { margin-top: 18px; }
+}
+@media (max-height: 700px) {
+  .hk-brief-film { width: min(140px, 40vw); }
 }
