@@ -10,7 +10,7 @@
   --wash: #e9edf3; --stage: #edf2f8; --hover: #eaf1fb; --selection: #d4e5ff;
   --disabled: #e2e6ec; --disabled-ink: #5b6575; --focus: #0866d9;
   --success: #39604f; --success-wash: #e8f0eb; --danger: #a12b35; --danger-wash: #fdf0f1;
-  --shadow: #24324712; --orbit: #c9d9ed; --globe: var(--action); --radius: 12px;
+  --shadow: #24324712; --radius: 12px;
 }
 /* Workspace tokens (sidebar, bubbles, role chips) and the dark palette, also from hacky-primitives.css. */
 :root {
@@ -25,7 +25,7 @@
   --wash: #2d3542; --stage: #252f3e; --hover: #303d50; --selection: #27476f;
   --disabled: #323b49; --disabled-ink: #acb6c6; --focus: #80b5ff;
   --success: #c5dbcc; --success-wash: #30463d; --danger: #ff9aa2; --danger-wash: #46282c;
-  --shadow: #0006; --orbit: #3a4a61; --sidebar: #1e242e; --scroll: #6c788b; --overlay: #0b121db3;
+  --shadow: #0006; --sidebar: #1e242e; --scroll: #6c788b; --overlay: #0b121db3;
   --incoming-bubble: #2d3542; --link: #80b5ff;
   /* The light theme's saturated blue glares on dark gray and fails WCAG as text (3.2:1).
      Buttons get a soft blue with dark text (8.2:1); my bubbles a deep blue with light text (8.2:1). */
