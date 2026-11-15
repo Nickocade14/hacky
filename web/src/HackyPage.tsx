@@ -4,10 +4,10 @@ import { Notice } from "./components";
 import { useSignedIn } from "./SignedInShell";
 import { api, ApiClientError } from "./lib/api";
 import { chatPath, eventPath, listConnectionRequests, personPath } from "./lib/connections";
-import type { ChatMessage, Me } from "./lib/contracts";
+import type { ChatMessage, EventMe, Me } from "./lib/contracts";
 import {
-  firstName, introProblem, newMessageId, openingIntro, partsOf, shownSkills, textOf, whyLine,
-  type HackyCard, type HackyPart,
+  changeText, firstName, introProblem, newMessageId, openingIntro, partsOf, shownSkills, textOf, whyLine,
+  type HackyCard, type HackyPart, type ProfileProposal,
 } from "./lib/hacky";
 import { useMedia } from "./lib/theme";
 import { KnitAvatar } from "./workspace/KnitAvatar";
@@ -53,11 +53,11 @@ function RichText({ text }: { text: string }) {
 type Sent = { status: "pending" | "accepted"; conversationId: string | null };
 
 export function HackyPage() {
-  const { me, event, onExpired } = useSignedIn();
+  const { me, event, onExpired, onProfileChanged } = useSignedIn();
   // Hacky finds people inside a hackathon, so Home (where you join one) comes first.
   if (!event) return <Navigate to="/app" replace />;
   // A new event starts a new conversation.
-  return <HackyChat key={event.slug} slug={event.slug} me={me} onExpired={onExpired} />;
+  return <HackyChat key={event.slug} slug={event.slug} me={me} onExpired={onExpired} onProfileChanged={onProfileChanged} />;
 }
 
 // "New chat" clears what this browser shows; the server keeps the history.
@@ -66,7 +66,9 @@ function readStart(userId: string, slug: string) {
   try { return window.localStorage.getItem(startKey(userId, slug)); } catch { return null; }
 }
 
-function HackyChat({ slug, me, onExpired }: { slug: string; me: Me; onExpired: () => void }) {
+function HackyChat({ slug, me, onExpired, onProfileChanged }: {
+  slug: string; me: Me; onExpired: () => void; onProfileChanged: (profile: Me["profile"]) => void;
+}) {
   const userId = me.profile.userId;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [load, setLoad] = useState<{ loading: boolean; error?: string }>({ loading: true });
@@ -208,6 +210,7 @@ function HackyChat({ slug, me, onExpired }: { slug: string; me: Me; onExpired: (
           ? <UserTurn key={message.id} text={textOf(message)} failure={failures[message.id]} onRetry={thinking ? undefined : () => retry(message)} />
           : message.role === "assistant"
             ? <AssistantTurn key={message.id} parts={partsOf(message)} me={me} slug={slug} sent={sent} onExpired={onExpired}
+                onProfileChanged={onProfileChanged}
                 onSent={(id, request) => setSent((all) => ({ ...all, [id]: request }))} />
             : null)}
         {thinking && <div className="hk-thinking" role="status">
@@ -247,14 +250,19 @@ function UserTurn({ text, failure, onRetry }: { text: string; failure?: string; 
   </div>;
 }
 
-type CardProps = { me: Me; slug: string; sent: Record<string, Sent>; onSent: (userId: string, request: Sent) => void; onExpired: () => void };
+type CardProps = {
+  me: Me; slug: string; sent: Record<string, Sent>; onSent: (userId: string, request: Sent) => void; onExpired: () => void;
+  onProfileChanged: (profile: Me["profile"]) => void;
+};
 
 function AssistantTurn({ parts, ...cardProps }: { parts: HackyPart[] } & CardProps) {
   if (!parts.length) return null;
   return <div className="hk-turn">
     {parts.map((part, i) => part.type === "text"
       ? <p key={i} className="hk-bubble"><RichText text={part.text} /></p>
-      : <div key={i} className="hk-matches">
+      : part.type === "profile"
+        ? <ProfileCard key={part.id} proposal={part.proposal} slug={cardProps.slug} onExpired={cardProps.onExpired} onProfileChanged={cardProps.onProfileChanged} />
+        : <div key={i} className="hk-matches">
         <span className="hk-matches-count">{part.cards.length} {part.cards.length === 1 ? (part.mentors ? "mentor" : "person") : (part.mentors ? "mentors" : "people")}</span>
         {part.cards.map((card) => <PersonCard key={card.person.userId} card={card} {...cardProps} />)}
       </div>)}
@@ -318,3 +326,50 @@ function PersonCard({ card, me, slug, sent, onSent, onExpired }: { card: HackyCa
     </form>}
   </article>;
 }
+
+// A profile change Hacky proposes. Nothing is saved until "Save to profile":
+// then the two PATCH bodies go to the same endpoints My profile uses.
+function ProfileCard({ proposal, slug, onExpired, onProfileChanged }: {
+  proposal: ProfileProposal; slug: string; onExpired: () => void; onProfileChanged: (profile: Me["profile"]) => void;
+}) {
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "dismissed">("idle");
+  const [problem, setProblem] = useState<string | null>(null);
+  if (state === "dismissed") return <p className="hk-match-status" role="status">Not saved. Nothing on your profile changed.</p>;
+
+  async function save() {
+    setState("saving"); setProblem(null);
+    try {
+      if (Object.keys(proposal.profile).length) {
+        onProfileChanged(await api.authenticated<Me["profile"]>("/me/profile", { method: "PATCH", body: proposal.profile }));
+      }
+      if (Object.keys(proposal.intake).length) {
+        await api.authenticated<EventMe>(`/events/${encodeURIComponent(slug)}/me`, { method: "PATCH", body: proposal.intake });
+      }
+      setState("saved");
+    } catch (failure) {
+      if (failure instanceof ApiClientError && failure.status === 401) { onExpired(); return; }
+      setProblem(failure instanceof Error ? failure.message : "Couldn’t save. Please try again.");
+      setState("idle");
+    }
+  }
+
+  return <article className="hk-match hk-profile-update" aria-label="Update your profile">
+    <h3 className="hk-profile-title">Update your profile</h3>
+    <dl className="hk-changes">
+      {proposal.changes.map((change) => <div key={change.field}>
+        <dt>{change.label}</dt>
+        <dd>{changeText(change)}</dd>
+      </div>)}
+    </dl>
+    {problem && <Notice error>{problem}</Notice>}
+    {state === "saved"
+      ? <p className="hk-match-status" role="status">Saved to your profile. <Link to="/profile">View profile</Link></p>
+      : <div className="hk-intro-actions">
+        <button type="button" className="hk-button" onClick={() => void save()} disabled={state === "saving"}>
+          {state === "saving" ? "Saving…" : "Save to profile"}
+        </button>
+        <button type="button" className="hk-button secondary" disabled={state === "saving"} onClick={() => setState("dismissed")}>Not now</button>
+      </div>}
+  </article>;
+}
+
