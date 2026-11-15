@@ -171,4 +171,80 @@ void main() {
       'Find a mentor\nfor Flutter',
     );
   });
+
+  test('reads a profile change Hacky proposes into the two PATCH bodies', () {
+    final parts = HackyParts.of(
+      assistant([
+        textPart('Check it and tap Save.'),
+        {
+          'type': 'tool-update_profile',
+          'toolCallId': 'call-p1',
+          'state': 'output-available',
+          'input': {'query': 'add frontend to my skills'},
+          'output': {
+            'status': 'proposed',
+            'profile': {
+              'links': {
+                'github': 'https://github.com/nico',
+                'linkedin': 'https://linkedin.com/in/nico',
+              },
+            },
+            'intake': {
+              'skills': ['Flutter', 'frontend'],
+              'experience': 'intermediate',
+            },
+            'changes': [
+              {
+                'field': 'skills',
+                'label': 'Skills',
+                'added': ['frontend'],
+                'removed': ['Dart'],
+              },
+              {
+                'field': 'linkedin',
+                'label': 'LinkedIn',
+                'value': 'https://linkedin.com/in/nico',
+              },
+            ],
+          },
+        },
+      ]),
+    );
+
+    expect(parts, hasLength(2));
+    final update = parts[1] as HackyProfileUpdatePart;
+    expect(update.changes.map((change) => change.text), [
+      '+ frontend, − Dart',
+      'https://linkedin.com/in/nico',
+    ]);
+    expect(update.profile.toJson(), {
+      'links': {
+        'github': 'https://github.com/nico',
+        'linkedin': 'https://linkedin.com/in/nico',
+      },
+    });
+    expect(update.intake.toJson(), {
+      'skills': ['Flutter', 'frontend'],
+      'experience': 'intermediate',
+    });
+  });
+
+  test('skips a profile change with nothing to show', () {
+    final parts = HackyParts.of(
+      assistant([
+        {
+          'type': 'tool-update_profile',
+          'state': 'output-available',
+          'output': {
+            'status': 'proposed',
+            'profile': <String, dynamic>{},
+            'intake': <String, dynamic>{},
+            'changes': <Map<String, dynamic>>[],
+          },
+        },
+      ]),
+    );
+
+    expect(parts, isEmpty);
+  });
 }

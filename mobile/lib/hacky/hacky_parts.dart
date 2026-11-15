@@ -9,7 +9,10 @@
 
 import '../api/models/auth.dart';
 import '../api/models/chat.dart';
+import '../api/models/events.dart';
 import '../api/models/json_read.dart';
+import '../api/models/me.dart';
+import '../api/models/nullable.dart';
 import '../api/models/people.dart';
 import '../api/models/requests.dart';
 import '../api/models/teams.dart';
@@ -79,6 +82,46 @@ class HackyIntroDraftPart extends HackyPart {
   final TeamRef? team;
   final String intro;
   final ConnectionSource source;
+}
+
+/// `update_profile`: a change to my own profile Hacky proposes
+/// (`ProfileUpdateProposal` in docs/openapi.yaml). Nothing is saved until I
+/// tap Save: then [profile] goes to `PATCH /api/me/profile` and [intake] to
+/// `PATCH /api/events/{slug}/me`.
+class HackyProfileUpdatePart extends HackyPart {
+  const HackyProfileUpdatePart({
+    required this.profile,
+    required this.intake,
+    required this.changes,
+  });
+
+  final UpdateProfileBody profile;
+  final UpdateEventMeBody intake;
+  final List<ProfileChange> changes;
+}
+
+/// One line of a [HackyProfileUpdatePart]: "Skills: + frontend".
+class ProfileChange {
+  const ProfileChange({
+    required this.label,
+    required this.added,
+    required this.removed,
+    required this.value,
+  });
+
+  final String label;
+  final List<String> added;
+  final List<String> removed;
+  final String? value;
+
+  /// "+ frontend, − Flutter" for lists, the new value otherwise.
+  String get text {
+    final list = [
+      for (final tag in added) '+ $tag',
+      for (final tag in removed) '− $tag',
+    ];
+    return list.isNotEmpty ? list.join(', ') : value ?? '';
+  }
 }
 
 /// `ask_with_options`: a question with answer chips.
@@ -205,11 +248,17 @@ abstract final class HackyParts {
     return switch (tool) {
       'search_people' => [_matches(output)],
       'get_profile' => [_profile(output)],
+      'update_profile' => [_profileUpdate(output)],
       _ => [_draft(output)],
     };
   }
 
-  static const _tools = {'search_people', 'get_profile', 'draft_intro'};
+  static const _tools = {
+    'search_people',
+    'get_profile',
+    'draft_intro',
+    'update_profile',
+  };
 
   static List<HackyPart> _question(Map<String, dynamic> part) {
     final input = part['input'];
@@ -292,6 +341,47 @@ abstract final class HackyParts {
         (value) => value.name == state,
         orElse: () => RelationState.none,
       ),
+    );
+  }
+
+  static HackyPart _profileUpdate(Map<String, dynamic> output) {
+    final profile = readObject(output, 'profile');
+    final intake = readObject(output, 'intake');
+    final changes = [
+      for (final change in readObjectList(output, 'changes'))
+        ProfileChange(
+          label: readString(change, 'label'),
+          added: _strings(change, 'added'),
+          removed: _strings(change, 'removed'),
+          value: change['value'] is String ? change['value'] as String : null,
+        ),
+    ];
+    if (changes.isEmpty) throw const FormatException('"changes" is empty');
+    final bio = profile['bio'];
+    final links = readNullableObject(profile, 'links');
+    final experience = intake['experience'];
+    List<String>? list(String key) =>
+        intake.containsKey(key) ? _strings(intake, key) : null;
+    return HackyProfileUpdatePart(
+      profile: UpdateProfileBody(
+        bio: bio is String ? Nullable(bio) : null,
+        links: links == null ? null : ProfileLinks.fromJson(links),
+      ),
+      intake: UpdateEventMeBody(
+        skills: list('skills'),
+        skillsWanted: list('skillsWanted'),
+        interests: list('interests'),
+        experience: experience is String
+            ? Nullable(
+                Experience.values.firstWhere(
+                  (value) => value.name == experience,
+                  orElse: () =>
+                      throw const FormatException('"experience" is unknown'),
+                ),
+              )
+            : null,
+      ),
+      changes: changes,
     );
   }
 
