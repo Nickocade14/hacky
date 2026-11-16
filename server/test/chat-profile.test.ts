@@ -28,6 +28,15 @@ test("profile edits are told apart from requests for people", () => {
     "I have experience with Docker",
     "https://www.linkedin.com/in/nicolas-cadena",
     "here's my github: github.com/Nickocade14",
+    // Typed fast, as real attendees do.
+    "add my name and im a front end developer in my. bio",
+    "im good at python and sql",
+    "I'm really good at React",
+    "i am a backend engineer",
+    "edit my profile, I know Docker skills",
+    "edita mi bio: soy desarrollador mobile",
+    "soy buena en Flutter",
+    "change my name in my bio",
   ]) assert.equal(wantsProfileEdit(text), true, text);
 
   for (const text of [
@@ -38,6 +47,12 @@ test("profile edits are told apart from requests for people", () => {
     "anyone good at c++?",
     "Help me pick a track",
     "busca alguien con experiencia en frontend",
+    "im looking for a frontend developer",
+    "I'm a backend dev, find me a designer",
+    "soy estudiante, busca un mentor",
+    "is anyone good at Figma?",
+    "no sé qué track elegir",
+    "im new here, what can you do?",
   ]) assert.equal(wantsProfileEdit(text), false, text);
 });
 

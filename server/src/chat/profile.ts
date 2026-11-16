@@ -7,16 +7,24 @@ import { EXPERIENCE } from "../models/enums.js";
 // proposal with the existing PATCH endpoints when the user taps Save.
 
 const LINK = /(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com|github\.com)\/[^\s<>"')]+/i;
-const OWN_PROFILE = /\b(my|mi|mis)\s+(profile|perfil|skills?|bio|habilidades|intereses|interests|links?|linkedin|github|website|web)\b/i;
-const EDIT_VERB = /\b(add|agrega|agregar|añade|añadir|anade|pon|put|remove|quita|quitar|borra|borrar|delete|update|actualiza|change|cambia|set)\b/i;
-const I_KNOW = /\b(i\s+(have|know|do|am\s+good\s+at)|i'm\s+good\s+at|(yo\s+)?(tengo|s[eé]))\b.{0,40}\b(experience|experiencia|skills?)\b/i;
-const FIND = /\b(find|busca|buscar|encuentra|looking\s+for|who|qui[eé]n|someone|somebody|alguien|teammates?|mentors?|people|gente)\b/i;
+// Typed fast: "my. bio", "im", "i m". Accented words avoid a trailing \b
+// (without the u flag, é and ñ aren't word characters).
+const OWN_PROFILE = /\b(my|mi|mis)[\s.,:;-]+(profile|perfil|skills?|bio|habilidades|intereses|interests|links?|linkedin|github|website|web|name|nombre|about)\b/i;
+const EDIT_VERB = /\b(add|agrega|agregar|añade|añadir|anade|anadir|pon|poner|put|write|escribe|escribir|remove|quita|quitar|borra|borrar|delete|elimina|eliminar|update|actualiza|actualizar|change|cambia|cambiar|set|edit|edita|editar|modify|modifica|modificar|fix|arregla)\b/i;
+const I_AM = String.raw`\b(i\s*'?\s*m|i\s+am)\b`;
+const I_KNOW = /\b(i\s+(have|know|do)|(yo\s+)?(tengo|s[eé]))\b.{0,40}\b(experience|experiencia|skills?)\b/i;
+// "im good at python and sql", "soy buena en React"
+const GOOD_AT = new RegExp(String.raw`${I_AM}\s+(really\s+|very\s+)?(good|great|skilled|experienced|strong)\s+(at|in|with)\s+\w|\bsoy\s+(muy\s+)?bueno?a?\s+(en|con)\s+\w`, "i");
+// "im a front end developer", "soy desarrollador backend"
+const I_WORK_AS = new RegExp(
+  String.raw`(${I_AM}|\bsoy)\s+(an?\s+|una?\s+)?[\w\s/+.-]{0,30}?(developer|dev|engineer|designer|programmer|student|programador|programadora|desarrollador|desarrolladora|ingenier[oa]|dise[nñ]ador|dise[nñ]adora|estudiante)\b`, "i");
+const FIND = /\b(find|busca|buscar|encuentra|looking\s+for|who|qui[eé]n|someone|somebody|anyone|alguien|teammates?|mentors?|people|gente)\b/i;
 
 export function wantsProfileEdit(text: string): boolean {
   if (LINK.test(text) && !FIND.test(text)) return true;
-  if (OWN_PROFILE.test(text) && (EDIT_VERB.test(text) || I_KNOW.test(text))) return true;
-  // "I have experience in frontend", unless they're asking for people.
-  return I_KNOW.test(text) && !FIND.test(text);
+  if (OWN_PROFILE.test(text) && (EDIT_VERB.test(text) || I_KNOW.test(text) || I_WORK_AS.test(text))) return true;
+  // "I have experience in frontend", "im good at sql", unless they're asking for people.
+  return (I_KNOW.test(text) || GOOD_AT.test(text) || I_WORK_AS.test(text)) && !FIND.test(text);
 }
 
 export type Links = { github?: string; linkedin?: string; website?: string };
