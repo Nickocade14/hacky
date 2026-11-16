@@ -162,5 +162,5 @@ export function proposalPart(proposal: Proposal, text: string) {
 export const PROFILE_REPLIES = {
   proposed: "Here's what I'd change. Check it and tap Save to update your profile.",
   linksOnly: "I found your link. Check it and tap Save to add it to your profile.",
-};
+  nothing: "I couldn't tell what to change. I can update your skills, interests, experience, bio and links. Try \"add React to my skills\". Your name and photo are in My profile.",
 };
