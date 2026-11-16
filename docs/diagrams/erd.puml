@@ -1,0 +1,199 @@
+@startuml
+' Hacky final ERD with crow's-foot cardinality notation
+' Verified: GitHub Nickocade14/hacky main, server/src/models/*.ts, Nov 14 2026
+left to right direction
+hide circle
+skinparam shadowing false
+skinparam backgroundColor #F8FAFC
+skinparam linetype polyline
+skinparam defaultFontName Arial
+skinparam ArrowColor #64748B
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #94A3B8
+  FontColor #0F172A
+}
+title Hacky | Complete Mongoose ERD | 14 collections | Crow-foot cardinalities
+entity "User\n(users)" as User ##EAF4FF {
+  * _id : ObjectId <<PK>>
+  * email : string <<UQ>>
+  * passwordHash : string [private]
+  * emailVerified : boolean
+    createdAt / updatedAt : Date
+}
+entity "Profile\n(profiles)" as Profile ##EAF4FF {
+  * _id : ObjectId <<PK>>
+  * handle : string <<UQ>>
+  * name : string
+    hackyStyle : Mixed
+    photoUrl / bio : string
+    links : Map<string,string>
+  * isDemo : boolean
+    createdAt / updatedAt : Date
+}
+entity "PendingSignup\n(pendingsignups)" as PendingSignup ##EAF4FF {
+  * _id : ObjectId <<PK>>
+  * email : string <<UQ>>
+  * handle : string
+  * name : string
+  * passwordHash : string [private]
+  * codeHash : string [private]
+  * tries : number
+  * expiresAt : Date <<TTL>>
+    createdAt / updatedAt : Date
+}
+entity "AuthCode\n(authcodes)" as AuthCode ##EAF4FF {
+  * _id : ObjectId <<PK>>
+  * user : ObjectId → User <<FK>>
+  * kind : enum
+  * codeHash : string [private]
+  * tries : number
+  * expiresAt : Date <<TTL>>
+    createdAt / updatedAt : Date
+}
+entity "Event\n(events)" as Event ##EAFBF6 {
+  * _id : ObjectId <<PK>>
+  * slug : string <<UQ>>
+  * name : string
+    theme : Mixed
+    tracks : string[]
+    startsAt / endsAt : Date
+    createdAt : Date
+}
+entity "Membership\n(memberships)" as Membership ##EAFBF6 {
+  * _id : ObjectId <<PK>>
+  * event : ObjectId → Event <<FK>>
+  * user : ObjectId → Profile <<FK>>
+  * role : enum
+  * verified / looking : boolean
+  * availability : enum
+    skills / skillsWanted : string[]
+    experience / goal / track : enum / string
+  * wantsExperienced : boolean
+    interests / motivations : string[]
+    idea / summary : string
+  * complete : boolean
+    createdAt / updatedAt : Date
+}
+entity "Team\n(teams)" as Team ##EAFBF6 {
+  * _id : ObjectId <<PK>>
+  * event : ObjectId → Event <<FK>>
+  * owner : ObjectId → Profile <<FK>>
+    members : ObjectId[] → Profile <<FK>>
+  * name : string
+    idea / track : string
+    wantedSkills : string[]
+  * maxSize : number
+    createdAt : Date
+}
+entity "Embedding\n(embeddings)" as Embedding ##EAFBF6 {
+  * _id : ObjectId <<PK>>
+  * event : ObjectId → Event <<FK>>
+  * ownerKind : member | team
+  * ownerId : ObjectId → Profile / Team
+  * embedding : number[768]
+    updatedAt : Date
+}
+entity "Block\n(blocks)" as Block ##FFF3E8 {
+  * _id : ObjectId <<PK>>
+  * blocker : ObjectId → Profile <<FK>>
+  * blocked : ObjectId → Profile <<FK>>
+    createdAt : Date
+}
+entity "ConnectionRequest\n(requests)" as ConnectionRequest ##FFF3E8 {
+  * _id : ObjectId <<PK>>
+  * event : ObjectId → Event <<FK>>
+  * from / to : ObjectId → Profile <<FK>>
+  * status : enum
+  * intro : string
+  * source : enum
+    team : ObjectId → Team <<FK>>
+    respondedAt / hiddenAt : Date
+    createdAt : Date
+}
+entity "HelpRequest\n(help)" as HelpRequest ##FFF3E8 {
+  * _id : ObjectId <<PK>>
+  * event : ObjectId → Event <<FK>>
+  * hacker : ObjectId → Profile <<FK>>
+  * title : string
+    details : string
+    skillsNeeded : string[]
+  * status : enum
+    mentor : ObjectId → Profile <<FK>>
+    claimedAt / resolvedAt : Date
+    createdAt : Date
+}
+entity "Conversation\n(conversations)" as Conversation ##F3EEFF {
+  * _id : ObjectId <<PK>>
+  * event : ObjectId → Event <<FK>>
+  * kind : dm | mentor | team
+    members[] : {user → Profile, joinedAt, lastReadAt}
+    dmUserLow / dmUserHigh : ObjectId → Profile <<FK>>
+    helpRequest : ObjectId → HelpRequest <<FK>>
+    team : ObjectId → Team <<FK>>
+  * lastMessageAt : Date
+    createdAt : Date
+}
+entity "Message\n(messages)" as Message ##F3EEFF {
+  * _id : ObjectId <<PK>>
+  * conversation : ObjectId → Conversation <<FK>>
+    sender : ObjectId → Profile <<FK>>
+    clientId : string
+  * body : string
+  * kind : text | card | system
+    createdAt : Date
+}
+entity "AgentMessage\n(agentmessages)" as AgentMessage ##F3EEFF {
+  * _id : ObjectId <<PK>>
+  * user : ObjectId → Profile <<FK>>
+  * event : ObjectId → Event <<FK>>
+  * messageId : string
+  * role : user | assistant | system
+  * parts : Mixed (AI message parts)
+    createdAt : Date
+}
+User ||..|| Profile : "same _id"
+User ||--o{ AuthCode : "user"
+Event ||--o{ Membership : "event"
+Profile ||--o{ Membership : "user"
+Event ||--o{ Team : "event"
+Profile ||--o{ Team : "owner"
+Team o{--|{ Profile : "members[]"
+Event ||--o{ Embedding : "event"
+Profile o|..o{ Embedding : "ownerId [member]"
+Team o|..o{ Embedding : "ownerId [team]"
+Profile ||--o{ Block : "blocker"
+Profile ||--o{ Block : "blocked"
+Event ||--o{ ConnectionRequest : "event"
+Profile ||--o{ ConnectionRequest : "from"
+Profile ||--o{ ConnectionRequest : "to"
+Team o|--o{ ConnectionRequest : "team [optional]"
+Event ||--o{ HelpRequest : "event"
+Profile ||--o{ HelpRequest : "hacker"
+Profile o|--o{ HelpRequest : "mentor [optional]"
+Event ||--o{ Conversation : "event"
+Profile |{--o{ Conversation : "members[].user"
+Profile o|--o{ Conversation : "dmUserLow / High"
+Team o|--o| Conversation : "team [optional]"
+HelpRequest o|--o| Conversation : "helpRequest [optional]"
+Conversation ||--o{ Message : "conversation"
+Profile o|--o{ Message : "sender [optional]"
+Profile ||--o{ AgentMessage : "user"
+Event ||--o{ AgentMessage : "event"
+note bottom of PendingSignup
+  No direct relationship: temporary sign-up stored
+  before User and Profile are created.
+end note
+note bottom of Embedding
+  Exactly one owner logically, determined by ownerKind.
+  Each conditional line is 0..1 on owner side because
+  it applies only when ownerKind matches member/team.
+end note
+legend bottom
+  **Cardinality:** || = exactly one; o| = zero or one; o{ = zero or many; |{ = one or many
+  **Solid** = Mongoose ObjectId ref (including embedded ref arrays)
+  **Dotted** = logical/shared-ID or polymorphic owner; not a declared ref
+  **PK** primary key; UQ unique; FK ObjectId ref; TTL automatic expiry
+  MongoDB does not enforce SQL-style foreign keys.
+endlegend
+@enduml
