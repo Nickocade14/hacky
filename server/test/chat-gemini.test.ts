@@ -87,6 +87,8 @@ test("the prompt has every ref, the viewer and the message, one line per person"
   assert.ok(p2.startsWith("p2 | Maya Chen (@maya_backend) | hacker"));
   assert.ok(buildInstructions(input).includes('"Knight Hacks IX"'));
   assert.ok(buildInstructions({ ...input, intent: "mentor" }).includes("find mentors"));
+  // Profile edits that slip past wantsProfileEdit get a hint, not "I can't edit your profile".
+  assert.match(buildInstructions(input), /Never say you can't edit it/);
 });
 
 test("parses the model's JSON and rejects bad output", async () => {
