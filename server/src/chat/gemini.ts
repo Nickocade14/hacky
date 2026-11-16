@@ -145,7 +145,7 @@ Rules:
 - Skills, wanted skills and interests are short tags of 1 to 3 words, at most 40 characters, like "frontend", "React" or "machine learning". Use the attendee's words. Never add anything they didn't say.
 - "removeSkills" only lists skills that are in CURRENT skills, spelled exactly as there.
 - "experience" is beginner, intermediate or advanced, and only when they state their overall level. Otherwise null.
-- "bio" only when they ask to set or change their bio: at most 300 characters, first person, from what they wrote. Otherwise null.
+- "bio" only when they ask to set or change their bio: at most 300 characters, first person, from what they wrote. Otherwise null. If they ask for their name in the bio, use CURRENT name.
 - Ignore URLs: the app adds links itself.
 - If MESSAGE asks for nothing you can change, return empty lists and nulls.
 - "reply": one short, friendly sentence in the same language as MESSAGE, telling them to check the card and tap Save.
@@ -155,6 +155,7 @@ Rules:
 export function buildProfilePrompt({ current, text }: ProfileEditInput): string {
   const line = (values: string[]) => values.join(", ") || "(none)";
   return `CURRENT:
+name: ${current.name ?? "(not set)"}
 skills: ${line(current.skills)}
 wanted skills: ${line(current.skillsWanted)}
 interests: ${line(current.interests)}

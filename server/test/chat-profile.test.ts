@@ -5,6 +5,7 @@ import { buildProfilePrompt, createProfileEditor } from "../src/chat/gemini.js";
 import { type CurrentProfile, type ProfileEdit, buildProposal, linksFrom, wantsProfileEdit } from "../src/chat/profile.js";
 
 const current: CurrentProfile = {
+  name: "Nico Cadena",
   skills: ["Flutter", "React"],
   skillsWanted: [],
   interests: ["health"],
@@ -37,6 +38,7 @@ test("profile edits are told apart from requests for people", () => {
     "edita mi bio: soy desarrollador mobile",
     "soy buena en Flutter",
     "change my name in my bio",
+    "pls edit my profile adding my name and im a forntend dev",
   ]) assert.equal(wantsProfileEdit(text), true, text);
 
   for (const text of [
@@ -92,6 +94,7 @@ test("bio and experience are proposed as single values", () => {
 
 test("the editor sends the current profile and parses the model's JSON", async () => {
   const prompt = buildProfilePrompt({ current, text: "add frontend to my skills" });
+  assert.match(prompt, /name: Nico Cadena/);
   assert.match(prompt, /skills: Flutter, React/);
   assert.match(prompt, /MESSAGE:\nadd frontend to my skills/);
 

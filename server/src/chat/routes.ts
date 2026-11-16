@@ -151,9 +151,10 @@ async function profileParts(
   viewer: mongoose.Types.ObjectId, membership: { skills?: string[] | null; skillsWanted?: string[] | null; interests?: string[] | null; experience?: string | null },
   text: string, editProfile: ProfileEditor,
 ): Promise<Part[]> {
-  const profile = await ProfileModel.findById(viewer).select("bio links").lean();
+  const profile = await ProfileModel.findById(viewer).select("name bio links").lean();
   const links = profile?.links instanceof Map ? Object.fromEntries(profile.links) : { ...(profile?.links ?? {}) };
   const current = {
+    name: profile?.name ?? null,
     skills: membership.skills ?? [],
     skillsWanted: membership.skillsWanted ?? [],
     interests: membership.interests ?? [],

@@ -69,6 +69,7 @@ export interface ProfileEdit {
 }
 
 export interface CurrentProfile {
+  name: string | null; // read-only here; lets the model write "I'm Nico, ..." in a bio
   skills: string[];
   skillsWanted: string[];
   interests: string[];
@@ -161,5 +162,5 @@ export function proposalPart(proposal: Proposal, text: string) {
 export const PROFILE_REPLIES = {
   proposed: "Here's what I'd change. Check it and tap Save to update your profile.",
   linksOnly: "I found your link. Check it and tap Save to add it to your profile.",
-  nothing: "I couldn't tell what to change. Try \"add React to my skills\" or paste your LinkedIn link.",
+};
 };
